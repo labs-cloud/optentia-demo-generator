@@ -331,3 +331,14 @@ i[data-ic] svg{width:1em;height:1em;display:block;stroke:currentColor;fill:none;
 @keyframes toastIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 .grid-2{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;align-items:start}
 @media(max-width:1180px){.cc-grid{grid-template-columns:1fr 1fr}.cc-grid .stack:last-child{grid-column:span 2}.chan-detail,.bigcards{grid-template-columns:1fr 1fr}}
+
+/* ── Kanban (pipeline) ── */
+.kanban{display:flex;gap:12px;overflow-x:auto;padding-bottom:16px;align-items:flex-start}
+.k-col{min-width:185px;flex:1;background:var(--panel-2);border-radius:10px;padding:12px 10px}
+.k-col-h{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.07em;color:var(--ink-dim);text-transform:uppercase;padding-bottom:10px;border-bottom:2px solid var(--teal);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.k-cnt{font-family:var(--mono);font-size:10px;color:var(--teal-ink);background:var(--teal-soft);padding:1px 7px;border-radius:999px}
+.k-cards{display:flex;flex-direction:column;gap:8px}
+.k-card{padding:10px 11px;background:var(--panel);border:1px solid var(--line);border-radius:8px;cursor:pointer;transition:.15s;width:100%;text-align:left}
+.k-card:hover{border-color:var(--teal);transform:translateY(-1px);box-shadow:var(--shadow-sm)}
+.k-name{font-size:12.5px;font-weight:600;color:var(--ink)}
+.k-detail{font-family:var(--mono);font-size:10px;color:var(--ink-dim);margin-top:3px;line-height:1.4}
