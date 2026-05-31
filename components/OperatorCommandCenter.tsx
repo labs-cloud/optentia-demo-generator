@@ -738,6 +738,12 @@ function DetailDrawer({
   onClose: () => void;
   onAction: (label: string) => void;
 }) {
+  const [drawerAction, setDrawerAction] = useState("");
+  const handleAction = (label: string) => {
+    setDrawerAction(label);
+    onAction(label);
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/20 backdrop-blur-sm" onClick={onClose}>
       <aside className="ml-auto h-full w-full max-w-xl overflow-y-auto border-l border-white/60 bg-[#fffdf8]/95 p-6 shadow-2xl backdrop-blur-xl" onClick={(event) => event.stopPropagation()}>
@@ -745,7 +751,13 @@ function DetailDrawer({
           <Pill tone="teal">Detail view</Pill>
           <button onClick={onClose} className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-950">Close</button>
         </div>
-        <DetailContent detail={detail} leads={leads} onAction={onAction} />
+        {drawerAction ? (
+          <div className="mb-5 rounded-3xl border border-[#2a7a8a]/25 bg-[#2a7a8a]/10 p-4" aria-live="polite">
+            <p className="text-sm font-semibold text-[#1f6471]">Action sent</p>
+            <p className="mt-1 text-sm leading-6 text-slate-600">{drawerAction}</p>
+          </div>
+        ) : null}
+        <DetailContent detail={detail} leads={leads} onAction={handleAction} />
       </aside>
     </div>
   );
@@ -759,6 +771,11 @@ function DetailContent({ detail, leads, onAction }: { detail: DetailRecord; lead
       <div>
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-400">Lead Profile</p>
         <h2 className="mt-3 text-4xl font-semibold tracking-tight">{lead.name}</h2>
+        <ActionBar
+          context={lead.name}
+          actions={["Hand over to broker", "Delegate follow-up to Operator", "Schedule showing prep", "Draft message"]}
+          onAction={onAction}
+        />
         <DetailGrid rows={[
           ["Lead type", lead.type],
           ["Budget", profile.budget],
@@ -780,6 +797,11 @@ function DetailContent({ detail, leads, onAction }: { detail: DetailRecord; lead
       <div>
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-400">Conversation</p>
         <h2 className="mt-3 text-4xl font-semibold tracking-tight">{detail.item.channel}</h2>
+        <ActionBar
+          context={`${detail.item.channel} conversation`}
+          actions={["Hand over conversation", "Delegate reply to Operator", "Draft response", "Create Asana task"]}
+          onAction={onAction}
+        />
         <div className="mt-6 space-y-3">
           {detail.item.messages.map((message) => (
             <div key={`${message.speaker}-${message.message}`} className="rounded-3xl border border-white/70 bg-[#fffaf0]/70 p-4">
@@ -799,6 +821,11 @@ function DetailContent({ detail, leads, onAction }: { detail: DetailRecord; lead
       <div>
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-400">Task</p>
         <h2 className="mt-3 text-4xl font-semibold tracking-tight">{detail.item.title}</h2>
+        <ActionBar
+          context={detail.item.title}
+          actions={["Take over task", "Delegate to Operator", "Reschedule overnight", "Mark reviewed"]}
+          onAction={onAction}
+        />
         <DetailGrid rows={[
           ["Priority", detail.item.priority],
           ["Due date", detail.item.due],
@@ -817,6 +844,11 @@ function DetailContent({ detail, leads, onAction }: { detail: DetailRecord; lead
       <div>
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-400">Appointment</p>
         <h2 className="mt-3 text-4xl font-semibold tracking-tight">{detail.item.title}</h2>
+        <ActionBar
+          context={detail.item.title}
+          actions={["Hand over appointment", "Delegate reminder", "Prepare briefing", "Create follow-up task"]}
+          onAction={onAction}
+        />
         <DetailGrid rows={[
           ["Time", detail.item.time],
           ["Status", detail.item.status],
@@ -834,6 +866,11 @@ function DetailContent({ detail, leads, onAction }: { detail: DetailRecord; lead
       <div>
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-rose-500">Escalation</p>
         <h2 className="mt-3 text-4xl font-semibold tracking-tight">{detail.item.title}</h2>
+        <ActionBar
+          context={detail.item.title}
+          actions={["Hand over to broker", "Delegate to Operator", "Approve draft", "Schedule follow-up"]}
+          onAction={onAction}
+        />
         <Narrative title="What happened">{detail.item.why}</Narrative>
         <Narrative title="Why Operator escalated">{detail.item.next}</Narrative>
         <Narrative title="Draft message">{detail.item.draft}</Narrative>
@@ -852,6 +889,11 @@ function DetailContent({ detail, leads, onAction }: { detail: DetailRecord; lead
     <div>
       <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-400">Activity</p>
       <h2 className="mt-3 text-4xl font-semibold tracking-tight">{detail.item.summary}</h2>
+      <ActionBar
+        context={detail.item.summary}
+        actions={["Hand over to broker", "Delegate next step", "Create follow-up task", "Mark reviewed"]}
+        onAction={onAction}
+      />
       <DetailGrid rows={[
         ["Time", detail.item.time],
         ["Channel", detail.item.channel],
@@ -859,6 +901,37 @@ function DetailContent({ detail, leads, onAction }: { detail: DetailRecord; lead
         ["Full detail", "Operator logged the activity, updated the workspace, and kept the broker informed only when judgment was required."]
       ]} />
     </div>
+  );
+}
+
+function ActionBar({
+  context,
+  actions,
+  onAction
+}: {
+  context: string;
+  actions: string[];
+  onAction: (label: string) => void;
+}) {
+  return (
+    <section className="mt-6 rounded-3xl border border-white/70 bg-white/75 p-4 shadow-sm backdrop-blur-xl">
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2a7a8a]">Further actions</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {actions.map((action, index) => (
+          <button
+            key={action}
+            onClick={() => onAction(`${action}: ${context}`)}
+            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+              index === 0
+                ? "bg-slate-950 text-white hover:bg-slate-800"
+                : "border border-slate-200 bg-white/70 text-slate-600 hover:border-slate-300 hover:bg-white hover:text-slate-950"
+            }`}
+          >
+            {action}
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }
 
