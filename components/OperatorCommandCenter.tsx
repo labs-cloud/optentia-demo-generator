@@ -1,1158 +1,1134 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import type { ActivityEvent, Appointment, Client, Escalation, InboxThread, Lead, Task } from "@/types/demo";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { Client } from "@/types/demo";
 
-type View = "operator" | "leads" | "inbox" | "tasks" | "calendar" | "pipeline" | "documents" | "escalations" | "reports";
-type DetailRecord =
-  | { type: "lead"; item: Lead }
-  | { type: "conversation"; item: InboxThread }
-  | { type: "task"; item: Task }
-  | { type: "appointment"; item: Appointment }
-  | { type: "opportunity"; item: Lead; stage: string }
-  | { type: "escalation"; item: Escalation }
-  | { type: "activity"; item: ActivityEvent };
+/* ── Types ── */
+type Page = "home" | "conversations" | "activity" | "schedule" | "channels" | "records" | "settings";
 
-interface ChatMessage {
-  role: "Operator" | "You";
+interface Msg {
+  who: "op" | "me";
   text: string;
 }
 
-interface ScheduledOperatorTask {
-  title: string;
-  window: string;
-  instructions: string;
-  status: "Queued" | "Scheduled";
+interface Toast {
+  id: number;
+  msg: string;
 }
 
-const navItems: { id: View; label: string; icon: string }[] = [
-  { id: "operator", label: "Operator", icon: "O" },
-  { id: "leads", label: "Leads", icon: "L" },
-  { id: "inbox", label: "Inbox", icon: "I" },
-  { id: "tasks", label: "Tasks", icon: "T" },
-  { id: "calendar", label: "Calendar", icon: "C" },
-  { id: "pipeline", label: "Pipeline", icon: "P" },
-  { id: "documents", label: "Documents", icon: "D" },
-  { id: "escalations", label: "Escalations", icon: "E" },
-  { id: "reports", label: "Reports", icon: "R" }
-];
+/* ── SVG Icons ── */
+const ICONS: Record<string, string> = {
+  dashboard: '<path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/>',
+  comments: '<path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 9 9 0 0 1-3.9-.9L3 21l1.9-5.6A8.4 8.4 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z"/>',
+  activity: '<path d="M3 12h4l2.5-7 4 14 2.5-7H21"/>',
+  calendar: '<path d="M4 6h16v14H4zM4 10h16M8 4v4M16 4v4"/>',
+  broadcast: '<path d="M12 13v8M8 21h8M6 7.5a8 8 0 0 1 12 0M9 9.5a4 4 0 0 1 6 0M12 12.5a1 1 0 1 0 0-.01"/>',
+  folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  gear: '<path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 13.5a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0-1.2-2.9H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+  bolt: '<path d="M13 2L3 14h7l-1 8 10-12h-7z"/>',
+  file: '<path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M12 12v6M9 15h6"/>',
+  bell: '<path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>',
+  warning: '<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/>',
+  sms: '<path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 9 9 0 0 1-3.9-.9L3 21l1.9-5.6A8.4 8.4 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/>',
+  mail: '<path d="M3 5h18v14H3z"/><path d="M3 6l9 7 9-7"/>',
+  phone: '<path d="M5 4h4l2 5-3 2a12 12 0 0 0 5 5l2-3 5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/>',
+  whatsapp: '<path d="M4.5 19.5l1.4-4.1A7.2 7.2 0 1 1 9.6 18.6z"/><path d="M9 9.4c0 3.1 2.3 5.3 5.3 5.3.5 0 1.1-.4 1.1-.9 0-.4-1.3-1-1.6-1-.4 0-.6.6-1 .6-.7 0-2.1-1.5-2.1-2.1 0-.3.6-.6.6-1 0-.3-.6-1.6-1-1.6-.5 0-1 .6-1 1.1z"/>',
+  globe: '<path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"/><path d="M3.5 12h17M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+  fax: '<path d="M7 3h10v5H7z"/><path d="M5 8h14a2 2 0 0 1 2 2v8h-4v-5H7v5H3v-8a2 2 0 0 1 2-2z"/><path d="M7 18h10v3H7z"/>',
+  clock: '<path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z"/><path d="M12 6.5V12l3.5 2"/>',
+  search: '<path d="M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16zM21 21l-4.3-4.3"/>',
+  send: '<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>',
+  check: '<path d="M20 6L9 17l-5-5"/>',
+  arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  refresh: '<path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  pin: '<path d="M12 21s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12z"/><path d="M12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/>',
+};
 
-const demoClients = [
-  { slug: "chaim", label: "Chaim Real Estate" },
-  { slug: "lazer", label: "Rapid Examiners" }
-];
-
-const questionPrompts = [
-  "Who needs follow up today?",
-  "Which leads are hottest?",
-  "What appointments do I have today?",
-  "Any deals at risk?",
-  "Show pending tasks.",
-  "Where did you respond today?",
-  "Summarize my pipeline."
-];
-
-function allLeads(client: Client) {
-  return client.pipeline.flatMap((column) => column.leads.map((lead) => ({ ...lead, stage: column.title })));
+function Icon({ name }: { name: string }) {
+  const path = ICONS[name] || "";
+  return (
+    <i data-ic={name}>
+      <svg viewBox="0 0 24 24" aria-hidden="true" dangerouslySetInnerHTML={{ __html: path }} />
+    </i>
+  );
 }
 
-function getNavLabel(client: Client, id: View) {
-  return client.navigationLabels?.[id] ?? navItems.find((item) => item.id === id)?.label ?? id;
+/* ── Static data ── */
+const CHANNELS = [
+  ["SMS", "sms", true, "Confirming exams · 38s avg reply", { sent: "214", reply: "38s" }],
+  ["Email", "mail", true, "Intake packets to claimants", { sent: "96", reply: "4m" }],
+  ["Phone", "phone", true, "2 reminder calls in progress", { sent: "31", reply: "live" }],
+  ["WhatsApp", "whatsapp", true, "1 claimant thread · awaiting reply", { sent: "18", reply: "2m" }],
+  ["Web Intake", "globe", false, "No new submissions in 12m", { sent: "7", reply: "—" }],
+  ["Fax / Records", "fax", true, "Pulling records for 3 claims", { sent: "12", reply: "9m" }],
+] as [string, string, boolean, string, { sent: string; reply: string }][];
+
+const QUEUE = [
+  ["22:00", "Send next-day reminders to 14 claimants"],
+  ["23:30", "Sync confirmed exams to scheduling system"],
+  ["05:00", "Chase 5 outstanding record requests"],
+  ["06:30", "Compile coordinator morning brief"],
+] as [string, string][];
+
+const ACTS = [
+  ["09:42:18", "CONFIRMED", "b-confirmed", "Confirmed IME with Dr. Patel (Ortho) for claim", "#RE-20481", "sms"],
+  ["09:39:55", "SCHEDULED", "b-scheduled", "Booked exam — claimant J. Alvarez, Tue 10:30 AM", "#RE-20479", "mail"],
+  ["09:36:40", "COLLECTED", "b-collected", "Received medical records (42 pp) for", "#RE-20455", "fax"],
+  ["09:31:12", "ESCALATED", "b-escalated", "Claimant unresponsive after 3 attempts — flagged", "#RE-20460", "phone"],
+  ["09:24:47", "CONFIRMED", "b-confirmed", "Reminder acknowledged by claimant", "#RE-20468", "whatsapp"],
+  ["09:18:03", "RESCHEDULED", "b-rescheduled", "Moved exam — examiner conflict resolved", "#RE-20451", "mail"],
+  ["09:11:29", "SENT", "b-sent", "Dispatched intake packets to 6 new claimants", "batch", "mail"],
+  ["09:04:50", "SCHEDULED", "b-scheduled", "Booked neuro exam — Dr. Reyes, Thu 2:00 PM", "#RE-20472", "sms"],
+  ["08:57:16", "COLLECTED", "b-collected", "Pulled imaging from provider portal for", "#RE-20444", "folder"],
+  ["08:49:38", "QUEUED", "b-queued", "Queued no-show follow-up sequence — 4 claimants", "batch", "clock"],
+  ["08:40:02", "CONFIRMED", "b-confirmed", "Confirmed orthopedic exam for claimant", "#RE-20438", "phone"],
+  ["08:32:55", "SENT", "b-sent", "Sent appointment confirmations to 8 claimants", "batch", "mail"],
+  ["08:21:17", "COLLECTED", "b-collected", "Logged returned records packet for", "#RE-20429", "fax"],
+  ["08:09:44", "SCHEDULED", "b-scheduled", "Booked psych eval — Dr. Hahn, Fri 11:00 AM", "#RE-20422", "whatsapp"],
+] as [string, string, string, string, string, string][];
+
+const RECORDS = [
+  ["#RE-20481", "Marcus Patel", "Orthopedic IME", "CONFIRMED", "b-confirmed", "Today 10:00"],
+  ["#RE-20479", "Jordan Alvarez", "Orthopedic IME", "SCHEDULED", "b-scheduled", "Tue 10:30"],
+  ["#RE-20472", "Maya Osei", "Neurological", "SCHEDULED", "b-scheduled", "Thu 14:00"],
+  ["#RE-20468", "Priya Raman", "Psychological", "CONFIRMED", "b-confirmed", "Fri 09:00"],
+  ["#RE-20460", "Devon Clarke", "Orthopedic IME", "ESCALATED", "b-escalated", "Unresponsive"],
+  ["#RE-20455", "Sofia Lindqvist", "Records pending", "COLLECTED", "b-collected", "42 pp in"],
+  ["#RE-20451", "Aaron Webb", "Neurological", "RESCHEDULED", "b-rescheduled", "Mon 13:00"],
+  ["#RE-20444", "Hannah Kim", "Imaging review", "COLLECTED", "b-collected", "Imaging in"],
+  ["#RE-20438", "Theo Marsh", "Orthopedic IME", "CONFIRMED", "b-confirmed", "Wed 11:30"],
+] as [string, string, string, string, string, string][];
+
+const EXAMS = [
+  ["08:30", "AM", "Intake review — overnight submissions", "Operator · automated", "flat"],
+  ["10:00", "AM", "IME · J. Alvarez — Dr. Patel (Ortho)", "#RE-20479 · confirmed", "accent"],
+  ["11:00", "AM", "Records call — provider portal follow-up", "#RE-20455 · in progress", "flat"],
+  ["12:30", "PM", "Neuro exam · M. Osei — Dr. Reyes", "#RE-20472 · confirmed", "flat"],
+  ["14:00", "PM", "Coordinator sync — Dr. Patel's office", "Recurring", "flat"],
+  ["15:30", "PM", "Psych eval · L. Tran — Dr. Hahn", "#RE-20422 · confirmed", "flat"],
+  ["16:45", "PM", "Escalation review — unresponsive claimants", "2 flagged · needs you", "flat"],
+] as [string, string, string, string, string][];
+
+/* ── Page metadata ── */
+const PAGE_META: Record<Page, [string, string]> = {
+  home: ["Today · Friday May 30", "Command Center"],
+  conversations: ["Live · responds instantly", "Conversations"],
+  activity: ["Real-time feed", "Activity"],
+  schedule: ["Friday · May 30", "Schedule"],
+  channels: ["6 channels", "Channels"],
+  records: ["Open claims", "Records"],
+  settings: ["Workspace", "Settings"],
+};
+
+/* ── Operator reply logic ── */
+function operatorReply(text: string): string {
+  const t = text.toLowerCase();
+  if (/(schedul|book|exam|appoint|slot)/.test(t))
+    return "On it. I'll find the next open examiner slot that fits the claimant's location and specialty, book it, and send a confirmation on their preferred channel. You'll see it land in the activity log within a minute.";
+  if (/(record|document|file|imaging|auth)/.test(t))
+    return "I'll chase the outstanding records now — re-sending secure links to the providers and faxing the two that prefer it. Anything that comes back gets logged straight to the claim and flagged for review.";
+  if (/(escalat|stuck|unrespons|no.?show|follow)/.test(t))
+    return "Looking at it. I'll run one more multi-channel attempt with the alternate contact details, and if it's still quiet I'll hand it to a coordinator with the full timeline attached. No claim falls through.";
+  if (/(remind|confirm|message|text|notify)/.test(t))
+    return "Reminders are going out on each claimant's preferred channel, timed to their appointment. I'll watch for acknowledgements and re-send to anyone who goes quiet.";
+  if (/(thank|great|perfect|nice|good job|awesome)/.test(t))
+    return "Anytime. I'll keep the queue moving and surface anything that needs your judgment.";
+  if (/(report|summary|brief|status|how|what)/.test(t))
+    return "Here's where things stand: 27 exams scheduled in the last 24h, 88% no-show recovery, and 2 items flagged for you. Everything else is running autonomously. Want the full breakdown by channel?";
+  return "Understood — I'll take it from here and update the activity log as I go. I'll only ping you if something needs a decision.";
 }
 
-function getTerms(client: Client) {
-  return {
-    recordSingular: client.terms?.recordSingular ?? "lead",
-    recordPlural: client.terms?.recordPlural ?? "leads",
-    pipelineSingular: client.terms?.pipelineSingular ?? "opportunity",
-    pipelinePlural: client.terms?.pipelinePlural ?? "pipeline",
-    appointmentPlural: client.terms?.appointmentPlural ?? "appointments",
-    taskPlural: client.terms?.taskPlural ?? "tasks",
-    escalationPlural: client.terms?.escalationPlural ?? "decisions",
-    monitoredBusiness: client.terms?.monitoredBusiness ?? client.company
-  };
+/* ── Toast hook ── */
+function useToasts() {
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const show = useCallback((msg: string) => {
+    const id = Date.now();
+    setToasts((t) => [...t, { id, msg }]);
+    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 2700);
+  }, []);
+  return { toasts, show };
 }
 
-function findRelatedLead(task: Task, leads: Lead[]) {
-  return leads.find((lead) => task.title.toLowerCase().includes(lead.name.toLowerCase().split(" ")[0])) ?? leads[0];
+/* ── Count-up hook ── */
+function useCountUp(target: number, active: boolean) {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    if (!active) return;
+    setValue(0);
+    const t0 = performance.now();
+    const dur = 1000;
+    let raf: number;
+    function step(t: number) {
+      const k = Math.min(1, (t - t0) / dur);
+      const e = 1 - Math.pow(1 - k, 3);
+      setValue(Math.round(target * e));
+      if (k < 1) raf = requestAnimationFrame(step);
+      else setValue(target);
+    }
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [target, active]);
+  return value;
 }
 
-function operatorAnswer(prompt: string, client: Client) {
-  const leads = allLeads(client);
-  const terms = getTerms(client);
-  const hotLeads = leads
-    .filter((lead) => lead.urgency >= 80)
-    .sort((a, b) => b.urgency - a.urgency)
-    .slice(0, 3);
-  const pendingTasks = client.tasks.filter((task) => task.priority === "High" || task.priority === "Urgent");
-  const riskItems = client.escalations.slice(0, 2);
-  const channelThreads = client.inbox
-    .filter((thread) => ["WhatsApp", "Telegram", "Email", "Slack", "Asana", "SMS"].includes(thread.channel))
-    .map((thread) => `${thread.channel}: ${thread.messages.find((message) => message.speaker.includes("Operator"))?.message ?? "Operator response logged"}`);
-  const normalized = prompt.toLowerCase();
-
-  if (normalized.includes("follow")) {
-    return `I would follow up on ${pendingTasks.map((task) => task.title.replace(/^Follow up with /, "")).slice(0, 3).join(", ")}. The most time-sensitive item is ${pendingTasks[0]?.title ?? `the next ${terms.recordSingular}`} because it is marked ${pendingTasks[0]?.priority ?? "High"}.`;
-  }
-
-  if (normalized.includes("hot") || normalized.includes("lead")) {
-    return `The highest-priority ${terms.recordPlural} are ${hotLeads.map((lead) => `${lead.name} (${lead.urgency}/100 urgency, ${lead.stage})`).join(", ")}. I recommend acting on ${hotLeads[0]?.name ?? `the top ${terms.recordSingular}`} first and confirming the next step: ${hotLeads[0]?.next ?? "complete the next action"}.`;
-  }
-
-  if (normalized.includes("respond") || normalized.includes("whatsapp") || normalized.includes("telegram") || normalized.includes("slack") || normalized.includes("email") || normalized.includes("asana")) {
-    return `I responded or logged work across ${channelThreads.length} channels today. ${channelThreads.join(" ")} I also kept Asana updated so the operational tasks match the conversations.`;
-  }
-
-  if (normalized.includes("pipeline")) {
-    return `${terms.pipelinePlural} summary: ${client.pipeline.map((column) => `${column.title}: ${column.leads.map((lead) => lead.name).join(", ") || "none"}`).join(" | ")}. The strongest next move is ${hotLeads[0]?.next ?? `follow up with the highest urgency ${terms.recordSingular}`}.`;
-  }
-
-  if (normalized.includes("appointment") || normalized.includes("calendar")) {
-    return `Today's schedule has ${client.appointments.length} appointments. The key ones are ${client.appointments.map((appointment) => `${appointment.time} - ${appointment.title}`).join("; ")}. I already sent reminders where needed.`;
-  }
-
-  if (normalized.includes("risk") || normalized.includes("escalation")) {
-    return `There are ${client.escalations.length} open decisions. The main risks are ${riskItems.map((item) => item.title).join(" and ")}. I prepared reply drafts so the broker can approve quickly instead of writing from scratch.`;
-  }
-
-  if (normalized.includes("task") || normalized.includes("pending")) {
-    return `Pending priority tasks: ${pendingTasks.map((task) => `${task.title} due ${task.due}`).join("; ")}. I created these because they protect response time, showings, and negotiation readiness.`;
-  }
-
-  return `I can handle that. Based on the current pipeline, I will prioritize ${hotLeads[0]?.name ?? "the hottest active lead"}, keep the appointment calendar clean, update records, and escalate only if a decision needs broker judgment.`;
-}
-
-function aiLeadSummary(lead: Lead) {
-  const timeline = lead.urgency >= 90 ? "within 30 days" : lead.urgency >= 75 ? "within 60 days" : "within 90 days";
-  const risk = lead.urgency >= 90 ? "High" : lead.urgency >= 70 ? "Medium" : "Low";
-
-  return {
-    budget: lead.interest.includes("$") ? lead.interest : "To be confirmed",
-    timeline,
-    risk,
-    qualification: lead.urgency >= 70 ? "Qualified" : "Nurture",
-    summary: `${lead.name} is a ${lead.type.toLowerCase()} with ${lead.interest.toLowerCase()} interest. Operator recommends ${lead.next.toLowerCase()} and keeping the conversation active today.`
-  };
-}
-
-function ShellButton({
-  children,
-  onClick,
-  active = false
+/* ── Activity row ── */
+function ActRow({
+  row,
+  isFirst,
+  onToast,
 }: {
-  children: React.ReactNode;
-  onClick: () => void;
-  active?: boolean;
+  row: [string, string, string, string, string, string];
+  isFirst: boolean;
+  onToast: (msg: string) => void;
 }) {
+  const [time, label, cls, desc, ref, ico] = row;
   return (
     <button
-      onClick={onClick}
-      className={`w-full rounded-2xl px-3 py-2.5 text-left text-sm font-medium transition ${
-        active ? "bg-[#0f172a] text-white shadow-sm" : "text-slate-500 hover:bg-slate-100 hover:text-slate-950"
-      }`}
+      className={`act${isFirst ? " latest" : ""}`}
+      onClick={() => onToast(ref === "batch" ? "Batch action — opening details" : "Opening " + ref)}
     >
-      {children}
+      <span className="act-time">{time}</span>
+      <span className={`badge ${cls}`}>{label}</span>
+      <span className="act-desc">
+        {desc} <span className="ref">{ref}</span>
+      </span>
+      <span className="act-chan">
+        <Icon name={ico} />
+      </span>
     </button>
   );
 }
 
-function Pill({ children, tone = "neutral" }: { children: React.ReactNode; tone?: "neutral" | "gold" | "teal" | "danger" }) {
-  const tones = {
-    neutral: "border-stone-200 bg-white/80 text-slate-600",
-    gold: "border-[#c9a84c]/25 bg-[#c9a84c]/10 text-[#7a6120]",
-    teal: "border-[#2a7a8a]/25 bg-[#2a7a8a]/10 text-[#1f6471]",
-    danger: "border-rose-200 bg-rose-50 text-rose-700"
-  };
-
-  return <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${tones[tone]}`}>{children}</span>;
-}
-
-function RecordCard({
-  title,
-  meta,
-  children,
-  onClick
+/* ── Schedule row ── */
+function SchedRow({
+  exam,
+  onToast,
 }: {
-  title: string;
-  meta?: string;
-  children?: React.ReactNode;
-  onClick: () => void;
+  exam: [string, string, string, string, string];
+  onToast: (msg: string) => void;
 }) {
+  const [t, ap, title, sub, tone] = exam;
   return (
-    <button
-      onClick={onClick}
-      className="group w-full rounded-3xl border border-white/60 bg-white/78 p-5 text-left shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-white hover:shadow-md"
-    >
-      {meta ? <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">{meta}</p> : null}
-      <h3 className="text-lg font-semibold text-slate-950">{title}</h3>
-      {children ? <div className="mt-3 text-sm leading-6 text-slate-600">{children}</div> : null}
-      <p className="mt-4 text-sm font-semibold text-[#2a7a8a] opacity-0 transition group-hover:opacity-100">Open details</p>
-    </button>
+    <div className={`sched-row${tone === "accent" ? " accent" : ""}`} onClick={() => onToast(title)}>
+      <div className="sched-time">
+        {t}
+        <span>{ap}</span>
+      </div>
+      <div>
+        <div className="sched-title">{title}</div>
+        <div className="sched-sub">{sub}</div>
+      </div>
+      <Icon name="arrow" />
+    </div>
   );
 }
 
+/* ── Stat card ── */
+function StatCard({
+  label,
+  target,
+  suf,
+  delta,
+  gold,
+  active,
+  onToast,
+}: {
+  label: string;
+  target: number;
+  suf: string;
+  delta: string;
+  gold?: boolean;
+  active: boolean;
+  onToast: (msg: string) => void;
+}) {
+  const value = useCountUp(target, active);
+  return (
+    <div className={`stat${gold ? " gold" : ""}`} onClick={() => onToast(`${label}: tracking ${target}${suf}`)}>
+      <div className="stat-val">
+        {value}
+        {value === target && suf ? <span className="u">{suf}</span> : null}
+      </div>
+      <div className="stat-label">{label}</div>
+      <div className="stat-delta">{delta}</div>
+    </div>
+  );
+}
+
+/* ── Setting row ── */
+function SettingRow({
+  label,
+  desc,
+  on,
+  onToggle,
+}: {
+  label: string;
+  desc: string;
+  on: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="set-row">
+      <div>
+        <div className="set-label">{label}</div>
+        <div className="set-desc">{desc}</div>
+      </div>
+      <div className={`toggle${on ? " on" : ""}`} role="switch" onClick={onToggle} />
+    </div>
+  );
+}
+
+/* ── Main component ── */
 export function OperatorCommandCenter({ client }: { client: Client }) {
-  const router = useRouter();
-  const [view, setView] = useState<View>("operator");
-  const [detail, setDetail] = useState<DetailRecord | null>(null);
-  const [feed, setFeed] = useState<ActivityEvent[]>(client.activityFeed);
-  const [chatInput, setChatInput] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      role: "Operator",
-      text: "I am monitoring active leads, conversations, tasks, appointments, and decisions. Ask me what needs attention and I will answer from the live workspace."
-    }
-  ]);
-  const [actionNotice, setActionNotice] = useState("");
-  const [scheduledTasks, setScheduledTasks] = useState<ScheduledOperatorTask[]>([
-    {
-      title: "Overnight lead sweep",
-      window: "Tonight, 11:30 PM",
-      instructions: "Review every qualified lead, identify unanswered messages, and prepare morning follow-up drafts.",
-      status: "Queued"
-    }
-  ]);
-  const leads = useMemo(() => allLeads(client), [client]);
-  const visibleNavItems = navItems.filter((item) => item.id !== "documents" || client.navigationLabels?.documents);
+  const [page, setPage] = useState<Page>("home");
+  const [activeThread, setActiveThread] = useState("briefing");
+  const [threadMessages, setThreadMessages] = useState<Record<string, Msg[]>>(() => {
+    const briefingMsg = client.todaySummaryBody
+      ? `Good morning, Dana. ${client.todaySummaryBody}`
+      : "Good morning, Dana. Overnight I confirmed <b>11 exams</b>, recovered <b>3 no-shows</b>, and collected records on 7 claims. Two items need your eyes today.";
 
-  const askOperator = (prompt: string) => {
-    const cleanPrompt = prompt.trim();
-    if (!cleanPrompt) return;
-
-    const answer = operatorAnswer(cleanPrompt, client);
-    setMessages((current) => [...current, { role: "You", text: cleanPrompt }, { role: "Operator", text: answer }]);
-    setFeed((current) => [
-      {
-        time: "Now",
-        channel: "CRM",
-        status: "Completed",
-        summary: `Operator answered: ${cleanPrompt}`
-      },
-      ...current
-    ]);
-    setChatInput("");
-  };
-
-  const submitChat = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    askOperator(chatInput);
-  };
-
-  const approveAction = (label: string) => {
-    setActionNotice(label);
-    setFeed((current) => [
-      {
-        time: "Now",
-        channel: "CRM",
-        status: "Completed",
-        summary: label
-      },
-      ...current
-    ]);
-  };
-
-  const scheduleOperatorTask = (task: ScheduledOperatorTask) => {
-    setScheduledTasks((current) => [task, ...current]);
-    setActionNotice(`Scheduled: ${task.title}`);
-    setFeed((current) => [
-      {
-        time: "Now",
-        channel: "Asana",
-        status: "Waiting",
-        summary: `Overnight Operator task scheduled: ${task.title}`
-      },
-      ...current
-    ]);
-    setMessages((current) => [
-      ...current,
-      { role: "You", text: `Schedule overnight task: ${task.title}` },
-      {
-        role: "Operator",
-        text: `Scheduled for ${task.window}. I’ll handle ${task.instructions.toLowerCase()} and leave a morning summary with completed work, open questions, and any escalations.`
-      }
-    ]);
-  };
-
-  return (
-    <main className="min-h-screen text-slate-950">
-      <div className="grid min-h-screen lg:grid-cols-[260px_1fr_360px]">
-        <aside className="border-r border-white/50 bg-white/55 p-5 backdrop-blur-xl">
-          <div className="mb-10">
-            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-lg font-semibold text-white">O</div>
-            <h1 className="text-2xl font-semibold tracking-tight">The Operator</h1>
-            <p className="mt-1 text-sm text-slate-500">Your AI Chief of Staff</p>
-          </div>
-
-          <nav className="space-y-1">
-            {visibleNavItems.map((item) => (
-              <ShellButton key={item.id} active={view === item.id} onClick={() => setView(item.id)}>
-                <span className="flex items-center gap-3">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-xl border border-white/60 bg-white/50 text-xs">{item.icon}</span>
-                  {getNavLabel(client, item.id)}
-                </span>
-              </ShellButton>
-            ))}
-          </nav>
-
-          <div className="mt-10 rounded-3xl border border-white/60 bg-white/45 p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Monitoring</p>
-            <p className="mt-2 font-semibold">{client.company}</p>
-            <p className="mt-1 text-sm text-slate-500">{client.todaySummaryBody}</p>
-          </div>
-        </aside>
-
-        <section className="min-w-0 p-5 md:p-8">
-          <div className="mx-auto max-w-5xl">
-            <Header view={view} client={client} onSwitchClient={(slug) => router.push(`/demo/${slug}`)} />
-            {actionNotice ? (
-              <div className="mb-5 rounded-3xl border border-[#2a7a8a]/25 bg-[#2a7a8a]/10 px-5 py-4 text-sm font-medium text-[#1f6471]">
-                {actionNotice}
-              </div>
-            ) : null}
-            {view === "operator" ? <OperatorHome messages={messages} onAsk={askOperator} chatInput={chatInput} setChatInput={setChatInput} submitChat={submitChat} client={client} leads={leads} scheduledTasks={scheduledTasks} onScheduleTask={scheduleOperatorTask} /> : null}
-            {view === "leads" ? <LeadsView leads={leads} onOpen={(lead) => setDetail({ type: "lead", item: lead })} /> : null}
-            {view === "inbox" ? <InboxView inbox={client.inbox} onOpen={(thread) => setDetail({ type: "conversation", item: thread })} onAsk={askOperator} /> : null}
-            {view === "tasks" ? <TasksView tasks={client.tasks} onOpen={(task) => setDetail({ type: "task", item: task })} /> : null}
-            {view === "calendar" ? (
-              <CalendarView
-                appointments={client.appointments}
-                tasks={client.tasks}
-                onOpenAppointment={(appointment) => setDetail({ type: "appointment", item: appointment })}
-                onOpenTask={(task) => setDetail({ type: "task", item: task })}
-              />
-            ) : null}
-            {view === "pipeline" ? <PipelineView client={client} onOpen={(lead, stage) => setDetail({ type: "opportunity", item: lead, stage })} onAsk={askOperator} /> : null}
-            {view === "documents" ? <DocumentsView client={client} onOpen={(lead) => setDetail({ type: "lead", item: lead })} /> : null}
-            {view === "escalations" ? <EscalationsView escalations={client.escalations} onOpen={(escalation) => setDetail({ type: "escalation", item: escalation })} onAction={approveAction} /> : null}
-            {view === "reports" ? <ReportsView client={client} leads={leads} /> : null}
-          </div>
-        </section>
-
-        <aside className="border-l border-white/50 bg-white/45 p-5 backdrop-blur-xl">
-          <div className="sticky top-5">
-            <div className="mb-5 flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Live activity</p>
-                <h2 className="text-lg font-semibold">Operator stream</h2>
-              </div>
-              <Pill tone="teal">Live</Pill>
-            </div>
-            <div className="space-y-3">
-              {feed.map((event, index) => (
-                <button
-                  key={`${event.time}-${event.summary}-${index}`}
-                  onClick={() => setDetail({ type: "activity", item: event })}
-                  className="w-full rounded-3xl border border-white/60 bg-white/72 p-4 text-left shadow-sm backdrop-blur-xl transition hover:border-white hover:shadow-md"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs font-semibold text-slate-400">{event.time}</p>
-                    <Pill tone={event.status === "Escalated" ? "danger" : event.status === "Waiting" ? "gold" : "teal"}>{event.status}</Pill>
-                  </div>
-                  <p className="mt-3 text-sm font-medium leading-6">{event.summary}</p>
-                  <p className="mt-2 text-xs text-slate-400">{event.channel}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-        </aside>
-      </div>
-
-      {detail ? <DetailDrawer detail={detail} client={client} leads={leads} onClose={() => setDetail(null)} onAction={approveAction} /> : null}
-    </main>
-  );
-}
-
-function Header({ view, client, onSwitchClient }: { view: View; client: Client; onSwitchClient: (slug: string) => void }) {
-  const terms = getTerms(client);
-  const titles = {
-    operator: ["Operator", client.operatorSubtitle ?? `Monitoring ${terms.monitoredBusiness}`],
-    leads: [getNavLabel(client, "leads"), `Open every ${terms.recordSingular} profile, summary, risk, and next action.`],
-    inbox: ["Inbox", "Conversations across WhatsApp, email, SMS, and calls."],
-    tasks: [getNavLabel(client, "tasks"), `Work the Operator created and why each ${terms.taskPlural} item matters.`],
-    calendar: [getNavLabel(client, "calendar"), `${terms.appointmentPlural}, reminders, notes, and preparation.`],
-    pipeline: [getNavLabel(client, "pipeline"), `${terms.pipelinePlural} by stage with recommended next steps.`],
-    documents: [getNavLabel(client, "documents"), "Requested, retrieved, verified, and delivery-ready documents."],
-    escalations: [getNavLabel(client, "escalations"), `${terms.escalationPlural} that need human judgment.`],
-    reports: ["Reports", "Narrative briefs and insights instead of dashboard charts."]
-  };
-  const [title, subtitle] = titles[view];
-
-  return (
-    <header className="mb-8">
-      <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-        <div>
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-[#c9a84c]">Powered by Optentia</p>
-          <h2 className="text-5xl font-semibold tracking-[-0.04em] text-slate-950 md:text-6xl">{title}</h2>
-          <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-500">{subtitle}</p>
-        </div>
-        <label className="rounded-2xl border border-white/70 bg-white/70 p-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400 shadow-sm backdrop-blur-xl">
-          Demo Client
-          <select
-            value={client.slug}
-            onChange={(event) => onSwitchClient(event.target.value)}
-            className="mt-2 block w-full rounded-xl border border-white/70 bg-white px-3 py-2 text-sm font-semibold normal-case tracking-normal text-slate-800 outline-none"
-          >
-            {demoClients.map((demoClient) => (
-              <option key={demoClient.slug} value={demoClient.slug}>{demoClient.label}</option>
-            ))}
-          </select>
-        </label>
-      </div>
-    </header>
-  );
-}
-
-function OperatorHome({
-  messages,
-  onAsk,
-  chatInput,
-  setChatInput,
-  submitChat,
-  client,
-  leads,
-  scheduledTasks,
-  onScheduleTask
-}: {
-  messages: ChatMessage[];
-  onAsk: (prompt: string) => void;
-  chatInput: string;
-  setChatInput: (value: string) => void;
-  submitChat: (event: FormEvent<HTMLFormElement>) => void;
-  client: Client;
-  leads: ReturnType<typeof allLeads>;
-  scheduledTasks: ScheduledOperatorTask[];
-  onScheduleTask: (task: ScheduledOperatorTask) => void;
-}) {
-  return (
-    <div className="space-y-6">
-      <section className="rounded-[2rem] border border-white/60 bg-white/76 p-5 shadow-sm backdrop-blur-xl md:p-7">
-        <div className="mb-6 flex flex-wrap gap-2">
-          {questionPrompts.map((prompt) => (
-            <button key={prompt} onClick={() => onAsk(prompt)} className="rounded-full border border-white/70 bg-white/70 px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:border-[#2a7a8a]/40 hover:bg-white hover:text-slate-950">
-              {prompt}
-            </button>
-          ))}
-        </div>
-
-        <div className="space-y-4">
-          {messages.map((message, index) => (
-            <div key={`${message.role}-${index}`} className={`max-w-3xl rounded-3xl border p-5 ${message.role === "Operator" ? "border-white/70 bg-[#fffaf0]/72" : "ml-auto border-[#2a7a8a]/20 bg-[#2a7a8a]/10"}`}>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">{message.role}</p>
-              <p className="text-base leading-8 text-slate-800">{message.text}</p>
-            </div>
-          ))}
-        </div>
-
-        <form onSubmit={submitChat} className="mt-6 flex gap-3 rounded-3xl border border-white/70 bg-white/80 p-2 shadow-sm backdrop-blur-xl">
-          <input
-            value={chatInput}
-            onChange={(event) => setChatInput(event.target.value)}
-            placeholder="Ask the Operator what needs attention..."
-            className="min-w-0 flex-1 rounded-2xl px-4 py-3 text-base outline-none placeholder:text-slate-400"
-          />
-          <button className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">Ask</button>
-        </form>
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-3">
-        <QuietMetric label="People needing attention" value={String(leads.filter((lead) => lead.urgency >= 80).length)} />
-        <QuietMetric label="Open broker decisions" value={String(client.escalations.length)} />
-        <QuietMetric label="Appointments today" value={String(client.appointments.length)} />
-      </section>
-
-      <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
-        <OvernightScheduler onScheduleTask={onScheduleTask} />
-        <section className="rounded-[2rem] border border-white/60 bg-white/72 p-5 shadow-sm backdrop-blur-xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#c9a84c]">Scheduled operator work</p>
-          <h3 className="mt-2 text-2xl font-semibold tracking-tight">Overnight queue</h3>
-          <p className="mt-2 text-sm leading-6 text-slate-500">
-            Anything scheduled from the Operator panel appears here immediately, just like a real after-hours work queue.
-          </p>
-          <div className="mt-5 space-y-3">
-            {scheduledTasks.map((task, index) => (
-              <div key={`${task.title}-${task.window}-${index}`} className="rounded-3xl border border-white/70 bg-[#fffaf0]/70 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-semibold">{task.title}</p>
-                    <p className="mt-1 text-sm text-slate-500">{task.window}</p>
-                  </div>
-                  <Pill tone="gold">{task.status}</Pill>
-                </div>
-                <p className="mt-3 text-sm leading-6 text-slate-600">{task.instructions}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      </div>
-
-      <ChannelResponseMap inbox={client.inbox} />
-    </div>
-  );
-}
-
-function OvernightScheduler({ onScheduleTask }: { onScheduleTask: (task: ScheduledOperatorTask) => void }) {
-  const [title, setTitle] = useState("Prepare morning pipeline brief");
-  const [window, setWindow] = useState("Tonight, 11:30 PM");
-  const [instructions, setInstructions] = useState("Review WhatsApp, Telegram, Email, Slack, and Asana. Summarize hot leads, unanswered messages, tasks due tomorrow, and escalations needing approval.");
-  const [sentTask, setSentTask] = useState<ScheduledOperatorTask | null>(null);
-
-  const scheduleTask = () => {
-    const task = {
-      title: title.trim() || "Untitled overnight task",
-      window: window.trim() || "Tonight",
-      instructions: instructions.trim() || "Review the workspace and prepare a morning summary.",
-      status: "Scheduled" as const
-    };
-
-    onScheduleTask(task);
-    setSentTask(task);
-  };
-
-  return (
-    <section className="rounded-[2rem] border border-white/60 bg-white/76 p-5 shadow-sm backdrop-blur-xl">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2a7a8a]">After-hours delegation</p>
-      <h3 className="mt-2 text-2xl font-semibold tracking-tight">Schedule work for the Operator</h3>
-      <p className="mt-2 text-sm leading-6 text-slate-500">
-        Queue a task for overnight so the broker starts tomorrow with follow-ups, pipeline notes, and escalations already prepared.
-      </p>
-      <div className="mt-5 space-y-3">
-        <input value={title} onChange={(event) => setTitle(event.target.value)} className="w-full rounded-2xl border border-white/70 bg-white/80 px-4 py-3 text-sm outline-none focus:border-[#2a7a8a]/40" />
-        <input value={window} onChange={(event) => setWindow(event.target.value)} className="w-full rounded-2xl border border-white/70 bg-white/80 px-4 py-3 text-sm outline-none focus:border-[#2a7a8a]/40" />
-        <textarea value={instructions} onChange={(event) => setInstructions(event.target.value)} rows={4} className="w-full resize-none rounded-2xl border border-white/70 bg-white/80 px-4 py-3 text-sm leading-6 outline-none focus:border-[#2a7a8a]/40" />
-      </div>
-      {sentTask ? (
-        <div className="mt-4 rounded-3xl border border-[#2a7a8a]/25 bg-[#2a7a8a]/10 p-4" aria-live="polite">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold text-[#1f6471]">Sent to Operator queue</p>
-              <p className="mt-1 text-sm leading-6 text-slate-600">
-                {sentTask.title} is scheduled for {sentTask.window}. It now appears in the Overnight queue.
-              </p>
-            </div>
-            <Pill tone="teal">In queue</Pill>
-          </div>
-        </div>
-      ) : null}
-      <button
-        onClick={scheduleTask}
-        className={`mt-4 rounded-2xl px-5 py-3 text-sm font-semibold transition ${
-          sentTask ? "bg-[#2a7a8a] text-white hover:bg-[#236b79]" : "bg-slate-950 text-white hover:bg-slate-800"
-        }`}
-      >
-        {sentTask ? "Sent - In Overnight Queue" : "Send to Operator Queue"}
-      </button>
-    </section>
-  );
-}
-
-function ChannelResponseMap({ inbox }: { inbox: InboxThread[] }) {
-  const channels = ["WhatsApp", "Telegram", "Email", "Slack", "Asana", "SMS"];
-
-  return (
-    <section className="rounded-[2rem] border border-white/60 bg-white/72 p-5 shadow-sm backdrop-blur-xl">
-      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#c9a84c]">Operator response map</p>
-          <h3 className="mt-2 text-2xl font-semibold tracking-tight">Where the Operator responded</h3>
-        </div>
-        <Pill tone="teal">{channels.length} connected channels</Pill>
-      </div>
-      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {channels.map((channel) => {
-          const thread = inbox.find((item) => item.channel === channel);
-          const action = thread?.messages.find((message) => message.speaker.includes("Operator Action"))?.message ?? "Ready to monitor";
-          return (
-            <div key={channel} className="rounded-3xl border border-white/70 bg-[#fffaf0]/70 p-4">
-              <div className="flex items-center justify-between gap-3">
-                <p className="font-semibold">{channel}</p>
-                <Pill tone={thread ? "teal" : "neutral"}>{thread ? "Active" : "Idle"}</Pill>
-              </div>
-              <p className="mt-3 text-sm leading-6 text-slate-600">{action}</p>
-            </div>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
-function QuietMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-3xl border border-white/60 bg-white/72 p-5 shadow-sm backdrop-blur-xl">
-      <p className="text-sm text-slate-500">{label}</p>
-      <p className="mt-2 text-4xl font-semibold tracking-tight">{value}</p>
-    </div>
-  );
-}
-
-function LeadsView({ leads, onOpen }: { leads: ReturnType<typeof allLeads>; onOpen: (lead: Lead) => void }) {
-  return (
-    <div className="grid gap-4 md:grid-cols-2">
-      {leads.map((lead) => {
-        const profile = aiLeadSummary(lead);
-        return (
-          <RecordCard key={lead.name} title={lead.name} meta={`${lead.type} / ${lead.stage}`} onClick={() => onOpen(lead)}>
-            <div className="flex flex-wrap gap-2">
-              <Pill tone="teal">{profile.qualification}</Pill>
-              <Pill tone={profile.risk === "High" ? "danger" : "gold"}>{profile.risk} risk</Pill>
-            </div>
-            <p className="mt-3">{profile.summary}</p>
-          </RecordCard>
-        );
-      })}
-    </div>
-  );
-}
-
-function InboxView({ inbox, onOpen, onAsk }: { inbox: InboxThread[]; onOpen: (thread: InboxThread) => void; onAsk: (prompt: string) => void }) {
-  return (
-    <div className="space-y-5">
-      <AskOperatorStrip
-        title="Ask about channel responses"
-        prompts={["Where did you respond today?", "Show WhatsApp and Telegram follow-ups", "What did you post in Slack and Asana?"]}
-        onAsk={onAsk}
-      />
-      <div className="grid gap-4 md:grid-cols-2">
-        {inbox.map((thread) => (
-          <RecordCard key={thread.channel} title={thread.channel} meta={`${thread.messages.length} messages`} onClick={() => onOpen(thread)}>
-            <p>{thread.messages[thread.messages.length - 1]?.message}</p>
-            <div className="mt-3 flex gap-2">
-              <Pill tone="teal">Operator replied</Pill>
-              <Pill tone="gold">Actions logged</Pill>
-            </div>
-          </RecordCard>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function TasksView({ tasks, onOpen }: { tasks: Task[]; onOpen: (task: Task) => void }) {
-  return (
-    <div className="space-y-4">
-      {tasks.map((task) => (
-        <RecordCard key={task.title} title={task.title} meta={`Due ${task.due}`} onClick={() => onOpen(task)}>
-          <div className="flex flex-wrap gap-2">
-            <Pill tone={task.priority === "Urgent" ? "danger" : task.priority === "High" ? "gold" : "neutral"}>{task.priority}</Pill>
-            <Pill>{task.assignedTo}</Pill>
-          </div>
-          <p className="mt-3">Created by {task.createdBy} to keep the next step from slipping.</p>
-        </RecordCard>
-      ))}
-    </div>
-  );
-}
-
-function CalendarView({
-  appointments,
-  tasks,
-  onOpenAppointment,
-  onOpenTask
-}: {
-  appointments: Appointment[];
-  tasks: Task[];
-  onOpenAppointment: (appointment: Appointment) => void;
-  onOpenTask: (task: Task) => void;
-}) {
-  const timeSlots = ["9 AM", "10 AM", "11 AM", "12 PM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM", "6 PM"];
-  const todaysTasks = tasks.filter((task) => task.due.toLowerCase().includes("today"));
-  const laterTasks = tasks.filter((task) => !task.due.toLowerCase().includes("today"));
-
-  const itemsForSlot = (slot: string) => {
-    const slotHour = slot.replace(" AM", "").replace(" PM", "");
-    const slotPeriod = slot.includes("AM") ? "AM" : "PM";
+    const escMsg =
+      client.escalations[0]
+        ? `Heads up — <b>${client.escalations[0].title}</b>: ${client.escalations[0].why} ${client.escalations[0].next}`
+        : "Heads up — <b>#RE-20460</b> (Devon Clarke) hasn't responded after 3 contact attempts across SMS and phone. I've paused automated outreach and flagged it for you.";
 
     return {
-      appointments: appointments.filter((appointment) => appointment.time.includes(`${slotHour}:`) && appointment.time.includes(slotPeriod)),
-      tasks: todaysTasks.filter((task) => task.due.includes(`${slotHour}:`) && task.due.includes(slotPeriod))
+      briefing: [
+        { who: "op", text: briefingMsg },
+        { who: "me", text: "What still needs a human today?" },
+        {
+          who: "op",
+          text: "Two items: one claim needs an examiner override (specialty mismatch), and a claimant asked to speak with a coordinator. Everything else is moving on its own. Want me to draft the override request?",
+        },
+      ],
+      escalations: [
+        { who: "op", text: escMsg },
+        { who: "me", text: "Why did it stall?" },
+        {
+          who: "op",
+          text: "Wrong number on the intake form, and the email bounced. I found an alternate number in the claim file. Want me to try it, or have a coordinator call directly?",
+        },
+      ],
+      scheduling: [
+        {
+          who: "op",
+          text: "I have 9 exams on the board for today and 14 reminders queued for tonight. Dr. Reyes opened two Thursday slots — I can pull forward the two neuro exams waiting on availability.",
+        },
+        { who: "me", text: "Do it, and confirm with the claimants." },
+        {
+          who: "op",
+          text: "Done — both moved to Thursday and confirmation texts are out. I'll watch for replies and lock the slots once acknowledged.",
+        },
+      ],
+      records: [
+        {
+          who: "op",
+          text: "5 record requests are outstanding. I re-sent secure links to 3 providers this morning and faxed the other 2. <b>#RE-20455</b> just returned a 42-page packet — already logged to the claim.",
+        },
+        { who: "me", text: "Anything blocked?" },
+        {
+          who: "op",
+          text: "One provider needs a signed authorization on file before they'll release. I've drafted the auth and queued it for your e-signature.",
+        },
+      ],
+      alvarez: [
+        {
+          who: "op",
+          text: "Jordan Alvarez confirmed the Tuesday 10:30 orthopedic exam with Dr. Patel and asked about parking. I sent the clinic's parking details and the intake checklist.",
+        },
+        { who: "me", text: "Great. Remind them the day before." },
+        {
+          who: "op",
+          text: "Reminder is scheduled for Monday 5:00 PM via SMS — their preferred channel. I'll notify you if anything changes.",
+        },
+      ],
     };
+  });
+  const [typing, setTyping] = useState(false);
+  const [chatInput, setChatInput] = useState("");
+  const [actFilter, setActFilter] = useState("all");
+  const [clock, setClock] = useState("");
+  const [settingsToggles, setSettingsToggles] = useState<Record<string, boolean>>({
+    "Auto-confirm exams": true,
+    "Auto-recover no-shows": true,
+    "Auto-collect records": true,
+    "Escalate before sending": false,
+    "SMS reminders": true,
+    WhatsApp: true,
+    "After-hours autonomy": true,
+    "Weekend operation": false,
+    "Morning brief": true,
+    "Escalation alerts": true,
+    "Weekly digest": false,
+  });
+  const { toasts, show: showToast } = useToasts();
+  const chatBodyRef = useRef<HTMLDivElement>(null);
+
+  // Clock
+  useEffect(() => {
+    const tick = () => {
+      const d = new Date();
+      const p = (n: number) => String(n).padStart(2, "0");
+      setClock(`${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Scroll chat to bottom
+  useEffect(() => {
+    if (chatBodyRef.current) {
+      chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
+    }
+  }, [activeThread, threadMessages, typing]);
+
+  const goPage = (p: Page, opts?: { thread?: string }) => {
+    setPage(p);
+    if (opts?.thread) setActiveThread(opts.thread);
   };
 
+  const sendMessage = useCallback(
+    (text: string) => {
+      text = text.trim();
+      if (!text) return;
+      setThreadMessages((prev) => ({
+        ...prev,
+        [activeThread]: [...(prev[activeThread] || []), { who: "me" as const, text }],
+      }));
+      setChatInput("");
+      setTyping(true);
+      setTimeout(() => {
+        const rep = operatorReply(text);
+        setTyping(false);
+        setThreadMessages((prev) => ({
+          ...prev,
+          [activeThread]: [...(prev[activeThread] || []), { who: "op" as const, text: rep }],
+        }));
+      }, 900 + Math.random() * 500);
+    },
+    [activeThread]
+  );
+
+  const handleAsk = (q: string) => {
+    goPage("conversations", { thread: "briefing" });
+    setTimeout(() => {
+      if (!/open the full chat/i.test(q)) sendMessage(q);
+    }, 260);
+  };
+
+  const threads = [
+    { id: "briefing", name: "Operator", sub: "Daily briefing", av: "O", gold: false, time: "9:42", pin: true },
+    { id: "escalations", name: "Escalations", sub: "2 items need you", av: "!", gold: true, time: "9:31", pin: false },
+    { id: "scheduling", name: "Scheduling", sub: "Exam bookings", av: "S", gold: false, time: "9:18", pin: false },
+    { id: "records", name: "Records requests", sub: "Provider follow-ups", av: "R", gold: false, time: "8:57", pin: false },
+    { id: "alvarez", name: "J. Alvarez · #RE-20479", sub: "Claimant thread", av: "JA", gold: false, time: "8:40", pin: false },
+  ];
+
+  const threadPrompts: Record<string, string[]> = {
+    escalations: ["Try the alternate number", "Hand to a coordinator", "Show the contact timeline"],
+    scheduling: ["Pull forward the neuro exams", "How many reminders tonight?", "Any conflicts?"],
+    records: ["What's blocked?", "Send the auth for signature", "Chase the slow providers"],
+    alvarez: ["Remind them Monday", "Send parking details", "Any special instructions?"],
+    briefing: ["Show me the escalations", "Draft the override request", "What's the day look like?"],
+  };
+
+  const filteredActs =
+    actFilter === "all" ? ACTS : ACTS.filter((a) => a[2] === actFilter);
+
+  const kpi0 = client.kpis[0];
+  const kpi1 = client.kpis[1];
+  const kpi2 = client.kpis[2];
+
+  const stats = [
+    {
+      to: kpi0 ? parseInt(kpi0.value, 10) || 27 : 27,
+      suf: "",
+      label: kpi0?.label || "Exams scheduled · 24h",
+      delta: kpi0?.detail || "+9 vs prev day",
+      gold: false,
+    },
+    {
+      to: kpi1 ? parseInt(kpi1.value, 10) || 41 : 41,
+      suf: "s",
+      label: kpi1?.label || "Avg response time",
+      delta: kpi1?.detail || "−12s this week",
+      gold: false,
+    },
+    {
+      to: kpi2 ? parseInt(kpi2.value, 10) || 88 : 88,
+      suf: "%",
+      label: kpi2?.label || "No-show recovery",
+      delta: kpi2?.detail || "+6 pts",
+      gold: true,
+    },
+  ];
+
+  const [eyebrow, tbTitle] = PAGE_META[page];
+
   return (
-    <div className="space-y-5">
-      <section className="rounded-[2rem] border border-white/60 bg-white/76 p-5 shadow-sm backdrop-blur-xl">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2a7a8a]">Calendar workspace</p>
-            <h3 className="mt-2 text-2xl font-semibold tracking-tight">Today with Operator tasks</h3>
-            <p className="mt-2 text-sm leading-6 text-slate-500">
-              Appointments and tasks live together so the broker can see what is booked, what is due, and what the Operator is preparing.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Pill tone="teal">{appointments.length} appointments</Pill>
-            <Pill tone="gold">{todaysTasks.length} tasks today</Pill>
+    <div className="app">
+      {/* ── Sidebar ── */}
+      <aside className="side">
+        <div className="brand">
+          <div className="brand-badge">O</div>
+          <div className="brand-meta">
+            <span className="brand-name">Operator</span>
+            <span className="brand-status">
+              <span className="pulse" />
+              Running · 240h
+            </span>
           </div>
         </div>
-      </section>
-
-      <section className="overflow-hidden rounded-[2rem] border border-white/60 bg-white/72 shadow-sm backdrop-blur-xl">
-        <div className="grid grid-cols-[82px_1fr] border-b border-white/70 bg-white/50">
-          <div className="border-r border-white/70 p-4 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Time</div>
-          <div className="grid grid-cols-2">
-            <div className="border-r border-white/70 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#c9a84c]">Appointments</p>
-              <p className="mt-1 font-semibold">Broker calendar</p>
-            </div>
-            <div className="p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2a7a8a]">Tasks</p>
-              <p className="mt-1 font-semibold">Operator work</p>
+        <div className="nav-sec">Workspace</div>
+        <nav className="nav">
+          {(
+            [
+              ["home", "dashboard", "Command Center", null],
+              ["conversations", "comments", "Conversations", "12"],
+              ["activity", "activity", "Activity", null],
+              ["schedule", "calendar", "Schedule", "9"],
+              ["channels", "broadcast", "Channels", null],
+              ["records", "folder", "Records", null],
+            ] as [Page, string, string, string | null][]
+          ).map(([pid, icon, label, cnt]) => (
+            <button
+              key={pid}
+              className={`nav-item${page === pid ? " active" : ""}`}
+              onClick={() => goPage(pid)}
+            >
+              <Icon name={icon} />
+              <span className="lbl">{label}</span>
+              {cnt ? <span className="cnt">{cnt}</span> : null}
+            </button>
+          ))}
+        </nav>
+        <div className="side-foot">
+          <button
+            className={`nav-item${page === "settings" ? " active" : ""}`}
+            onClick={() => goPage("settings")}
+          >
+            <Icon name="gear" />
+            <span className="lbl">Settings</span>
+          </button>
+          <div className="account">
+            <div className="avatar">DM</div>
+            <div className="account-meta">
+              <span className="account-name">Dana Morales</span>
+              <span className="account-co">{client.company} · Ops Lead</span>
             </div>
           </div>
         </div>
+      </aside>
 
-        {timeSlots.map((slot) => {
-          const slotItems = itemsForSlot(slot);
-          return (
-            <div key={slot} className="grid min-h-[116px] grid-cols-[82px_1fr] border-b border-white/60 last:border-b-0">
-              <div className="border-r border-white/70 bg-white/35 p-4 text-sm font-semibold text-slate-400">{slot}</div>
-              <div className="grid grid-cols-2">
-                <div className="space-y-3 border-r border-white/70 p-3">
-                  {slotItems.appointments.length ? slotItems.appointments.map((appointment) => (
-                    <button key={`${appointment.time}-${appointment.title}`} onClick={() => onOpenAppointment(appointment)} className="w-full rounded-2xl border border-[#2a7a8a]/20 bg-[#2a7a8a]/10 p-4 text-left transition hover:border-[#2a7a8a]/40 hover:bg-[#2a7a8a]/15">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-xs font-semibold text-[#1f6471]">{appointment.time}</p>
-                          <p className="mt-1 font-semibold">{appointment.title}</p>
-                        </div>
-                        <Pill tone={appointment.status.includes("Needs") ? "danger" : "teal"}>{appointment.status}</Pill>
+      {/* ── Main ── */}
+      <div className="main">
+        {/* Topbar */}
+        <header className="topbar">
+          <div className="tb-title">
+            <span className="tb-eyebrow">{eyebrow}</span>
+            <span className="tb-h">{tbTitle}</span>
+          </div>
+          <div className="tb-spacer" />
+          <div className="search">
+            <Icon name="search" />
+            <input placeholder="Search claims, threads, exams…" />
+          </div>
+          <span className="monitor">
+            <span className="pulse" />
+            MONITORING
+          </span>
+          <span className="clock">
+            {clock}
+            <span className="z"> LOCAL</span>
+          </span>
+        </header>
+
+        {/* Pages */}
+        <div className="view">
+
+          {/* ── HOME ── */}
+          <section className={`page${page === "home" ? " active" : ""}`}>
+            <div className="cc-grid">
+              {/* Left col */}
+              <div className="stack">
+                {/* Op preview */}
+                <div className="op-prev">
+                  <div className="op-prev-h">
+                    <div className="op-mini">O</div>
+                    <div>
+                      <div className="op-prev-name">
+                        Operator
+                        <span>
+                          <span className="pulse" style={{ display: "inline-block", width: 6, height: 6 }} />
+                          &nbsp;Online · working {client.company}
+                        </span>
                       </div>
+                    </div>
+                  </div>
+                  <div className="op-prev-body">
+                    <div className="op-bubble">
+                      Good morning, Dana. Overnight I confirmed <b>11 exams</b>, recovered <b>3 no-shows</b>, and
+                      collected records on 7 claims. Two items need your eyes today.
+                    </div>
+                  </div>
+                  <div className="op-prev-foot">
+                    <button className="chip" onClick={() => handleAsk("What needs me today?")}>
+                      What needs me today?
                     </button>
-                  )) : <p className="p-3 text-sm text-slate-400">No appointment scheduled.</p>}
+                    <button className="chip" onClick={() => handleAsk("Show escalations")}>
+                      Show escalations
+                    </button>
+                    <button className="chip" onClick={() => goPage("conversations", { thread: "briefing" })}>
+                      Open chat →
+                    </button>
+                  </div>
                 </div>
-                <div className="space-y-3 p-3">
-                  {slotItems.tasks.length ? slotItems.tasks.map((task) => (
-                    <button key={`${task.due}-${task.title}`} onClick={() => onOpenTask(task)} className="w-full rounded-2xl border border-[#c9a84c]/25 bg-[#c9a84c]/10 p-4 text-left transition hover:border-[#c9a84c]/45 hover:bg-[#c9a84c]/15">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-xs font-semibold text-[#7a6120]">{task.due}</p>
-                          <p className="mt-1 font-semibold">{task.title}</p>
-                        </div>
-                        <Pill tone={task.priority === "Urgent" ? "danger" : task.priority === "High" ? "gold" : "neutral"}>{task.priority}</Pill>
-                      </div>
+
+                {/* Quick actions */}
+                <div className="card">
+                  <div className="card-h">
+                    <h2>Quick actions</h2>
+                    <span className="sub">one tap</span>
+                  </div>
+                  <div className="qa">
+                    <button
+                      className="qa-btn"
+                      onClick={() => showToast("Scheduling sweep started — checking examiner availability")}
+                    >
+                      <Icon name="bolt" />
+                      Run scheduling sweep
                     </button>
-                  )) : <p className="p-3 text-sm text-slate-400">No task due in this slot.</p>}
+                    <button className="qa-btn" onClick={() => showToast("Pulling records from 3 provider portals")}>
+                      <Icon name="file" />
+                      Pull records
+                    </button>
+                    <button className="qa-btn" onClick={() => showToast("Reminders queued for 14 claimants")}>
+                      <Icon name="bell" />
+                      Send reminders
+                    </button>
+                    <button
+                      className="qa-btn gold"
+                      onClick={() => goPage("conversations", { thread: "escalations" })}
+                    >
+                      <Icon name="warning" />
+                      Review escalations
+                    </button>
+                  </div>
+                </div>
+
+                {/* Channel map */}
+                <div className="card">
+                  <div className="card-h">
+                    <h2>Channel map</h2>
+                    <button className="link" onClick={() => goPage("channels")}>
+                      Details <Icon name="arrow" />
+                    </button>
+                  </div>
+                  <div className="chan-grid">
+                    {CHANNELS.map(([name, ico, active, note]) => (
+                      <button
+                        key={name as string}
+                        className={`chan ${active ? "active" : "idle"}`}
+                        onClick={() => goPage("channels")}
+                      >
+                        <div className="chan-top">
+                          <span className="chan-ico">
+                            <Icon name={ico as string} />
+                          </span>
+                          <span className="chan-name">{name}</span>
+                          <span className={`chan-pill ${active ? "p-active" : "p-idle"}`}>
+                            {active ? "ACTIVE" : "IDLE"}
+                          </span>
+                        </div>
+                        <div className="chan-note">{note}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Middle col */}
+              <div className="stack">
+                <div className="stats">
+                  {stats.map((s) => (
+                    <StatCard
+                      key={s.label}
+                      label={s.label}
+                      target={s.to}
+                      suf={s.suf}
+                      delta={s.delta}
+                      gold={s.gold}
+                      active={page === "home"}
+                      onToast={showToast}
+                    />
+                  ))}
+                </div>
+                <div className="card">
+                  <div className="card-h">
+                    <h2>Live Activity</h2>
+                    <span className="live-badge">
+                      <span className="ld" />
+                      LIVE
+                    </span>
+                  </div>
+                  <div>
+                    {ACTS.slice(0, 8).map((row, i) => (
+                      <ActRow key={row[0] + i} row={row} isFirst={i === 0} onToast={showToast} />
+                    ))}
+                  </div>
+                  <div style={{ padding: "13px 16px", borderTop: "1px solid var(--line-2)" }}>
+                    <button className="link" onClick={() => goPage("activity")}>
+                      View all activity <Icon name="arrow" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right col */}
+              <div className="stack">
+                <div className="card">
+                  <div className="card-h">
+                    <h2>Overnight Queue</h2>
+                    <span className="q-badge">
+                      <Icon name="clock" />
+                      Scheduled
+                    </span>
+                  </div>
+                  <div className="q-list">
+                    {QUEUE.map(([t, d]) => (
+                      <div key={t} className="q-item" onClick={() => showToast(`Queued: ${d}`)}>
+                        <span className="q-time">{t}</span>
+                        <span className="q-ico">
+                          <Icon name="clock" />
+                        </span>
+                        <span className="q-desc">{d}</span>
+                        <span className="badge b-queued">Queued</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="card">
+                  <div className="card-h">
+                    <h2>Today&apos;s exams</h2>
+                    <button className="link" onClick={() => goPage("schedule")}>
+                      Schedule <Icon name="arrow" />
+                    </button>
+                  </div>
+                  <div className="sched">
+                    {EXAMS.slice(0, 4).map((exam) => (
+                      <SchedRow key={exam[0] + exam[2]} exam={exam} onToast={showToast} />
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
-          );
-        })}
-      </section>
+          </section>
 
-      {laterTasks.length ? (
-        <section className="rounded-[2rem] border border-white/60 bg-white/72 p-5 shadow-sm backdrop-blur-xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#c9a84c]">Upcoming task lane</p>
-          <h3 className="mt-2 text-2xl font-semibold tracking-tight">Tomorrow and later</h3>
-          <div className="mt-5 grid gap-3 md:grid-cols-2">
-            {laterTasks.map((task) => (
-              <button key={`${task.due}-${task.title}`} onClick={() => onOpenTask(task)} className="rounded-3xl border border-white/70 bg-[#fffaf0]/70 p-4 text-left transition hover:bg-white">
-                <p className="text-sm font-semibold text-slate-500">{task.due}</p>
-                <p className="mt-1 font-semibold">{task.title}</p>
-                <p className="mt-2 text-sm text-slate-500">Assigned to {task.assignedTo}</p>
-              </button>
-            ))}
-          </div>
-        </section>
-      ) : null}
-    </div>
-  );
-}
+          {/* ── CONVERSATIONS ── */}
+          <section className={`page${page === "conversations" ? " active" : ""}`}>
+            <div className="conv">
+              <div className="thread-list">
+                <div className="tl-h">
+                  <h3>Conversations</h3>
+                  <button className="btn btn-ghost btn-sm" onClick={() => showToast("New conversation started")}>
+                    <Icon name="plus" />
+                  </button>
+                </div>
+                <div className="tl-scroll">
+                  {threads.map((t) => {
+                    const msgs = threadMessages[t.id] || [];
+                    const last = (msgs[msgs.length - 1]?.text || "").replace(/<[^>]+>/g, "");
+                    return (
+                      <button
+                        key={t.id}
+                        className={`thread${activeThread === t.id ? " active" : ""}`}
+                        onClick={() => setActiveThread(t.id)}
+                      >
+                        <span className={`th-av${t.gold ? " gold" : ""}`}>{t.av}</span>
+                        <span className="th-meta">
+                          <span className="th-name">{t.name}</span>
+                          <span className="th-last">{last}</span>
+                        </span>
+                        <span className="th-right">
+                          <span className="th-time">{t.time}</span>
+                          {t.pin ? <Icon name="pin" /> : null}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-function PipelineView({ client, onOpen, onAsk }: { client: Client; onOpen: (lead: Lead, stage: string) => void; onAsk: (prompt: string) => void }) {
-  return (
-    <div className="space-y-5">
-      <AskOperatorStrip
-        title="Chat with the Operator about the pipeline"
-        prompts={["Summarize my pipeline.", "Which pipeline stage needs attention?", "Which lead should I move next?"]}
-        onAsk={onAsk}
-      />
-      <div className="grid gap-4 xl:grid-cols-3">
-        {client.pipeline.map((column) => (
-          <section key={column.title} className="rounded-[2rem] border border-white/60 bg-white/72 p-4 shadow-sm backdrop-blur-xl">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-semibold">{column.title}</h3>
-              <Pill>{column.leads.length}</Pill>
-            </div>
-            <div className="space-y-3">
-              {column.leads.map((lead) => (
-                <button key={lead.name} onClick={() => onOpen(lead, column.title)} className="w-full rounded-2xl border border-white/70 bg-[#fffaf0]/70 p-4 text-left transition hover:border-[#2a7a8a]/30 hover:bg-white">
-                  <p className="font-semibold">{lead.name}</p>
-                  <p className="mt-1 text-sm text-slate-500">{lead.interest}</p>
-                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-200">
-                    <div className="h-full rounded-full bg-[#2a7a8a]" style={{ width: `${lead.urgency}%` }} />
+              <div className="chatwrap">
+                {(() => {
+                  const t = threads.find((x) => x.id === activeThread) || threads[0];
+                  return (
+                    <div className="chat-h">
+                      <div className="op-mini" style={{ width: 34, height: 34 }}>
+                        O
+                      </div>
+                      <div className="chat-h-meta">
+                        <div className="chat-h-name">
+                          {t.name === "Operator" ? "Operator" : `Operator · ${t.name}`}
+                        </div>
+                        <div className="chat-h-sub">
+                          <span className="pulse" style={{ width: 6, height: 6 }} />
+                          {t.sub} · responds instantly
+                        </div>
+                      </div>
+                      <button
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => showToast("Operator is handling this thread")}
+                      >
+                        <Icon name="bolt" />
+                        Auto-run
+                      </button>
+                    </div>
+                  );
+                })()}
+
+                <div className="chat-body" ref={chatBodyRef}>
+                  <div className="daydiv">Today · Friday May 30</div>
+                  {(threadMessages[activeThread] || []).map((m, i) =>
+                    m.who === "op" ? (
+                      <div key={i} className="msg op">
+                        <span className="msg-av">O</span>
+                        <div className="bubble" dangerouslySetInnerHTML={{ __html: m.text }} />
+                      </div>
+                    ) : (
+                      <div key={i} className="msg me">
+                        <div className="bubble">{m.text}</div>
+                      </div>
+                    )
+                  )}
+                  {typing ? (
+                    <div className="msg op">
+                      <span className="msg-av">O</span>
+                      <div className="bubble typing">
+                        <span />
+                        <span />
+                        <span />
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="chat-foot">
+                  <div className="chat-prompts">
+                    {(threadPrompts[activeThread] || threadPrompts.briefing).map((p) => (
+                      <button key={p} className="chip" onClick={() => sendMessage(p)}>
+                        {p}
+                      </button>
+                    ))}
                   </div>
-                </button>
+                  <div className="chat-input">
+                    <input
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          sendMessage(chatInput);
+                        }
+                      }}
+                      placeholder="Message the Operator…"
+                      autoComplete="off"
+                    />
+                    <button className="send-btn" onClick={() => sendMessage(chatInput)}>
+                      <Icon name="send" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ── ACTIVITY ── */}
+          <section className={`page${page === "activity" ? " active" : ""}`}>
+            <div className="section-head">
+              <div className="filters">
+                {(["all", "b-confirmed", "b-scheduled", "b-collected", "b-escalated", "b-queued"] as const).map(
+                  (f) => (
+                    <button
+                      key={f}
+                      className={`filter${actFilter === f ? " on" : ""}`}
+                      onClick={() => setActFilter(f)}
+                    >
+                      {f === "all"
+                        ? "All"
+                        : (f.replace("b-", "").charAt(0).toUpperCase() + f.replace("b-", "").slice(1))}
+                    </button>
+                  )
+                )}
+              </div>
+              <button className="btn btn-ghost btn-sm" onClick={() => showToast("Activity log refreshed")}>
+                <Icon name="refresh" />
+                Refresh
+              </button>
+            </div>
+            <div className="card">
+              <div className="card-h">
+                <h2>Activity log</h2>
+                <span className="sub">{filteredActs.length} actions · 0 errors</span>
+              </div>
+              <div>
+                {filteredActs.map((row, i) => (
+                  <ActRow
+                    key={row[0] + i}
+                    row={row}
+                    isFirst={i === 0 && actFilter === "all"}
+                    onToast={showToast}
+                  />
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* ── SCHEDULE ── */}
+          <section className={`page${page === "schedule" ? " active" : ""}`}>
+            <div className="section-head">
+              <div>
+                <span className="eyebrow">Friday · May 30</span>
+                <div
+                  style={{ fontFamily: "var(--serif)", fontSize: 20, fontWeight: 700, marginTop: 3 }}
+                >
+                  7 exams · 3 confirmed overnight
+                </div>
+              </div>
+              <button className="btn btn-primary btn-sm" onClick={() => showToast("Opening new exam booking")}>
+                <Icon name="plus" />
+                Book exam
+              </button>
+            </div>
+            <div className="card">
+              <div className="sched">
+                {EXAMS.map((exam) => (
+                  <SchedRow key={exam[0] + exam[2]} exam={exam} onToast={showToast} />
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* ── CHANNELS ── */}
+          <section className={`page${page === "channels" ? " active" : ""}`}>
+            <div className="section-head">
+              <div>
+                <span className="eyebrow">Channel response map</span>
+                <div
+                  style={{ fontFamily: "var(--serif)", fontSize: 20, fontWeight: 700, marginTop: 3 }}
+                >
+                  5 active · 1 idle
+                </div>
+              </div>
+              <button className="btn btn-ghost btn-sm" onClick={() => showToast("Channel settings")}>
+                <Icon name="gear" />
+                Configure
+              </button>
+            </div>
+            <div className="chan-detail">
+              {CHANNELS.map(([name, ico, active, note, m]) => (
+                <div key={name as string} className={`card chd${active ? "" : " idle"}`}>
+                  <div className="chd-top">
+                    <span className="chd-ico">
+                      <Icon name={ico as string} />
+                    </span>
+                    <div style={{ flex: 1 }}>
+                      <div className="chd-name">{name as string}</div>
+                      <div className="chan-note" style={{ marginTop: 3 }}>
+                        {note as string}
+                      </div>
+                    </div>
+                    <span className={`chan-pill ${active ? "p-active" : "p-idle"}`}>
+                      {active ? "ACTIVE" : "IDLE"}
+                    </span>
+                  </div>
+                  <div className="chd-metrics">
+                    <div className="chd-metric">
+                      <div className="v">{(m as { sent: string; reply: string }).sent}</div>
+                      <div className="l">Messages · today</div>
+                    </div>
+                    <div className="chd-metric">
+                      <div className="v">{(m as { sent: string; reply: string }).reply}</div>
+                      <div className="l">Avg reply</div>
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
           </section>
-        ))}
-      </div>
-    </div>
-  );
-}
 
-function DocumentsView({ client, onOpen }: { client: Client; onOpen: (lead: Lead) => void }) {
-  const records = allLeads(client).filter((record) =>
-    /copy|document|record|filing|search|lien|surrogates|mortgage|satisfaction|authorization/i.test(`${record.type} ${record.interest} ${record.next}`)
-  );
-
-  return (
-    <div className="space-y-5">
-      <section className="rounded-[2rem] border border-white/60 bg-white/76 p-5 shadow-sm backdrop-blur-xl">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2a7a8a]">Document operations</p>
-        <h3 className="mt-2 text-2xl font-semibold tracking-tight">County records, copies, and filings</h3>
-        <p className="mt-2 text-sm leading-6 text-slate-500">
-          The Operator tracks requests like certified copies, county clerk filings, lien searches, C&R searches, Surrogates Court requests, and missing authorization forms.
-        </p>
-      </section>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        {records.map((record) => (
-          <RecordCard key={record.name} title={record.name} meta={record.type} onClick={() => onOpen(record)}>
-            <div className="flex flex-wrap gap-2">
-              <Pill tone={record.urgency >= 90 ? "danger" : record.urgency >= 75 ? "gold" : "teal"}>{record.urgency}/100 urgency</Pill>
-              <Pill>{record.stage}</Pill>
+          {/* ── RECORDS ── */}
+          <section className={`page${page === "records" ? " active" : ""}`}>
+            <div className="bigcards">
+              {(
+                [
+                  ["Open claims", "42", ""],
+                  ["Records collected · 7d", "128", ""],
+                  ["Awaiting authorization", "5", "gold"],
+                ] as [string, string, string][]
+              ).map(([label, v, g]) => (
+                <div key={label} className={`stat${g ? " gold" : ""}`} onClick={() => showToast(label)}>
+                  <div className="stat-val">{v}</div>
+                  <div className="stat-label">{label}</div>
+                </div>
+              ))}
             </div>
-            <p className="mt-3">{record.interest}</p>
-            <p className="mt-2 text-[#2a7a8a]">Next: {record.next}</p>
-          </RecordCard>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function AskOperatorStrip({ title, prompts, onAsk }: { title: string; prompts: string[]; onAsk: (prompt: string) => void }) {
-  return (
-    <section className="rounded-[2rem] border border-white/60 bg-white/76 p-5 shadow-sm backdrop-blur-xl">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2a7a8a]">Operator chat available here</p>
-          <h3 className="mt-1 text-xl font-semibold">{title}</h3>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {prompts.map((prompt) => (
-            <button key={prompt} onClick={() => onAsk(prompt)} className="rounded-full border border-white/70 bg-white/70 px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-white hover:text-slate-950">
-              {prompt}
-            </button>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function EscalationsView({
-  escalations,
-  onOpen,
-  onAction
-}: {
-  escalations: Escalation[];
-  onOpen: (escalation: Escalation) => void;
-  onAction: (label: string) => void;
-}) {
-  return (
-    <div className="space-y-4">
-      {escalations.map((escalation) => (
-        <div key={escalation.title} className="rounded-[2rem] border border-white/60 bg-white/76 p-5 shadow-sm backdrop-blur-xl">
-          <button onClick={() => onOpen(escalation)} className="w-full text-left">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-rose-500">Needs decision</p>
-            <h3 className="mt-2 text-xl font-semibold">{escalation.title}</h3>
-            <p className="mt-3 text-sm leading-6 text-slate-600">{escalation.why}</p>
-          </button>
-          <div className="mt-5 flex flex-wrap gap-2">
-            {["Approve", "Edit", "Dismiss"].map((action) => (
-              <button key={action} onClick={() => onAction(`${action}: ${escalation.title}`)} className={`rounded-full px-4 py-2 text-sm font-semibold transition ${action === "Approve" ? "bg-slate-950 text-white hover:bg-slate-800" : "border border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-950"}`}>
-                {action}
-              </button>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function ReportsView({ client, leads }: { client: Client; leads: ReturnType<typeof allLeads> }) {
-  const hotLead = [...leads].sort((a, b) => b.urgency - a.urgency)[0];
-
-  return (
-    <div className="space-y-4">
-      <ReportCard title="Daily Brief">
-        Operator handled {client.todaySummaryValue.toLowerCase()}. The most important motion today is moving {hotLead?.name} forward while keeping seller valuation and showing follow-ups on schedule.
-      </ReportCard>
-      <ReportCard title="Weekly Summary">
-        Lead response is healthy, with qualified buyers and sellers moving through the pipeline. The main operational theme is fast follow-up plus selective broker escalation.
-      </ReportCard>
-      <ReportCard title="Revenue Opportunities">
-        {hotLead?.name} is the strongest near-term opportunity. Operator recommends immediate next action: {hotLead?.next}.
-      </ReportCard>
-      <ReportCard title="Leads Requiring Attention">
-        {leads.filter((lead) => lead.urgency >= 75).map((lead) => lead.name).join(", ")} should stay on today's watchlist.
-      </ReportCard>
-      <ReportCard title="Upcoming Appointments">
-        {client.appointments.map((appointment) => `${appointment.time} ${appointment.title}`).join("; ")}.
-      </ReportCard>
-      <ReportCard title="Open Escalations">
-        {client.escalations.map((escalation) => escalation.title).join("; ")}.
-      </ReportCard>
-      <ReportCard title="Operator Insights">
-        The business is not missing activity. The risk is decision latency on negotiation and seller questions. Operator is filtering those moments and preparing replies.
-      </ReportCard>
-    </div>
-  );
-}
-
-function ReportCard({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="rounded-[2rem] border border-white/60 bg-white/76 p-6 shadow-sm backdrop-blur-xl">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#c9a84c]">{title}</p>
-      <p className="mt-3 text-lg leading-8 text-slate-800">{children}</p>
-    </section>
-  );
-}
-
-function DetailDrawer({
-  detail,
-  client,
-  leads,
-  onClose,
-  onAction
-}: {
-  detail: DetailRecord;
-  client: Client;
-  leads: Lead[];
-  onClose: () => void;
-  onAction: (label: string) => void;
-}) {
-  const [drawerAction, setDrawerAction] = useState("");
-  const handleAction = (label: string) => {
-    setDrawerAction(label);
-    onAction(label);
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 bg-slate-950/20 backdrop-blur-sm" onClick={onClose}>
-      <aside className="ml-auto h-full w-full max-w-xl overflow-y-auto border-l border-white/60 bg-[#fffdf8]/95 p-6 shadow-2xl backdrop-blur-xl" onClick={(event) => event.stopPropagation()}>
-        <div className="mb-6 flex items-center justify-between">
-          <Pill tone="teal">Detail view</Pill>
-          <button onClick={onClose} className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-950">Close</button>
-        </div>
-        {drawerAction ? (
-          <div className="mb-5 rounded-3xl border border-[#2a7a8a]/25 bg-[#2a7a8a]/10 p-4" aria-live="polite">
-            <p className="text-sm font-semibold text-[#1f6471]">Action sent</p>
-            <p className="mt-1 text-sm leading-6 text-slate-600">{drawerAction}</p>
-          </div>
-        ) : null}
-        <DetailContent detail={detail} client={client} leads={leads} onAction={handleAction} />
-      </aside>
-    </div>
-  );
-}
-
-function DetailContent({ detail, client, leads, onAction }: { detail: DetailRecord; client: Client; leads: Lead[]; onAction: (label: string) => void }) {
-  const terms = getTerms(client);
-
-  if (detail.type === "lead" || detail.type === "opportunity") {
-    const lead = detail.item;
-    const profile = aiLeadSummary(lead);
-    return (
-      <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-400">{terms.recordSingular} Profile</p>
-        <h2 className="mt-3 text-4xl font-semibold tracking-tight">{lead.name}</h2>
-        <ActionBar
-          context={lead.name}
-          actions={client.slug === "lazer" ? ["Hand over to examiner", "Delegate county follow-up", "Schedule document review", "Draft client update"] : ["Hand over to broker", "Delegate follow-up to Operator", "Schedule showing prep", "Draft message"]}
-          onAction={onAction}
-        />
-        <DetailGrid rows={client.slug === "lazer" ? [
-          ["Order type", lead.type],
-          ["Property / request", lead.interest],
-          ["Order status", detail.type === "opportunity" ? detail.stage : profile.qualification],
-          ["Risk level", profile.risk],
-          ["Next recommended action", lead.next]
-        ] : [
-          [`${terms.recordSingular} type`, lead.type],
-          ["Budget", profile.budget],
-          ["Property interest", lead.interest],
-          ["Timeline", profile.timeline],
-          ["Qualification status", profile.qualification],
-          ["Risk level", profile.risk],
-          ["Next recommended action", lead.next]
-        ]} />
-        <Narrative title="AI Summary">{profile.summary}</Narrative>
-        <Narrative title="Communication History">Operator qualified the {terms.recordSingular}, logged the source as {lead.source}, and is tracking the next action inside the workspace.</Narrative>
-        <Narrative title="Notes">Urgency score is {lead.urgency}/100. Keep response time short and move the next action forward today.</Narrative>
-      </div>
-    );
-  }
-
-  if (detail.type === "conversation") {
-    return (
-      <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-400">Conversation</p>
-        <h2 className="mt-3 text-4xl font-semibold tracking-tight">{detail.item.channel}</h2>
-        <ActionBar
-          context={`${detail.item.channel} conversation`}
-          actions={["Hand over conversation", "Delegate reply to Operator", "Draft response", "Create Asana task"]}
-          onAction={onAction}
-        />
-        <div className="mt-6 space-y-3">
-          {detail.item.messages.map((message) => (
-            <div key={`${message.speaker}-${message.message}`} className="rounded-3xl border border-white/70 bg-[#fffaf0]/70 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">{message.speaker}</p>
-              <p className="mt-2 text-base leading-7">{message.message}</p>
+            <div className="card">
+              <div className="card-h">
+                <h2>Claims &amp; records</h2>
+                <span className="sub">{RECORDS.length} open claims</span>
+              </div>
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Claim</th>
+                    <th>Claimant</th>
+                    <th>Exam type</th>
+                    <th>Status</th>
+                    <th>Next</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {RECORDS.map((r) => (
+                    <tr key={r[0]} onClick={() => showToast(`Opening ${r[0]} · ${r[1]}`)}>
+                      <td className="rid">{r[0]}</td>
+                      <td>{r[1]}</td>
+                      <td>{r[2]}</td>
+                      <td>
+                        <span className={`badge ${r[4]}`}>{r[3]}</span>
+                      </td>
+                      <td className="rid">{r[5]}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          ))}
+          </section>
+
+          {/* ── SETTINGS ── */}
+          <section className={`page${page === "settings" ? " active" : ""}`}>
+            <div className="set-grid">
+              <div className="card">
+                <div className="card-h">
+                  <h2>Autonomy</h2>
+                </div>
+                {(
+                  [
+                    ["Auto-confirm exams", "Operator books and confirms without asking"],
+                    ["Auto-recover no-shows", "Re-engage missed appointments automatically"],
+                    ["Auto-collect records", "Chase provider records on a schedule"],
+                    ["Escalate before sending", "Hold sensitive replies for your approval"],
+                  ] as [string, string][]
+                ).map(([label, desc]) => (
+                  <SettingRow
+                    key={label}
+                    label={label}
+                    desc={desc}
+                    on={!!settingsToggles[label]}
+                    onToggle={() => {
+                      const wasOn = settingsToggles[label];
+                      setSettingsToggles((prev) => ({ ...prev, [label]: !prev[label] }));
+                      showToast(`Setting ${wasOn ? "disabled" : "enabled"}`);
+                    }}
+                  />
+                ))}
+              </div>
+
+              <div className="card">
+                <div className="card-h">
+                  <h2>Channels &amp; hours</h2>
+                </div>
+                {(
+                  [
+                    ["SMS reminders", "Primary channel for claimant reminders"],
+                    ["WhatsApp", "Enabled for claimants who opt in"],
+                    ["After-hours autonomy", "Keep working overnight, 22:00–07:00"],
+                    ["Weekend operation", "Run reduced sweeps on weekends"],
+                  ] as [string, string][]
+                ).map(([label, desc]) => (
+                  <SettingRow
+                    key={label}
+                    label={label}
+                    desc={desc}
+                    on={!!settingsToggles[label]}
+                    onToggle={() => {
+                      const wasOn = settingsToggles[label];
+                      setSettingsToggles((prev) => ({ ...prev, [label]: !prev[label] }));
+                      showToast(`Setting ${wasOn ? "disabled" : "enabled"}`);
+                    }}
+                  />
+                ))}
+              </div>
+
+              <div className="card">
+                <div className="card-h">
+                  <h2>Notifications</h2>
+                </div>
+                {(
+                  [
+                    ["Morning brief", "Daily summary at 7:00 AM"],
+                    ["Escalation alerts", "Ping me when a claim needs a human"],
+                    ["Weekly digest", "Performance recap every Monday"],
+                  ] as [string, string][]
+                ).map(([label, desc]) => (
+                  <SettingRow
+                    key={label}
+                    label={label}
+                    desc={desc}
+                    on={!!settingsToggles[label]}
+                    onToggle={() => {
+                      const wasOn = settingsToggles[label];
+                      setSettingsToggles((prev) => ({ ...prev, [label]: !prev[label] }));
+                      showToast(`Setting ${wasOn ? "disabled" : "enabled"}`);
+                    }}
+                  />
+                ))}
+              </div>
+
+              <div className="card">
+                <div className="card-h">
+                  <h2>Workspace</h2>
+                </div>
+                <div className="set-row">
+                  <div>
+                    <div className="set-label">Client</div>
+                    <div className="set-desc">{client.company} · IME scheduling</div>
+                  </div>
+                  <span className="badge b-confirmed">Active</span>
+                </div>
+                <div className="set-row">
+                  <div>
+                    <div className="set-label">Connected systems</div>
+                    <div className="set-desc">Scheduling, CRM, provider portal, fax</div>
+                  </div>
+                  <button className="link" onClick={() => showToast("Manage connections")}>
+                    Manage
+                  </button>
+                </div>
+                <div className="set-row">
+                  <div>
+                    <div className="set-label">Operator uptime</div>
+                    <div className="set-desc">240 hours · 0 errors</div>
+                  </div>
+                  <span className="badge b-scheduled">Healthy</span>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
-        <Narrative title="Operator actions">
-          {client.slug === "lazer"
-            ? "Conversation includes order status, document requirements, client updates, and logged next steps. The Operator is watching for county delays, missing authorizations, recording deadlines, and title issues."
-            : "Conversation includes qualification, follow-up history, and logged next steps. The Operator is watching for buying timeline, representation status, financing readiness, and negotiation signals."}
-        </Narrative>
       </div>
-    );
-  }
 
-  if (detail.type === "task") {
-    const relatedLead = findRelatedLead(detail.item, leads);
-    return (
-      <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-400">Task</p>
-        <h2 className="mt-3 text-4xl font-semibold tracking-tight">{detail.item.title}</h2>
-        <ActionBar
-          context={detail.item.title}
-          actions={["Take over task", "Delegate to Operator", "Reschedule overnight", "Mark reviewed"]}
-          onAction={onAction}
-        />
-        <DetailGrid rows={[
-          ["Priority", detail.item.priority],
-          ["Due date", detail.item.due],
-          ["Assigned to", detail.item.assignedTo],
-          ["Related lead", relatedLead.name],
-          ["Created by", detail.item.createdBy]
-        ]} />
-        <Narrative title="Why Operator created it">This task protects the next step for {relatedLead.name} and prevents the opportunity from going stale.</Narrative>
-        <Narrative title="Suggested next action">Complete the task, update the record, and let the Operator continue follow-up automatically.</Narrative>
-      </div>
-    );
-  }
-
-  if (detail.type === "appointment") {
-    return (
-      <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-400">Appointment</p>
-        <h2 className="mt-3 text-4xl font-semibold tracking-tight">{detail.item.title}</h2>
-        <ActionBar
-          context={detail.item.title}
-          actions={["Hand over appointment", "Delegate reminder", "Prepare briefing", "Create follow-up task"]}
-          onAction={onAction}
-        />
-        <DetailGrid rows={[
-          ["Time", detail.item.time],
-          ["Status", detail.item.status],
-          ["Property", detail.item.title.includes(":") ? detail.item.title.split(":").at(-1)?.trim() ?? "To be confirmed" : "To be confirmed"],
-          ["Reminders sent", detail.item.status === "Reminder Sent" ? "Yes" : "Scheduled"],
-          ["Recommended preparation", "Review lead context, objective, and next step before the meeting."]
-        ]} />
-        <Narrative title="Operator notes">Operator is tracking appointment history, reminder status, and preparation context so the broker can enter the call or showing already briefed.</Narrative>
-      </div>
-    );
-  }
-
-  if (detail.type === "escalation") {
-    return (
-      <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-rose-500">Escalation</p>
-        <h2 className="mt-3 text-4xl font-semibold tracking-tight">{detail.item.title}</h2>
-        <ActionBar
-          context={detail.item.title}
-          actions={["Hand over to broker", "Delegate to Operator", "Approve draft", "Schedule follow-up"]}
-          onAction={onAction}
-        />
-        <Narrative title="What happened">{detail.item.why}</Narrative>
-        <Narrative title="Why Operator escalated">{detail.item.next}</Narrative>
-        <Narrative title="Draft message">{detail.item.draft}</Narrative>
-        <div className="mt-6 flex flex-wrap gap-2">
-          {["Approve", "Edit", "Dismiss"].map((action) => (
-            <button key={action} onClick={() => onAction(`${action}: ${detail.item.title}`)} className={`rounded-full px-4 py-2 text-sm font-semibold transition ${action === "Approve" ? "bg-slate-950 text-white hover:bg-slate-800" : "border border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-950"}`}>
-              {action}
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-400">Activity</p>
-      <h2 className="mt-3 text-4xl font-semibold tracking-tight">{detail.item.summary}</h2>
-      <ActionBar
-        context={detail.item.summary}
-        actions={["Hand over to broker", "Delegate next step", "Create follow-up task", "Mark reviewed"]}
-        onAction={onAction}
-      />
-      <DetailGrid rows={[
-        ["Time", detail.item.time],
-        ["Channel", detail.item.channel],
-        ["Status", detail.item.status],
-        ["Full detail", "Operator logged the activity, updated the workspace, and kept the broker informed only when judgment was required."]
-      ]} />
-    </div>
-  );
-}
-
-function ActionBar({
-  context,
-  actions,
-  onAction
-}: {
-  context: string;
-  actions: string[];
-  onAction: (label: string) => void;
-}) {
-  return (
-    <section className="mt-6 rounded-3xl border border-white/70 bg-white/75 p-4 shadow-sm backdrop-blur-xl">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2a7a8a]">Further actions</p>
-      <div className="mt-3 flex flex-wrap gap-2">
-        {actions.map((action, index) => (
-          <button
-            key={action}
-            onClick={() => onAction(`${action}: ${context}`)}
-            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-              index === 0
-                ? "bg-slate-950 text-white hover:bg-slate-800"
-                : "border border-slate-200 bg-white/70 text-slate-600 hover:border-slate-300 hover:bg-white hover:text-slate-950"
-            }`}
-          >
-            {action}
-          </button>
+      {/* ── Toasts ── */}
+      <div className="toast-wrap">
+        {toasts.map((t) => (
+          <div key={t.id} className="toast">
+            <Icon name="check" />
+            {t.msg}
+          </div>
         ))}
       </div>
-    </section>
-  );
-}
-
-function DetailGrid({ rows }: { rows: [string, string][] }) {
-  return (
-    <div className="mt-6 grid gap-3">
-      {rows.map(([label, value]) => (
-        <div key={label} className="rounded-2xl border border-white/70 bg-[#fffaf0]/70 p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">{label}</p>
-          <p className="mt-1 font-medium">{value}</p>
-        </div>
-      ))}
     </div>
-  );
-}
-
-function Narrative({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="mt-6 rounded-3xl border border-white/70 bg-white/75 p-5 shadow-sm backdrop-blur-xl">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#c9a84c]">{title}</p>
-      <p className="mt-3 text-base leading-8 text-slate-700">{children}</p>
-    </section>
   );
 }
