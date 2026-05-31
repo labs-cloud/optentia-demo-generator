@@ -1,9 +1,10 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { ActivityEvent, Appointment, Client, Escalation, InboxThread, Lead, Task } from "@/types/demo";
 
-type View = "operator" | "leads" | "inbox" | "tasks" | "calendar" | "pipeline" | "escalations" | "reports";
+type View = "operator" | "leads" | "inbox" | "tasks" | "calendar" | "pipeline" | "documents" | "escalations" | "reports";
 type DetailRecord =
   | { type: "lead"; item: Lead }
   | { type: "conversation"; item: InboxThread }
@@ -32,8 +33,14 @@ const navItems: { id: View; label: string; icon: string }[] = [
   { id: "tasks", label: "Tasks", icon: "T" },
   { id: "calendar", label: "Calendar", icon: "C" },
   { id: "pipeline", label: "Pipeline", icon: "P" },
+  { id: "documents", label: "Documents", icon: "D" },
   { id: "escalations", label: "Escalations", icon: "E" },
   { id: "reports", label: "Reports", icon: "R" }
+];
+
+const demoClients = [
+  { slug: "chaim", label: "Chaim Real Estate" },
+  { slug: "lazer", label: "Rapid Examiners" }
 ];
 
 const questionPrompts = [
@@ -50,12 +57,30 @@ function allLeads(client: Client) {
   return client.pipeline.flatMap((column) => column.leads.map((lead) => ({ ...lead, stage: column.title })));
 }
 
+function getNavLabel(client: Client, id: View) {
+  return client.navigationLabels?.[id] ?? navItems.find((item) => item.id === id)?.label ?? id;
+}
+
+function getTerms(client: Client) {
+  return {
+    recordSingular: client.terms?.recordSingular ?? "lead",
+    recordPlural: client.terms?.recordPlural ?? "leads",
+    pipelineSingular: client.terms?.pipelineSingular ?? "opportunity",
+    pipelinePlural: client.terms?.pipelinePlural ?? "pipeline",
+    appointmentPlural: client.terms?.appointmentPlural ?? "appointments",
+    taskPlural: client.terms?.taskPlural ?? "tasks",
+    escalationPlural: client.terms?.escalationPlural ?? "decisions",
+    monitoredBusiness: client.terms?.monitoredBusiness ?? client.company
+  };
+}
+
 function findRelatedLead(task: Task, leads: Lead[]) {
   return leads.find((lead) => task.title.toLowerCase().includes(lead.name.toLowerCase().split(" ")[0])) ?? leads[0];
 }
 
 function operatorAnswer(prompt: string, client: Client) {
   const leads = allLeads(client);
+  const terms = getTerms(client);
   const hotLeads = leads
     .filter((lead) => lead.urgency >= 80)
     .sort((a, b) => b.urgency - a.urgency)
@@ -68,11 +93,11 @@ function operatorAnswer(prompt: string, client: Client) {
   const normalized = prompt.toLowerCase();
 
   if (normalized.includes("follow")) {
-    return `I would follow up with ${pendingTasks.map((task) => task.title.replace(/^Follow up with /, "")).slice(0, 3).join(", ")}. The most time-sensitive item is ${pendingTasks[0]?.title ?? "the next qualified lead"} because it is marked ${pendingTasks[0]?.priority ?? "High"}.`;
+    return `I would follow up on ${pendingTasks.map((task) => task.title.replace(/^Follow up with /, "")).slice(0, 3).join(", ")}. The most time-sensitive item is ${pendingTasks[0]?.title ?? `the next ${terms.recordSingular}`} because it is marked ${pendingTasks[0]?.priority ?? "High"}.`;
   }
 
   if (normalized.includes("hot") || normalized.includes("lead")) {
-    return `The hottest leads are ${hotLeads.map((lead) => `${lead.name} (${lead.urgency}/100 urgency, ${lead.stage})`).join(", ")}. I recommend acting on ${hotLeads[0]?.name ?? "the top buyer"} first and confirming the next step: ${hotLeads[0]?.next ?? "book the appointment"}.`;
+    return `The highest-priority ${terms.recordPlural} are ${hotLeads.map((lead) => `${lead.name} (${lead.urgency}/100 urgency, ${lead.stage})`).join(", ")}. I recommend acting on ${hotLeads[0]?.name ?? `the top ${terms.recordSingular}`} first and confirming the next step: ${hotLeads[0]?.next ?? "complete the next action"}.`;
   }
 
   if (normalized.includes("respond") || normalized.includes("whatsapp") || normalized.includes("telegram") || normalized.includes("slack") || normalized.includes("email") || normalized.includes("asana")) {
@@ -80,7 +105,7 @@ function operatorAnswer(prompt: string, client: Client) {
   }
 
   if (normalized.includes("pipeline")) {
-    return `Pipeline summary: ${client.pipeline.map((column) => `${column.title}: ${column.leads.map((lead) => lead.name).join(", ") || "none"}`).join(" | ")}. The strongest next move is ${hotLeads[0]?.next ?? "follow up with the highest urgency lead"}.`;
+    return `${terms.pipelinePlural} summary: ${client.pipeline.map((column) => `${column.title}: ${column.leads.map((lead) => lead.name).join(", ") || "none"}`).join(" | ")}. The strongest next move is ${hotLeads[0]?.next ?? `follow up with the highest urgency ${terms.recordSingular}`}.`;
   }
 
   if (normalized.includes("appointment") || normalized.includes("calendar")) {
@@ -168,6 +193,7 @@ function RecordCard({
 }
 
 export function OperatorCommandCenter({ client }: { client: Client }) {
+  const router = useRouter();
   const [view, setView] = useState<View>("operator");
   const [detail, setDetail] = useState<DetailRecord | null>(null);
   const [feed, setFeed] = useState<ActivityEvent[]>(client.activityFeed);
@@ -188,6 +214,7 @@ export function OperatorCommandCenter({ client }: { client: Client }) {
     }
   ]);
   const leads = useMemo(() => allLeads(client), [client]);
+  const visibleNavItems = navItems.filter((item) => item.id !== "documents" || client.navigationLabels?.documents);
 
   const askOperator = (prompt: string) => {
     const cleanPrompt = prompt.trim();
@@ -258,11 +285,11 @@ export function OperatorCommandCenter({ client }: { client: Client }) {
           </div>
 
           <nav className="space-y-1">
-            {navItems.map((item) => (
+            {visibleNavItems.map((item) => (
               <ShellButton key={item.id} active={view === item.id} onClick={() => setView(item.id)}>
                 <span className="flex items-center gap-3">
                   <span className="flex h-7 w-7 items-center justify-center rounded-xl border border-white/60 bg-white/50 text-xs">{item.icon}</span>
-                  {item.label}
+                  {getNavLabel(client, item.id)}
                 </span>
               </ShellButton>
             ))}
@@ -277,7 +304,7 @@ export function OperatorCommandCenter({ client }: { client: Client }) {
 
         <section className="min-w-0 p-5 md:p-8">
           <div className="mx-auto max-w-5xl">
-            <Header view={view} />
+            <Header view={view} client={client} onSwitchClient={(slug) => router.push(`/demo/${slug}`)} />
             {actionNotice ? (
               <div className="mb-5 rounded-3xl border border-[#2a7a8a]/25 bg-[#2a7a8a]/10 px-5 py-4 text-sm font-medium text-[#1f6471]">
                 {actionNotice}
@@ -296,6 +323,7 @@ export function OperatorCommandCenter({ client }: { client: Client }) {
               />
             ) : null}
             {view === "pipeline" ? <PipelineView client={client} onOpen={(lead, stage) => setDetail({ type: "opportunity", item: lead, stage })} onAsk={askOperator} /> : null}
+            {view === "documents" ? <DocumentsView client={client} onOpen={(lead) => setDetail({ type: "lead", item: lead })} /> : null}
             {view === "escalations" ? <EscalationsView escalations={client.escalations} onOpen={(escalation) => setDetail({ type: "escalation", item: escalation })} onAction={approveAction} /> : null}
             {view === "reports" ? <ReportsView client={client} leads={leads} /> : null}
           </div>
@@ -330,29 +358,47 @@ export function OperatorCommandCenter({ client }: { client: Client }) {
         </aside>
       </div>
 
-      {detail ? <DetailDrawer detail={detail} leads={leads} onClose={() => setDetail(null)} onAction={approveAction} /> : null}
+      {detail ? <DetailDrawer detail={detail} client={client} leads={leads} onClose={() => setDetail(null)} onAction={approveAction} /> : null}
     </main>
   );
 }
 
-function Header({ view }: { view: View }) {
+function Header({ view, client, onSwitchClient }: { view: View; client: Client; onSwitchClient: (slug: string) => void }) {
+  const terms = getTerms(client);
   const titles = {
-    operator: ["Operator", "Monitoring your real estate business"],
-    leads: ["Leads", "Open every lead profile, summary, risk, and next action."],
+    operator: ["Operator", client.operatorSubtitle ?? `Monitoring ${terms.monitoredBusiness}`],
+    leads: [getNavLabel(client, "leads"), `Open every ${terms.recordSingular} profile, summary, risk, and next action.`],
     inbox: ["Inbox", "Conversations across WhatsApp, email, SMS, and calls."],
-    tasks: ["Tasks", "Work the Operator created and why it matters."],
-    calendar: ["Calendar", "Appointments, reminders, notes, and preparation."],
-    pipeline: ["Pipeline", "Opportunities by stage with recommended next steps."],
-    escalations: ["Escalations", "Decisions that need broker judgment."],
+    tasks: [getNavLabel(client, "tasks"), `Work the Operator created and why each ${terms.taskPlural} item matters.`],
+    calendar: [getNavLabel(client, "calendar"), `${terms.appointmentPlural}, reminders, notes, and preparation.`],
+    pipeline: [getNavLabel(client, "pipeline"), `${terms.pipelinePlural} by stage with recommended next steps.`],
+    documents: [getNavLabel(client, "documents"), "Requested, retrieved, verified, and delivery-ready documents."],
+    escalations: [getNavLabel(client, "escalations"), `${terms.escalationPlural} that need human judgment.`],
     reports: ["Reports", "Narrative briefs and insights instead of dashboard charts."]
   };
   const [title, subtitle] = titles[view];
 
   return (
     <header className="mb-8">
-      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-[#c9a84c]">Powered by Optentia</p>
-      <h2 className="text-5xl font-semibold tracking-[-0.04em] text-slate-950 md:text-6xl">{title}</h2>
-      <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-500">{subtitle}</p>
+      <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-[#c9a84c]">Powered by Optentia</p>
+          <h2 className="text-5xl font-semibold tracking-[-0.04em] text-slate-950 md:text-6xl">{title}</h2>
+          <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-500">{subtitle}</p>
+        </div>
+        <label className="rounded-2xl border border-white/70 bg-white/70 p-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400 shadow-sm backdrop-blur-xl">
+          Demo Client
+          <select
+            value={client.slug}
+            onChange={(event) => onSwitchClient(event.target.value)}
+            className="mt-2 block w-full rounded-xl border border-white/70 bg-white px-3 py-2 text-sm font-semibold normal-case tracking-normal text-slate-800 outline-none"
+          >
+            {demoClients.map((demoClient) => (
+              <option key={demoClient.slug} value={demoClient.slug}>{demoClient.label}</option>
+            ))}
+          </select>
+        </label>
+      </div>
     </header>
   );
 }
@@ -746,6 +792,37 @@ function PipelineView({ client, onOpen, onAsk }: { client: Client; onOpen: (lead
   );
 }
 
+function DocumentsView({ client, onOpen }: { client: Client; onOpen: (lead: Lead) => void }) {
+  const records = allLeads(client).filter((record) =>
+    /copy|document|record|filing|search|lien|surrogates|mortgage|satisfaction|authorization/i.test(`${record.type} ${record.interest} ${record.next}`)
+  );
+
+  return (
+    <div className="space-y-5">
+      <section className="rounded-[2rem] border border-white/60 bg-white/76 p-5 shadow-sm backdrop-blur-xl">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2a7a8a]">Document operations</p>
+        <h3 className="mt-2 text-2xl font-semibold tracking-tight">County records, copies, and filings</h3>
+        <p className="mt-2 text-sm leading-6 text-slate-500">
+          The Operator tracks requests like certified copies, county clerk filings, lien searches, C&R searches, Surrogates Court requests, and missing authorization forms.
+        </p>
+      </section>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        {records.map((record) => (
+          <RecordCard key={record.name} title={record.name} meta={record.type} onClick={() => onOpen(record)}>
+            <div className="flex flex-wrap gap-2">
+              <Pill tone={record.urgency >= 90 ? "danger" : record.urgency >= 75 ? "gold" : "teal"}>{record.urgency}/100 urgency</Pill>
+              <Pill>{record.stage}</Pill>
+            </div>
+            <p className="mt-3">{record.interest}</p>
+            <p className="mt-2 text-[#2a7a8a]">Next: {record.next}</p>
+          </RecordCard>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function AskOperatorStrip({ title, prompts, onAsk }: { title: string; prompts: string[]; onAsk: (prompt: string) => void }) {
   return (
     <section className="rounded-[2rem] border border-white/60 bg-white/76 p-5 shadow-sm backdrop-blur-xl">
@@ -838,11 +915,13 @@ function ReportCard({ title, children }: { title: string; children: React.ReactN
 
 function DetailDrawer({
   detail,
+  client,
   leads,
   onClose,
   onAction
 }: {
   detail: DetailRecord;
+  client: Client;
   leads: Lead[];
   onClose: () => void;
   onAction: (label: string) => void;
@@ -866,27 +945,35 @@ function DetailDrawer({
             <p className="mt-1 text-sm leading-6 text-slate-600">{drawerAction}</p>
           </div>
         ) : null}
-        <DetailContent detail={detail} leads={leads} onAction={handleAction} />
+        <DetailContent detail={detail} client={client} leads={leads} onAction={handleAction} />
       </aside>
     </div>
   );
 }
 
-function DetailContent({ detail, leads, onAction }: { detail: DetailRecord; leads: Lead[]; onAction: (label: string) => void }) {
+function DetailContent({ detail, client, leads, onAction }: { detail: DetailRecord; client: Client; leads: Lead[]; onAction: (label: string) => void }) {
+  const terms = getTerms(client);
+
   if (detail.type === "lead" || detail.type === "opportunity") {
     const lead = detail.item;
     const profile = aiLeadSummary(lead);
     return (
       <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-400">Lead Profile</p>
+        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-400">{terms.recordSingular} Profile</p>
         <h2 className="mt-3 text-4xl font-semibold tracking-tight">{lead.name}</h2>
         <ActionBar
           context={lead.name}
-          actions={["Hand over to broker", "Delegate follow-up to Operator", "Schedule showing prep", "Draft message"]}
+          actions={client.slug === "lazer" ? ["Hand over to examiner", "Delegate county follow-up", "Schedule document review", "Draft client update"] : ["Hand over to broker", "Delegate follow-up to Operator", "Schedule showing prep", "Draft message"]}
           onAction={onAction}
         />
-        <DetailGrid rows={[
-          ["Lead type", lead.type],
+        <DetailGrid rows={client.slug === "lazer" ? [
+          ["Order type", lead.type],
+          ["Property / request", lead.interest],
+          ["Order status", detail.type === "opportunity" ? detail.stage : profile.qualification],
+          ["Risk level", profile.risk],
+          ["Next recommended action", lead.next]
+        ] : [
+          [`${terms.recordSingular} type`, lead.type],
           ["Budget", profile.budget],
           ["Property interest", lead.interest],
           ["Timeline", profile.timeline],
@@ -895,7 +982,7 @@ function DetailContent({ detail, leads, onAction }: { detail: DetailRecord; lead
           ["Next recommended action", lead.next]
         ]} />
         <Narrative title="AI Summary">{profile.summary}</Narrative>
-        <Narrative title="Communication History">Operator qualified the lead, logged the source as {lead.source}, and is tracking the next action inside the workspace.</Narrative>
+        <Narrative title="Communication History">Operator qualified the {terms.recordSingular}, logged the source as {lead.source}, and is tracking the next action inside the workspace.</Narrative>
         <Narrative title="Notes">Urgency score is {lead.urgency}/100. Keep response time short and move the next action forward today.</Narrative>
       </div>
     );
@@ -919,7 +1006,11 @@ function DetailContent({ detail, leads, onAction }: { detail: DetailRecord; lead
             </div>
           ))}
         </div>
-        <Narrative title="Operator actions">Conversation includes qualification, follow-up history, and logged next steps. The Operator is watching for buying timeline, representation status, financing readiness, and negotiation signals.</Narrative>
+        <Narrative title="Operator actions">
+          {client.slug === "lazer"
+            ? "Conversation includes order status, document requirements, client updates, and logged next steps. The Operator is watching for county delays, missing authorizations, recording deadlines, and title issues."
+            : "Conversation includes qualification, follow-up history, and logged next steps. The Operator is watching for buying timeline, representation status, financing readiness, and negotiation signals."}
+        </Narrative>
       </div>
     );
   }

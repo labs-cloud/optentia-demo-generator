@@ -1,8 +1,31 @@
 {
   "slug": "chaim",
-  "company": "Real Estate Brokerage Command Center",
+  "clientName": "Chaim Real Estate",
+  "companyName": "Chaim Real Estate",
+  "company": "Chaim Real Estate",
   "industry": "Real estate brokerage",
   "demoLabel": "Real estate broker demo",
+  "operatorSubtitle": "Monitoring Chaim Real Estate",
+  "navigationLabels": {
+    "operator": "Operator",
+    "leads": "Leads",
+    "inbox": "Inbox",
+    "tasks": "Tasks",
+    "calendar": "Calendar",
+    "pipeline": "Pipeline",
+    "escalations": "Escalations",
+    "reports": "Reports"
+  },
+  "terms": {
+    "recordSingular": "lead",
+    "recordPlural": "leads",
+    "pipelineSingular": "opportunity",
+    "pipelinePlural": "pipeline",
+    "appointmentPlural": "showings and appointments",
+    "taskPlural": "tasks",
+    "escalationPlural": "broker decisions",
+    "monitoredBusiness": "Chaim Real Estate"
+  },
   "operatorPrincipleTitle": "The broker stays in judgment mode.",
   "operatorPrincipleBody": "The Operator handles the repetitive execution layer: replying, qualifying, booking, creating tasks, updating systems, and filtering noise before it reaches the broker.",
   "operatorPrincipleMetric": "93%",

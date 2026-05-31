@@ -79,11 +79,39 @@ export interface DemoScenario {
   events: ActivityEvent[];
 }
 
+export interface NavigationLabels {
+  operator: string;
+  leads: string;
+  inbox: string;
+  tasks: string;
+  calendar: string;
+  pipeline: string;
+  documents?: string;
+  escalations: string;
+  reports: string;
+}
+
+export interface ClientTerms {
+  recordSingular: string;
+  recordPlural: string;
+  pipelineSingular: string;
+  pipelinePlural: string;
+  appointmentPlural: string;
+  taskPlural: string;
+  escalationPlural: string;
+  monitoredBusiness: string;
+}
+
 export interface Client {
   slug: string;
+  clientName?: string;
+  companyName?: string;
   company: string;
   industry: string;
   demoLabel: string;
+  operatorSubtitle?: string;
+  navigationLabels?: NavigationLabels;
+  terms?: ClientTerms;
   operatorPrincipleTitle: string;
   operatorPrincipleBody: string;
   operatorPrincipleMetric: string;
