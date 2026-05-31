@@ -156,8 +156,8 @@
       "Operator qualifies and books showing",
       "The broker only gets notified if human judgment is needed"
     ],
-    "buttonLabel": "Run Demo Flow",
-    "completedLabel": "Demo Flow Added",
+    "buttonLabel": "Start Operator Review",
+    "completedLabel": "Operator Review Added",
     "events": [
       { "time": "10:58 AM", "channel": "WhatsApp", "status": "Waiting", "summary": "New WhatsApp lead received" },
       { "time": "11:00 AM", "channel": "WhatsApp", "status": "Completed", "summary": "Operator responded with qualification questions" },

@@ -120,7 +120,7 @@ No dashboard code changes are required for a new prospect demo. The route automa
 
 The simulation engine lives in `/lib/simulation-engine.ts`.
 
-When a user clicks `Run Demo Flow`, the client-specific scenario events from the JSON file are inserted into the activity feed. Each client can tell a different story while using the same dashboard code.
+When a user asks the Operator a question or gives a direction, client-specific activity is inserted into the live activity stream. Each client can tell a different operational story while using the same product shell.
 
 The standard flow demonstrates:
 

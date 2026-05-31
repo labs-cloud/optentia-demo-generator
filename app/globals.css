@@ -1,17 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #050914;
-  --navy: #060c16;
-  --navy-soft: #0b1f38;
-  --panel: rgba(9, 20, 37, 0.86);
-  --panel-light: rgba(255, 255, 255, 0.055);
-  --line: rgba(255, 255, 255, 0.11);
+  --paper: #f7f5ef;
+  --surface: #ffffff;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --line: #e7e3d8;
   --gold: #c9a84c;
-  --gold-bright: #f0d58b;
   --teal: #2a7a8a;
-  --mist: #dfe8f3;
-  --muted: #8da0b9;
 }
 
 * {
@@ -26,10 +22,10 @@ body {
   min-height: 100vh;
   margin: 0;
   background:
-    radial-gradient(circle at 12% 8%, rgba(201, 168, 76, 0.16), transparent 28rem),
-    radial-gradient(circle at 88% 0%, rgba(42, 122, 138, 0.18), transparent 30rem),
-    linear-gradient(135deg, #030611 0%, #060c16 48%, #02050c 100%);
-  color: var(--mist);
+    radial-gradient(circle at 18% 0%, rgba(201, 168, 76, 0.14), transparent 26rem),
+    radial-gradient(circle at 95% 10%, rgba(42, 122, 138, 0.12), transparent 30rem),
+    linear-gradient(180deg, #fbfaf6 0%, var(--paper) 100%);
+  color: var(--ink);
   font-family: "Avenir Next", "Neue Haas Grotesk Text", "Segoe UI", sans-serif;
 }
 
@@ -40,48 +36,44 @@ body::before {
   pointer-events: none;
   content: "";
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
-  background-size: 64px 64px;
-  mask-image: linear-gradient(to bottom, black, transparent 82%);
+    linear-gradient(rgba(15, 23, 42, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.024) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, black, transparent 70%);
 }
 
-button {
+button,
+input {
   font: inherit;
 }
 
+button {
+  cursor: pointer;
+}
+
 .font-display {
-  font-family: "Bodoni 72", "Didot", "Georgia", serif;
+  font-family: "Avenir Next", "Neue Haas Grotesk Text", "Segoe UI", sans-serif;
 }
 
-.glass-card {
-  border: 1px solid var(--line);
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.035)),
-    rgba(7, 15, 30, 0.76);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
-  backdrop-filter: blur(18px);
-}
-
+.glass-card,
 .instrument-card {
-  border: 1px solid rgba(201, 168, 76, 0.18);
-  background:
-    linear-gradient(180deg, rgba(201, 168, 76, 0.12), transparent 62%),
-    rgba(8, 18, 34, 0.82);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.06);
 }
 
 .hairline {
-  background: linear-gradient(90deg, transparent, rgba(201, 168, 76, 0.8), transparent);
+  background: linear-gradient(90deg, transparent, rgba(201, 168, 76, 0.55), transparent);
 }
 
 .reveal {
-  animation: rise 0.65s ease both;
+  animation: rise 0.5s ease both;
 }
 
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(12px);
   }
 
   to {
