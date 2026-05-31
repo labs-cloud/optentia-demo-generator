@@ -2,7 +2,9 @@ export type ActivityStatus = "Completed" | "Waiting" | "Escalated";
 
 export type Channel =
   | "WhatsApp"
+  | "Telegram"
   | "Email"
+  | "Slack"
   | "SMS"
   | "Asana"
   | "Calendar"

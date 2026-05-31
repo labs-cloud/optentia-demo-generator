@@ -3,7 +3,9 @@ import type React from "react";
 
 export const channelStyles: Record<Channel, string> = {
   WhatsApp: "border-emerald-300/25 bg-emerald-400/10 text-emerald-200",
+  Telegram: "border-sky-300/25 bg-sky-400/10 text-sky-200",
   Email: "border-sky-300/25 bg-sky-400/10 text-sky-200",
+  Slack: "border-fuchsia-300/25 bg-fuchsia-400/10 text-fuchsia-100",
   SMS: "border-cyan-300/25 bg-cyan-400/10 text-cyan-100",
   Asana: "border-rose-300/25 bg-rose-400/10 text-rose-100",
   Calendar: "border-amber-300/25 bg-amber-400/10 text-amber-100",

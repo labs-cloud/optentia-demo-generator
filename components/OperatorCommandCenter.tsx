@@ -18,6 +18,13 @@ interface ChatMessage {
   text: string;
 }
 
+interface ScheduledOperatorTask {
+  title: string;
+  window: string;
+  instructions: string;
+  status: "Queued" | "Scheduled";
+}
+
 const navItems: { id: View; label: string; icon: string }[] = [
   { id: "operator", label: "Operator", icon: "O" },
   { id: "leads", label: "Leads", icon: "L" },
@@ -34,7 +41,9 @@ const questionPrompts = [
   "Which leads are hottest?",
   "What appointments do I have today?",
   "Any deals at risk?",
-  "Show pending tasks."
+  "Show pending tasks.",
+  "Where did you respond today?",
+  "Summarize my pipeline."
 ];
 
 function allLeads(client: Client) {
@@ -53,6 +62,9 @@ function operatorAnswer(prompt: string, client: Client) {
     .slice(0, 3);
   const pendingTasks = client.tasks.filter((task) => task.priority === "High" || task.priority === "Urgent");
   const riskItems = client.escalations.slice(0, 2);
+  const channelThreads = client.inbox
+    .filter((thread) => ["WhatsApp", "Telegram", "Email", "Slack", "Asana", "SMS"].includes(thread.channel))
+    .map((thread) => `${thread.channel}: ${thread.messages.find((message) => message.speaker.includes("Operator"))?.message ?? "Operator response logged"}`);
   const normalized = prompt.toLowerCase();
 
   if (normalized.includes("follow")) {
@@ -61,6 +73,14 @@ function operatorAnswer(prompt: string, client: Client) {
 
   if (normalized.includes("hot") || normalized.includes("lead")) {
     return `The hottest leads are ${hotLeads.map((lead) => `${lead.name} (${lead.urgency}/100 urgency, ${lead.stage})`).join(", ")}. I recommend acting on ${hotLeads[0]?.name ?? "the top buyer"} first and confirming the next step: ${hotLeads[0]?.next ?? "book the appointment"}.`;
+  }
+
+  if (normalized.includes("respond") || normalized.includes("whatsapp") || normalized.includes("telegram") || normalized.includes("slack") || normalized.includes("email") || normalized.includes("asana")) {
+    return `I responded or logged work across ${channelThreads.length} channels today. ${channelThreads.join(" ")} I also kept Asana updated so the operational tasks match the conversations.`;
+  }
+
+  if (normalized.includes("pipeline")) {
+    return `Pipeline summary: ${client.pipeline.map((column) => `${column.title}: ${column.leads.map((lead) => lead.name).join(", ") || "none"}`).join(" | ")}. The strongest next move is ${hotLeads[0]?.next ?? "follow up with the highest urgency lead"}.`;
   }
 
   if (normalized.includes("appointment") || normalized.includes("calendar")) {
@@ -159,6 +179,14 @@ export function OperatorCommandCenter({ client }: { client: Client }) {
     }
   ]);
   const [actionNotice, setActionNotice] = useState("");
+  const [scheduledTasks, setScheduledTasks] = useState<ScheduledOperatorTask[]>([
+    {
+      title: "Overnight lead sweep",
+      window: "Tonight, 11:30 PM",
+      instructions: "Review every qualified lead, identify unanswered messages, and prepare morning follow-up drafts.",
+      status: "Queued"
+    }
+  ]);
   const leads = useMemo(() => allLeads(client), [client]);
 
   const askOperator = (prompt: string) => {
@@ -194,6 +222,28 @@ export function OperatorCommandCenter({ client }: { client: Client }) {
         summary: label
       },
       ...current
+    ]);
+  };
+
+  const scheduleOperatorTask = (task: ScheduledOperatorTask) => {
+    setScheduledTasks((current) => [task, ...current]);
+    setActionNotice(`Scheduled: ${task.title}`);
+    setFeed((current) => [
+      {
+        time: "Now",
+        channel: "Asana",
+        status: "Waiting",
+        summary: `Overnight Operator task scheduled: ${task.title}`
+      },
+      ...current
+    ]);
+    setMessages((current) => [
+      ...current,
+      { role: "You", text: `Schedule overnight task: ${task.title}` },
+      {
+        role: "Operator",
+        text: `Scheduled for ${task.window}. I’ll handle ${task.instructions.toLowerCase()} and leave a morning summary with completed work, open questions, and any escalations.`
+      }
     ]);
   };
 
@@ -233,12 +283,12 @@ export function OperatorCommandCenter({ client }: { client: Client }) {
                 {actionNotice}
               </div>
             ) : null}
-            {view === "operator" ? <OperatorHome messages={messages} onAsk={askOperator} chatInput={chatInput} setChatInput={setChatInput} submitChat={submitChat} client={client} leads={leads} /> : null}
+            {view === "operator" ? <OperatorHome messages={messages} onAsk={askOperator} chatInput={chatInput} setChatInput={setChatInput} submitChat={submitChat} client={client} leads={leads} scheduledTasks={scheduledTasks} onScheduleTask={scheduleOperatorTask} /> : null}
             {view === "leads" ? <LeadsView leads={leads} onOpen={(lead) => setDetail({ type: "lead", item: lead })} /> : null}
-            {view === "inbox" ? <InboxView inbox={client.inbox} onOpen={(thread) => setDetail({ type: "conversation", item: thread })} /> : null}
+            {view === "inbox" ? <InboxView inbox={client.inbox} onOpen={(thread) => setDetail({ type: "conversation", item: thread })} onAsk={askOperator} /> : null}
             {view === "tasks" ? <TasksView tasks={client.tasks} onOpen={(task) => setDetail({ type: "task", item: task })} /> : null}
             {view === "calendar" ? <CalendarView appointments={client.appointments} onOpen={(appointment) => setDetail({ type: "appointment", item: appointment })} /> : null}
-            {view === "pipeline" ? <PipelineView client={client} onOpen={(lead, stage) => setDetail({ type: "opportunity", item: lead, stage })} /> : null}
+            {view === "pipeline" ? <PipelineView client={client} onOpen={(lead, stage) => setDetail({ type: "opportunity", item: lead, stage })} onAsk={askOperator} /> : null}
             {view === "escalations" ? <EscalationsView escalations={client.escalations} onOpen={(escalation) => setDetail({ type: "escalation", item: escalation })} onAction={approveAction} /> : null}
             {view === "reports" ? <ReportsView client={client} leads={leads} /> : null}
           </div>
@@ -307,7 +357,9 @@ function OperatorHome({
   setChatInput,
   submitChat,
   client,
-  leads
+  leads,
+  scheduledTasks,
+  onScheduleTask
 }: {
   messages: ChatMessage[];
   onAsk: (prompt: string) => void;
@@ -316,6 +368,8 @@ function OperatorHome({
   submitChat: (event: FormEvent<HTMLFormElement>) => void;
   client: Client;
   leads: ReturnType<typeof allLeads>;
+  scheduledTasks: ScheduledOperatorTask[];
+  onScheduleTask: (task: ScheduledOperatorTask) => void;
 }) {
   return (
     <div className="space-y-6">
@@ -353,7 +407,89 @@ function OperatorHome({
         <QuietMetric label="Open broker decisions" value={String(client.escalations.length)} />
         <QuietMetric label="Appointments today" value={String(client.appointments.length)} />
       </section>
+
+      <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+        <OvernightScheduler onScheduleTask={onScheduleTask} />
+        <section className="rounded-[2rem] border border-white/60 bg-white/72 p-5 shadow-sm backdrop-blur-xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#c9a84c]">Scheduled operator work</p>
+          <h3 className="mt-2 text-2xl font-semibold tracking-tight">Overnight queue</h3>
+          <div className="mt-5 space-y-3">
+            {scheduledTasks.map((task) => (
+              <div key={`${task.title}-${task.window}`} className="rounded-3xl border border-white/70 bg-[#fffaf0]/70 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold">{task.title}</p>
+                    <p className="mt-1 text-sm text-slate-500">{task.window}</p>
+                  </div>
+                  <Pill tone="gold">{task.status}</Pill>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-slate-600">{task.instructions}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+
+      <ChannelResponseMap inbox={client.inbox} />
     </div>
+  );
+}
+
+function OvernightScheduler({ onScheduleTask }: { onScheduleTask: (task: ScheduledOperatorTask) => void }) {
+  const [title, setTitle] = useState("Prepare morning pipeline brief");
+  const [window, setWindow] = useState("Tonight, 11:30 PM");
+  const [instructions, setInstructions] = useState("Review WhatsApp, Telegram, Email, Slack, and Asana. Summarize hot leads, unanswered messages, tasks due tomorrow, and escalations needing approval.");
+
+  return (
+    <section className="rounded-[2rem] border border-white/60 bg-white/76 p-5 shadow-sm backdrop-blur-xl">
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2a7a8a]">After-hours delegation</p>
+      <h3 className="mt-2 text-2xl font-semibold tracking-tight">Schedule work for the Operator</h3>
+      <p className="mt-2 text-sm leading-6 text-slate-500">
+        Queue a task for overnight so the broker starts tomorrow with follow-ups, pipeline notes, and escalations already prepared.
+      </p>
+      <div className="mt-5 space-y-3">
+        <input value={title} onChange={(event) => setTitle(event.target.value)} className="w-full rounded-2xl border border-white/70 bg-white/80 px-4 py-3 text-sm outline-none focus:border-[#2a7a8a]/40" />
+        <input value={window} onChange={(event) => setWindow(event.target.value)} className="w-full rounded-2xl border border-white/70 bg-white/80 px-4 py-3 text-sm outline-none focus:border-[#2a7a8a]/40" />
+        <textarea value={instructions} onChange={(event) => setInstructions(event.target.value)} rows={4} className="w-full resize-none rounded-2xl border border-white/70 bg-white/80 px-4 py-3 text-sm leading-6 outline-none focus:border-[#2a7a8a]/40" />
+      </div>
+      <button
+        onClick={() => onScheduleTask({ title, window, instructions, status: "Scheduled" })}
+        className="mt-4 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+      >
+        Schedule with Operator
+      </button>
+    </section>
+  );
+}
+
+function ChannelResponseMap({ inbox }: { inbox: InboxThread[] }) {
+  const channels = ["WhatsApp", "Telegram", "Email", "Slack", "Asana", "SMS"];
+
+  return (
+    <section className="rounded-[2rem] border border-white/60 bg-white/72 p-5 shadow-sm backdrop-blur-xl">
+      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#c9a84c]">Operator response map</p>
+          <h3 className="mt-2 text-2xl font-semibold tracking-tight">Where the Operator responded</h3>
+        </div>
+        <Pill tone="teal">{channels.length} connected channels</Pill>
+      </div>
+      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {channels.map((channel) => {
+          const thread = inbox.find((item) => item.channel === channel);
+          const action = thread?.messages.find((message) => message.speaker.includes("Operator Action"))?.message ?? "Ready to monitor";
+          return (
+            <div key={channel} className="rounded-3xl border border-white/70 bg-[#fffaf0]/70 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-semibold">{channel}</p>
+                <Pill tone={thread ? "teal" : "neutral"}>{thread ? "Active" : "Idle"}</Pill>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-slate-600">{action}</p>
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
@@ -385,18 +521,25 @@ function LeadsView({ leads, onOpen }: { leads: ReturnType<typeof allLeads>; onOp
   );
 }
 
-function InboxView({ inbox, onOpen }: { inbox: InboxThread[]; onOpen: (thread: InboxThread) => void }) {
+function InboxView({ inbox, onOpen, onAsk }: { inbox: InboxThread[]; onOpen: (thread: InboxThread) => void; onAsk: (prompt: string) => void }) {
   return (
-    <div className="space-y-4">
-      {inbox.map((thread) => (
-        <RecordCard key={thread.channel} title={thread.channel} meta={`${thread.messages.length} messages`} onClick={() => onOpen(thread)}>
-          <p>{thread.messages[thread.messages.length - 1]?.message}</p>
-          <div className="mt-3 flex gap-2">
-            <Pill tone="teal">Operator replied</Pill>
-            <Pill tone="gold">Actions logged</Pill>
-          </div>
-        </RecordCard>
-      ))}
+    <div className="space-y-5">
+      <AskOperatorStrip
+        title="Ask about channel responses"
+        prompts={["Where did you respond today?", "Show WhatsApp and Telegram follow-ups", "What did you post in Slack and Asana?"]}
+        onAsk={onAsk}
+      />
+      <div className="grid gap-4 md:grid-cols-2">
+        {inbox.map((thread) => (
+          <RecordCard key={thread.channel} title={thread.channel} meta={`${thread.messages.length} messages`} onClick={() => onOpen(thread)}>
+            <p>{thread.messages[thread.messages.length - 1]?.message}</p>
+            <div className="mt-3 flex gap-2">
+              <Pill tone="teal">Operator replied</Pill>
+              <Pill tone="gold">Actions logged</Pill>
+            </div>
+          </RecordCard>
+        ))}
+      </div>
     </div>
   );
 }
@@ -430,29 +573,56 @@ function CalendarView({ appointments, onOpen }: { appointments: Appointment[]; o
   );
 }
 
-function PipelineView({ client, onOpen }: { client: Client; onOpen: (lead: Lead, stage: string) => void }) {
+function PipelineView({ client, onOpen, onAsk }: { client: Client; onOpen: (lead: Lead, stage: string) => void; onAsk: (prompt: string) => void }) {
   return (
-    <div className="grid gap-4 xl:grid-cols-3">
-      {client.pipeline.map((column) => (
-        <section key={column.title} className="rounded-[2rem] border border-white/60 bg-white/72 p-4 shadow-sm backdrop-blur-xl">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="font-semibold">{column.title}</h3>
-            <Pill>{column.leads.length}</Pill>
-          </div>
-          <div className="space-y-3">
-            {column.leads.map((lead) => (
-              <button key={lead.name} onClick={() => onOpen(lead, column.title)} className="w-full rounded-2xl border border-white/70 bg-[#fffaf0]/70 p-4 text-left transition hover:border-[#2a7a8a]/30 hover:bg-white">
-                <p className="font-semibold">{lead.name}</p>
-                <p className="mt-1 text-sm text-slate-500">{lead.interest}</p>
-                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-200">
-                  <div className="h-full rounded-full bg-[#2a7a8a]" style={{ width: `${lead.urgency}%` }} />
-                </div>
-              </button>
-            ))}
-          </div>
-        </section>
-      ))}
+    <div className="space-y-5">
+      <AskOperatorStrip
+        title="Chat with the Operator about the pipeline"
+        prompts={["Summarize my pipeline.", "Which pipeline stage needs attention?", "Which lead should I move next?"]}
+        onAsk={onAsk}
+      />
+      <div className="grid gap-4 xl:grid-cols-3">
+        {client.pipeline.map((column) => (
+          <section key={column.title} className="rounded-[2rem] border border-white/60 bg-white/72 p-4 shadow-sm backdrop-blur-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="font-semibold">{column.title}</h3>
+              <Pill>{column.leads.length}</Pill>
+            </div>
+            <div className="space-y-3">
+              {column.leads.map((lead) => (
+                <button key={lead.name} onClick={() => onOpen(lead, column.title)} className="w-full rounded-2xl border border-white/70 bg-[#fffaf0]/70 p-4 text-left transition hover:border-[#2a7a8a]/30 hover:bg-white">
+                  <p className="font-semibold">{lead.name}</p>
+                  <p className="mt-1 text-sm text-slate-500">{lead.interest}</p>
+                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-200">
+                    <div className="h-full rounded-full bg-[#2a7a8a]" style={{ width: `${lead.urgency}%` }} />
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
     </div>
+  );
+}
+
+function AskOperatorStrip({ title, prompts, onAsk }: { title: string; prompts: string[]; onAsk: (prompt: string) => void }) {
+  return (
+    <section className="rounded-[2rem] border border-white/60 bg-white/76 p-5 shadow-sm backdrop-blur-xl">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2a7a8a]">Operator chat available here</p>
+          <h3 className="mt-1 text-xl font-semibold">{title}</h3>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {prompts.map((prompt) => (
+            <button key={prompt} onClick={() => onAsk(prompt)} className="rounded-full border border-white/70 bg-white/70 px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-white hover:text-slate-950">
+              {prompt}
+            </button>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 

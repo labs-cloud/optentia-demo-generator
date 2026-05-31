@@ -24,6 +24,8 @@
     { "time": "9:41 AM", "channel": "Calendar", "status": "Completed", "summary": "Booked showing for 123 Ocean Parkway" },
     { "time": "10:03 AM", "channel": "SMS", "status": "Escalated", "summary": "Escalated negotiation request to broker" },
     { "time": "10:22 AM", "channel": "Email", "status": "Waiting", "summary": "Sent mortgage pre-approval reminder" },
+    { "time": "10:34 AM", "channel": "Telegram", "status": "Completed", "summary": "Answered investor question about two-family property comps" },
+    { "time": "10:39 AM", "channel": "Slack", "status": "Completed", "summary": "Posted internal note for assistant to prepare showing packet" },
     { "time": "10:45 AM", "channel": "CRM", "status": "Completed", "summary": "Updated lead status in CRM" }
   ],
   "pipeline": [
@@ -99,6 +101,30 @@
         { "speaker": "Caller", "message": "Missed call from Eli Weiss at 10:36 AM" },
         { "speaker": "Operator", "message": "Sent callback text and asked whether this is about selling, buying, or valuation." },
         { "speaker": "Operator Action", "message": "Logged call + scheduled callback window." }
+      ]
+    },
+    {
+      "channel": "Telegram",
+      "messages": [
+        { "speaker": "Investor", "message": "Can you send comps for the 2-family near Ocean Parkway?" },
+        { "speaker": "Operator", "message": "Yes. I am pulling relevant comps and will mark anything that needs broker review." },
+        { "speaker": "Operator Action", "message": "Sent comp summary + created follow-up for investor review." }
+      ]
+    },
+    {
+      "channel": "Slack",
+      "messages": [
+        { "speaker": "Assistant", "message": "Do we need a packet for the 11:30 showing?" },
+        { "speaker": "Operator", "message": "Yes. Please prepare buyer packet, property sheet, and pre-approval checklist." },
+        { "speaker": "Operator Action", "message": "Internal Slack note posted + Asana task linked." }
+      ]
+    },
+    {
+      "channel": "Asana",
+      "messages": [
+        { "speaker": "Operator", "message": "Created task: Confirm showing at 123 Ocean Parkway." },
+        { "speaker": "Assistant", "message": "Packet is being prepared." },
+        { "speaker": "Operator Action", "message": "Task remains open until showing packet is confirmed complete." }
       ]
     }
   ],
