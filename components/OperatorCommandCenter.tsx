@@ -114,7 +114,7 @@ function ShellButton({
 
 function Pill({ children, tone = "neutral" }: { children: React.ReactNode; tone?: "neutral" | "gold" | "teal" | "danger" }) {
   const tones = {
-    neutral: "border-slate-200 bg-white text-slate-600",
+    neutral: "border-stone-200 bg-white/80 text-slate-600",
     gold: "border-[#c9a84c]/25 bg-[#c9a84c]/10 text-[#7a6120]",
     teal: "border-[#2a7a8a]/25 bg-[#2a7a8a]/10 text-[#1f6471]",
     danger: "border-rose-200 bg-rose-50 text-rose-700"
@@ -137,7 +137,7 @@ function RecordCard({
   return (
     <button
       onClick={onClick}
-      className="group w-full rounded-3xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+      className="group w-full rounded-3xl border border-white/60 bg-white/78 p-5 text-left shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-white hover:shadow-md"
     >
       {meta ? <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">{meta}</p> : null}
       <h3 className="text-lg font-semibold text-slate-950">{title}</h3>
@@ -198,9 +198,9 @@ export function OperatorCommandCenter({ client }: { client: Client }) {
   };
 
   return (
-    <main className="min-h-screen bg-[#f7f5ef] text-slate-950">
+    <main className="min-h-screen text-slate-950">
       <div className="grid min-h-screen lg:grid-cols-[260px_1fr_360px]">
-        <aside className="border-r border-slate-200 bg-white/80 p-5 backdrop-blur">
+        <aside className="border-r border-white/50 bg-white/55 p-5 backdrop-blur-xl">
           <div className="mb-10">
             <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-lg font-semibold text-white">O</div>
             <h1 className="text-2xl font-semibold tracking-tight">The Operator</h1>
@@ -211,14 +211,14 @@ export function OperatorCommandCenter({ client }: { client: Client }) {
             {navItems.map((item) => (
               <ShellButton key={item.id} active={view === item.id} onClick={() => setView(item.id)}>
                 <span className="flex items-center gap-3">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-xl border border-slate-200 text-xs">{item.icon}</span>
+                  <span className="flex h-7 w-7 items-center justify-center rounded-xl border border-white/60 bg-white/50 text-xs">{item.icon}</span>
                   {item.label}
                 </span>
               </ShellButton>
             ))}
           </nav>
 
-          <div className="mt-10 rounded-3xl border border-slate-200 bg-[#faf9f5] p-4">
+          <div className="mt-10 rounded-3xl border border-white/60 bg-white/45 p-4 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Monitoring</p>
             <p className="mt-2 font-semibold">{client.company}</p>
             <p className="mt-1 text-sm text-slate-500">{client.todaySummaryBody}</p>
@@ -244,7 +244,7 @@ export function OperatorCommandCenter({ client }: { client: Client }) {
           </div>
         </section>
 
-        <aside className="border-l border-slate-200 bg-white/65 p-5 backdrop-blur">
+        <aside className="border-l border-white/50 bg-white/45 p-5 backdrop-blur-xl">
           <div className="sticky top-5">
             <div className="mb-5 flex items-center justify-between">
               <div>
@@ -258,7 +258,7 @@ export function OperatorCommandCenter({ client }: { client: Client }) {
                 <button
                   key={`${event.time}-${event.summary}-${index}`}
                   onClick={() => setDetail({ type: "activity", item: event })}
-                  className="w-full rounded-3xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-slate-300 hover:shadow-md"
+                  className="w-full rounded-3xl border border-white/60 bg-white/72 p-4 text-left shadow-sm backdrop-blur-xl transition hover:border-white hover:shadow-md"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-xs font-semibold text-slate-400">{event.time}</p>
@@ -319,10 +319,10 @@ function OperatorHome({
 }) {
   return (
     <div className="space-y-6">
-      <section className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm md:p-7">
+      <section className="rounded-[2rem] border border-white/60 bg-white/76 p-5 shadow-sm backdrop-blur-xl md:p-7">
         <div className="mb-6 flex flex-wrap gap-2">
           {questionPrompts.map((prompt) => (
-            <button key={prompt} onClick={() => onAsk(prompt)} className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-[#2a7a8a]/40 hover:text-slate-950">
+            <button key={prompt} onClick={() => onAsk(prompt)} className="rounded-full border border-white/70 bg-white/70 px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:border-[#2a7a8a]/40 hover:bg-white hover:text-slate-950">
               {prompt}
             </button>
           ))}
@@ -330,14 +330,14 @@ function OperatorHome({
 
         <div className="space-y-4">
           {messages.map((message, index) => (
-            <div key={`${message.role}-${index}`} className={`max-w-3xl rounded-3xl border p-5 ${message.role === "Operator" ? "border-slate-200 bg-[#faf9f5]" : "ml-auto border-[#2a7a8a]/20 bg-[#2a7a8a]/10"}`}>
+            <div key={`${message.role}-${index}`} className={`max-w-3xl rounded-3xl border p-5 ${message.role === "Operator" ? "border-white/70 bg-[#fffaf0]/72" : "ml-auto border-[#2a7a8a]/20 bg-[#2a7a8a]/10"}`}>
               <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">{message.role}</p>
               <p className="text-base leading-8 text-slate-800">{message.text}</p>
             </div>
           ))}
         </div>
 
-        <form onSubmit={submitChat} className="mt-6 flex gap-3 rounded-3xl border border-slate-200 bg-white p-2 shadow-sm">
+        <form onSubmit={submitChat} className="mt-6 flex gap-3 rounded-3xl border border-white/70 bg-white/80 p-2 shadow-sm backdrop-blur-xl">
           <input
             value={chatInput}
             onChange={(event) => setChatInput(event.target.value)}
@@ -359,7 +359,7 @@ function OperatorHome({
 
 function QuietMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="rounded-3xl border border-white/60 bg-white/72 p-5 shadow-sm backdrop-blur-xl">
       <p className="text-sm text-slate-500">{label}</p>
       <p className="mt-2 text-4xl font-semibold tracking-tight">{value}</p>
     </div>
@@ -434,14 +434,14 @@ function PipelineView({ client, onOpen }: { client: Client; onOpen: (lead: Lead,
   return (
     <div className="grid gap-4 xl:grid-cols-3">
       {client.pipeline.map((column) => (
-        <section key={column.title} className="rounded-[2rem] border border-slate-200 bg-white p-4 shadow-sm">
+        <section key={column.title} className="rounded-[2rem] border border-white/60 bg-white/72 p-4 shadow-sm backdrop-blur-xl">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="font-semibold">{column.title}</h3>
             <Pill>{column.leads.length}</Pill>
           </div>
           <div className="space-y-3">
             {column.leads.map((lead) => (
-              <button key={lead.name} onClick={() => onOpen(lead, column.title)} className="w-full rounded-2xl border border-slate-200 bg-[#faf9f5] p-4 text-left transition hover:border-[#2a7a8a]/30 hover:bg-white">
+              <button key={lead.name} onClick={() => onOpen(lead, column.title)} className="w-full rounded-2xl border border-white/70 bg-[#fffaf0]/70 p-4 text-left transition hover:border-[#2a7a8a]/30 hover:bg-white">
                 <p className="font-semibold">{lead.name}</p>
                 <p className="mt-1 text-sm text-slate-500">{lead.interest}</p>
                 <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-200">
@@ -468,7 +468,7 @@ function EscalationsView({
   return (
     <div className="space-y-4">
       {escalations.map((escalation) => (
-        <div key={escalation.title} className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
+        <div key={escalation.title} className="rounded-[2rem] border border-white/60 bg-white/76 p-5 shadow-sm backdrop-blur-xl">
           <button onClick={() => onOpen(escalation)} className="w-full text-left">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-rose-500">Needs decision</p>
             <h3 className="mt-2 text-xl font-semibold">{escalation.title}</h3>
@@ -519,7 +519,7 @@ function ReportsView({ client, leads }: { client: Client; leads: ReturnType<type
 
 function ReportCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="rounded-[2rem] border border-white/60 bg-white/76 p-6 shadow-sm backdrop-blur-xl">
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#c9a84c]">{title}</p>
       <p className="mt-3 text-lg leading-8 text-slate-800">{children}</p>
     </section>
@@ -539,7 +539,7 @@ function DetailDrawer({
 }) {
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/20 backdrop-blur-sm" onClick={onClose}>
-      <aside className="ml-auto h-full w-full max-w-xl overflow-y-auto border-l border-slate-200 bg-white p-6 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+      <aside className="ml-auto h-full w-full max-w-xl overflow-y-auto border-l border-white/60 bg-[#fffdf8]/95 p-6 shadow-2xl backdrop-blur-xl" onClick={(event) => event.stopPropagation()}>
         <div className="mb-6 flex items-center justify-between">
           <Pill tone="teal">Detail view</Pill>
           <button onClick={onClose} className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-950">Close</button>
@@ -581,7 +581,7 @@ function DetailContent({ detail, leads, onAction }: { detail: DetailRecord; lead
         <h2 className="mt-3 text-4xl font-semibold tracking-tight">{detail.item.channel}</h2>
         <div className="mt-6 space-y-3">
           {detail.item.messages.map((message) => (
-            <div key={`${message.speaker}-${message.message}`} className="rounded-3xl border border-slate-200 bg-[#faf9f5] p-4">
+            <div key={`${message.speaker}-${message.message}`} className="rounded-3xl border border-white/70 bg-[#fffaf0]/70 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">{message.speaker}</p>
               <p className="mt-2 text-base leading-7">{message.message}</p>
             </div>
@@ -665,7 +665,7 @@ function DetailGrid({ rows }: { rows: [string, string][] }) {
   return (
     <div className="mt-6 grid gap-3">
       {rows.map(([label, value]) => (
-        <div key={label} className="rounded-2xl border border-slate-200 bg-[#faf9f5] p-4">
+        <div key={label} className="rounded-2xl border border-white/70 bg-[#fffaf0]/70 p-4">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">{label}</p>
           <p className="mt-1 font-medium">{value}</p>
         </div>
@@ -676,7 +676,7 @@ function DetailGrid({ rows }: { rows: [string, string][] }) {
 
 function Narrative({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="mt-6 rounded-3xl border border-white/70 bg-white/75 p-5 shadow-sm backdrop-blur-xl">
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#c9a84c]">{title}</p>
       <p className="mt-3 text-base leading-8 text-slate-700">{children}</p>
     </section>

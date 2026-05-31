@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 :root {
-  --paper: #f7f5ef;
-  --surface: #ffffff;
+  --paper: #f5efe4;
+  --surface: rgba(255, 255, 255, 0.78);
   --ink: #0f172a;
   --muted: #64748b;
-  --line: #e7e3d8;
+  --line: rgba(129, 116, 90, 0.18);
   --gold: #c9a84c;
   --teal: #2a7a8a;
 }
@@ -22,9 +22,10 @@ body {
   min-height: 100vh;
   margin: 0;
   background:
-    radial-gradient(circle at 18% 0%, rgba(201, 168, 76, 0.14), transparent 26rem),
-    radial-gradient(circle at 95% 10%, rgba(42, 122, 138, 0.12), transparent 30rem),
-    linear-gradient(180deg, #fbfaf6 0%, var(--paper) 100%);
+    radial-gradient(circle at 8% 8%, rgba(201, 168, 76, 0.34), transparent 25rem),
+    radial-gradient(circle at 84% 5%, rgba(42, 122, 138, 0.28), transparent 30rem),
+    radial-gradient(circle at 72% 84%, rgba(180, 113, 86, 0.16), transparent 28rem),
+    linear-gradient(135deg, #faf6ec 0%, #e8f1ef 42%, #f5ead9 100%);
   color: var(--ink);
   font-family: "Avenir Next", "Neue Haas Grotesk Text", "Segoe UI", sans-serif;
 }
@@ -36,10 +37,10 @@ body::before {
   pointer-events: none;
   content: "";
   background-image:
-    linear-gradient(rgba(15, 23, 42, 0.028) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(15, 23, 42, 0.024) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: linear-gradient(to bottom, black, transparent 70%);
+    linear-gradient(rgba(255, 255, 255, 0.38) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.3) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: linear-gradient(to bottom, black, transparent 76%);
 }
 
 button,
@@ -59,7 +60,8 @@ button {
 .instrument-card {
   border: 1px solid var(--line);
   background: var(--surface);
-  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 14px 40px rgba(61, 48, 28, 0.08);
+  backdrop-filter: blur(18px);
 }
 
 .hairline {
