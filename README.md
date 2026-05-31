@@ -2,7 +2,7 @@
 
 Reusable SaaS demo platform for Optentia sales demos.
 
-Operator Command Center shows how an AI Chief of Staff manages daily business operations across inboxes, tasks, calendars, pipelines, follow-ups, and escalations. The current Chaim real estate demo is preserved as the first client-driven implementation at `/demo/chaim`.
+Operator Command Center shows how an AI Chief of Staff manages daily business operations across inboxes, tasks, calendars, pipelines, follow-ups, and escalations. The real estate brokerage demo is preserved as the first client-driven implementation at `/demo/chaim`.
 
 ## Local Development
 

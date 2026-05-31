@@ -7,6 +7,7 @@ import { CapabilitiesPanel } from "@/components/CapabilitiesPanel";
 import { DemoScenarioRunner } from "@/components/DemoScenarioRunner";
 import { EscalationCenter } from "@/components/EscalationCenter";
 import { KPICards } from "@/components/KPICards";
+import { OperatorChat } from "@/components/OperatorChat";
 import { PipelineBoard } from "@/components/PipelineBoard";
 import { TaskBoard } from "@/components/TaskBoard";
 import { UnifiedInbox } from "@/components/UnifiedInbox";
@@ -23,6 +24,10 @@ export function OperatorCommandCenter({ client }: { client: Client }) {
     if (demoRan) return;
     setFeed((current) => runSimulation(client, current));
     setDemoRan(true);
+  };
+
+  const addOperatorCommand = (event: ActivityEvent) => {
+    setFeed((current) => [event, ...current]);
   };
 
   return (
@@ -71,6 +76,7 @@ export function OperatorCommandCenter({ client }: { client: Client }) {
 
         <aside className="space-y-6 xl:sticky xl:top-5 xl:self-start">
           <DemoScenarioRunner scenario={client.demoScenario} demoRan={demoRan} onRun={runDemo} />
+          <OperatorChat onCommand={addOperatorCommand} />
 
           <section className="rounded-[1.75rem] border border-white/10 bg-white/[0.045] p-6">
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#c9a84c]">Operator principle</p>

@@ -58,7 +58,7 @@ export interface Task {
 export interface Appointment {
   time: string;
   title: string;
-  status: "Confirmed" | "Reminder Sent" | "Needs Chaim" | "Needs Review" | "Tentative";
+  status: "Confirmed" | "Reminder Sent" | "Needs Review" | "Tentative";
 }
 
 export interface Escalation {

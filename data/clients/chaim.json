@@ -1,20 +1,20 @@
 {
   "slug": "chaim",
-  "company": "Chaim Real Estate",
+  "company": "Real Estate Brokerage Command Center",
   "industry": "Real estate brokerage",
   "demoLabel": "Real estate broker demo",
   "operatorPrincipleTitle": "The broker stays in judgment mode.",
-  "operatorPrincipleBody": "The Operator handles the repetitive execution layer: replying, qualifying, booking, creating tasks, updating systems, and filtering noise before it reaches Chaim.",
+  "operatorPrincipleBody": "The Operator handles the repetitive execution layer: replying, qualifying, booking, creating tasks, updating systems, and filtering noise before it reaches the broker.",
   "operatorPrincipleMetric": "93%",
   "operatorPrincipleMetricDetail": "of today's operational actions handled without interrupting the broker.",
   "todaySummaryValue": "43 actions handled",
-  "todaySummaryBody": "Replies sent, leads qualified, showings booked, systems updated, and only three items routed to Chaim.",
+  "todaySummaryBody": "Replies sent, leads qualified, showings booked, systems updated, and only three items routed to the broker.",
   "kpis": [
     { "label": "New Leads Today", "value": "14", "detail": "+38% vs avg" },
     { "label": "Qualified Leads", "value": "9", "detail": "64% conversion" },
     { "label": "Showings Booked", "value": "6", "detail": "4 confirmed" },
     { "label": "Follow-Ups Sent", "value": "23", "detail": "zero stale leads" },
-    { "label": "Escalations for Chaim", "value": "3", "detail": "judgment needed" },
+    { "label": "Broker Escalations", "value": "3", "detail": "judgment needed" },
     { "label": "Tasks Created", "value": "18", "detail": "all routed" }
   ],
   "activityFeed": [
@@ -22,7 +22,7 @@
     { "time": "9:14 AM", "channel": "Email", "status": "Completed", "summary": "Sent follow-up to cold lead from last week" },
     { "time": "9:27 AM", "channel": "Asana", "status": "Completed", "summary": "Created Asana task for inspection deadline" },
     { "time": "9:41 AM", "channel": "Calendar", "status": "Completed", "summary": "Booked showing for 123 Ocean Parkway" },
-    { "time": "10:03 AM", "channel": "SMS", "status": "Escalated", "summary": "Escalated negotiation request to Chaim" },
+    { "time": "10:03 AM", "channel": "SMS", "status": "Escalated", "summary": "Escalated negotiation request to broker" },
     { "time": "10:22 AM", "channel": "Email", "status": "Waiting", "summary": "Sent mortgage pre-approval reminder" },
     { "time": "10:45 AM", "channel": "CRM", "status": "Completed", "summary": "Updated lead status in CRM" }
   ],
@@ -55,7 +55,7 @@
     {
       "title": "Offer / Negotiation",
       "leads": [
-        { "name": "Ari Mandel", "type": "Buyer", "interest": "Ocean Parkway offer", "source": "SMS", "urgency": 96, "next": "Chaim to review terms" }
+        { "name": "Ari Mandel", "type": "Buyer", "interest": "Ocean Parkway offer", "source": "SMS", "urgency": 96, "next": "Broker to review terms" }
       ]
     },
     {
@@ -74,23 +74,23 @@
         { "speaker": "Lead", "message": "No." },
         { "speaker": "Operator", "message": "Great. Are you looking to buy within the next 90 days?" },
         { "speaker": "Lead", "message": "Yes." },
-        { "speaker": "Operator Action", "message": "Qualified lead + sent Chaim's calendar." }
+        { "speaker": "Operator Action", "message": "Qualified lead + sent broker calendar." }
       ]
     },
     {
       "channel": "Email",
       "messages": [
         { "speaker": "Seller", "message": "We may list our Borough Park condo next month. Can someone give us a realistic range?" },
-        { "speaker": "Operator", "message": "Absolutely. I can collect the key details now so Chaim has the right context before advising." },
+        { "speaker": "Operator", "message": "Absolutely. I can collect the key details now so the broker has the right context before advising." },
         { "speaker": "Operator Action", "message": "Started seller valuation intake + created follow-up task." }
       ]
     },
     {
       "channel": "SMS",
       "messages": [
-        { "speaker": "Lead", "message": "Can Chaim negotiate the price if I make an offer today?" },
-        { "speaker": "Operator Action", "message": "Escalated to Chaim - negotiation detected." },
-        { "speaker": "Operator", "message": "I'm flagging this for Chaim so he can advise on the right offer strategy." }
+        { "speaker": "Lead", "message": "Can the broker negotiate the price if I make an offer today?" },
+        { "speaker": "Operator Action", "message": "Escalated to broker - negotiation detected." },
+        { "speaker": "Operator", "message": "I'm flagging this for broker review so the offer strategy is handled correctly." }
       ]
     },
     {
@@ -103,23 +103,23 @@
     }
   ],
   "tasks": [
-    { "title": "Send buyer packet to David Rosen", "due": "Today, 12:00 PM", "priority": "High", "assignedTo": "Chaim", "createdBy": "Operator" },
-    { "title": "Follow up with seller valuation for Miriam Cohen", "due": "Today, 2:00 PM", "priority": "High", "assignedTo": "Chaim", "createdBy": "Operator" },
+    { "title": "Send buyer packet to David Rosen", "due": "Today, 12:00 PM", "priority": "High", "assignedTo": "Broker", "createdBy": "Operator" },
+    { "title": "Follow up with seller valuation for Miriam Cohen", "due": "Today, 2:00 PM", "priority": "High", "assignedTo": "Broker", "createdBy": "Operator" },
     { "title": "Confirm showing at 123 Ocean Parkway", "due": "Today, 10:50 AM", "priority": "Urgent", "assignedTo": "Assistant", "createdBy": "Operator" },
     { "title": "Request pre-approval letter from Sarah Klein", "due": "Tomorrow", "priority": "Medium", "assignedTo": "Operator", "createdBy": "Operator" },
-    { "title": "Review offer terms for Jacob Stein", "due": "Today, 4:30 PM", "priority": "Urgent", "assignedTo": "Chaim", "createdBy": "Operator" },
+    { "title": "Review offer terms for Jacob Stein", "due": "Today, 4:30 PM", "priority": "Urgent", "assignedTo": "Broker", "createdBy": "Operator" },
     { "title": "Update CRM after client call", "due": "Today, 6:00 PM", "priority": "Medium", "assignedTo": "Operator", "createdBy": "Operator" }
   ],
   "appointments": [
     { "time": "11:30 AM", "title": "Showing: 123 Ocean Parkway", "status": "Confirmed" },
     { "time": "1:00 PM", "title": "Buyer consult: David Rosen", "status": "Reminder Sent" },
     { "time": "3:15 PM", "title": "Seller valuation call: Miriam Cohen", "status": "Confirmed" },
-    { "time": "5:00 PM", "title": "Follow-up: Investor lead Jacob Stein", "status": "Needs Chaim" }
+    { "time": "5:00 PM", "title": "Follow-up: Investor lead Jacob Stein", "status": "Needs Review" }
   ],
   "escalations": [
     {
       "title": "Negotiation request from buyer",
-      "why": "Lead asked whether Chaim can negotiate price if an offer is made today.",
+      "why": "Lead asked whether the broker can negotiate price if an offer is made today.",
       "next": "Review buyer motivation and advise whether to open below ask or request seller context first.",
       "draft": "I can help you structure the offer. Before we decide on price, I want to understand your timing and ceiling so we negotiate from strength."
     },
@@ -154,7 +154,7 @@
     "steps": [
       "New lead messages on WhatsApp",
       "Operator qualifies and books showing",
-      "Chaim only gets notified if human judgment is needed"
+      "The broker only gets notified if human judgment is needed"
     ],
     "buttonLabel": "Run Demo Flow",
     "completedLabel": "Demo Flow Added",
