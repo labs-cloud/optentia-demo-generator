@@ -1,374 +1,296 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { Client } from "@/types/demo";
 
-/* ── Types ── */
-type Page = "home" | "conversations" | "activity" | "schedule" | "channels" | "records" | "settings";
+/* ─── TYPES ─────────────────────────────────────────────────────────── */
+type ClientId = "A" | "B";
 
-interface Msg {
-  who: "op" | "me";
-  text: string;
+interface Stat  { to: number; label: string; detail: string; gold?: boolean }
+interface Act   { time: string; desc: string; badge: string; cls: string; ico: string; latest?: boolean }
+interface Attn  { ref: string; name: string; meta1: string; meta2: string; statusCls: string; statusLabel: string; note: string; actions: string[] }
+interface Esc   { title: string; body: string; rec: string; actions: string[] }
+interface Chan  { name: string; ico: string; active: boolean; note: string }
+interface Msg   { who: "op" | "me"; text: string }
+
+interface ClientCfg {
+  eyebrow: string; statusChip: string;
+  nav: { id: string; label: string; ico: string }[];
+  stats: Stat[]; chatIntro: string; prompts: string[]; seedThread: Msg[];
+  acts: Act[]; attnHeader: string; attnItems: Attn[];
+  escs: Esc[]; chans: Chan[];
+  overnightLabel: string; overnightTask: string;
+  replies: { pat: RegExp; text: string }[]; fallback: string;
+  userName: string; userCo: string; userInitials: string;
 }
 
-interface Toast {
-  id: number;
-  msg: string;
-}
+/* ─── THEMES ─────────────────────────────────────────────────────────── */
+const THEMES: Record<ClientId, Record<string, string>> = {
+  A: {
+    "--bg":"#F7F4EF","--bg-2":"#EDE8E0","--panel":"#FFFFFF",
+    "--panel-2":"#F5F2EE","--panel-3":"#EDE9E3",
+    "--line":"#DDD8CF","--line-2":"#E9E5DF",
+    "--ink":"#1A1A2E","--ink-2":"#2D2D40","--ink-dim":"#7A7A8C",
+    "--teal":"#1B4D3E","--teal-2":"#2E7D5E","--teal-ink":"#0F2E24","--teal-soft":"#E8F0EE",
+    "--gold":"#C9A84C","--gold-soft":"#F9F2E0",
+    "--success":"#1C9C57","--success-soft":"#E1F3E9",
+    "--warning":"#C0761C","--warning-soft":"#F6EDDD",
+    "--danger":"#CF4030","--danger-soft":"#F8E5E2",
+    "--shadow-sm":"0 1px 2px rgba(26,26,46,.05)",
+    "--shadow":"0 1px 2px rgba(26,26,46,.05),0 10px 26px rgba(26,26,46,.07)",
+    "--shadow-lg":"0 18px 50px rgba(26,26,46,.13)",
+  },
+  B: {
+    "--bg":"#E7EDF3","--bg-2":"#DDE5EC","--panel":"#FFFFFF",
+    "--panel-2":"#F2F6FA","--panel-3":"#E9F0F6",
+    "--line":"#D6E0E9","--line-2":"#E5ECF2",
+    "--ink":"#152639","--ink-2":"#33485E","--ink-dim":"#6A7E91",
+    "--teal":"#1E7180","--teal-2":"#2A8C9E","--teal-ink":"#135462","--teal-soft":"#E1F0F2",
+    "--gold":"#A9842B","--gold-soft":"#F5EDD8",
+    "--success":"#1C9C57","--success-soft":"#E1F3E9",
+    "--warning":"#C0761C","--warning-soft":"#F6EDDD",
+    "--danger":"#CF4030","--danger-soft":"#F8E5E2",
+    "--shadow-sm":"0 1px 2px rgba(21,38,57,.05)",
+    "--shadow":"0 1px 2px rgba(21,38,57,.05),0 10px 26px rgba(21,38,57,.07)",
+    "--shadow-lg":"0 18px 50px rgba(21,38,57,.13)",
+  },
+};
 
-/* ── SVG Icons ── */
+/* ─── ICONS ──────────────────────────────────────────────────────────── */
 const ICONS: Record<string, string> = {
-  dashboard: '<path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/>',
-  comments: '<path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 9 9 0 0 1-3.9-.9L3 21l1.9-5.6A8.4 8.4 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z"/>',
-  activity: '<path d="M3 12h4l2.5-7 4 14 2.5-7H21"/>',
-  calendar: '<path d="M4 6h16v14H4zM4 10h16M8 4v4M16 4v4"/>',
-  broadcast: '<path d="M12 13v8M8 21h8M6 7.5a8 8 0 0 1 12 0M9 9.5a4 4 0 0 1 6 0M12 12.5a1 1 0 1 0 0-.01"/>',
-  folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
-  gear: '<path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 13.5a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0-1.2-2.9H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
-  bolt: '<path d="M13 2L3 14h7l-1 8 10-12h-7z"/>',
-  file: '<path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M12 12v6M9 15h6"/>',
-  bell: '<path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>',
-  warning: '<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/>',
-  sms: '<path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 9 9 0 0 1-3.9-.9L3 21l1.9-5.6A8.4 8.4 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/>',
-  mail: '<path d="M3 5h18v14H3z"/><path d="M3 6l9 7 9-7"/>',
-  phone: '<path d="M5 4h4l2 5-3 2a12 12 0 0 0 5 5l2-3 5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/>',
-  whatsapp: '<path d="M4.5 19.5l1.4-4.1A7.2 7.2 0 1 1 9.6 18.6z"/><path d="M9 9.4c0 3.1 2.3 5.3 5.3 5.3.5 0 1.1-.4 1.1-.9 0-.4-1.3-1-1.6-1-.4 0-.6.6-1 .6-.7 0-2.1-1.5-2.1-2.1 0-.3.6-.6.6-1 0-.3-.6-1.6-1-1.6-.5 0-1 .6-1 1.1z"/>',
-  globe: '<path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"/><path d="M3.5 12h17M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
-  fax: '<path d="M7 3h10v5H7z"/><path d="M5 8h14a2 2 0 0 1 2 2v8h-4v-5H7v5H3v-8a2 2 0 0 1 2-2z"/><path d="M7 18h10v3H7z"/>',
-  clock: '<path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z"/><path d="M12 6.5V12l3.5 2"/>',
-  search: '<path d="M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16zM21 21l-4.3-4.3"/>',
-  send: '<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>',
-  check: '<path d="M20 6L9 17l-5-5"/>',
-  arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
-  refresh: '<path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/>',
-  plus: '<path d="M12 5v14M5 12h14"/>',
-  pin: '<path d="M12 21s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12z"/><path d="M12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/>',
+  dashboard:    '<path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/>',
+  leads:        '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+  inbox:        '<path d="M4 4h16v16H4z"/><polyline points="22,6 12,13 2,6"/>',
+  tasks:        '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
+  calendar:     '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  pipeline:     '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
+  escalations:  '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+  reports:      '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+  orders:       '<path d="M6 2h12l4 4v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M8 10h8M8 14h8M8 6h4"/>',
+  projects:     '<rect x="2" y="3" width="6" height="6"/><rect x="9" y="3" width="6" height="6"/><rect x="16" y="3" width="6" height="6"/><rect x="2" y="11" width="6" height="6"/><rect x="9" y="11" width="6" height="6"/>',
+  documents:    '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>',
+  gear:         '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+  send:         '<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>',
+  bolt:         '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+  bell:         '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
+  warning:      '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+  clock:        '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  check:        '<polyline points="20 6 9 17 4 12"/>',
+  arrow:        '<line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>',
+  refresh:      '<polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>',
+  mail:         '<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22 6 12 13 2 6"/>',
+  phone:        '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.18h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>',
+  sms:          '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  whatsapp:     '<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>',
+  globe:        '<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+  doc:          '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+  folder:       '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>',
+  plus:         '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+  search:       '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+  user:         '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  sheets:       '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/>',
+  keep:         '<path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"/><line x1="8" y1="3" x2="8" y2="21"/>',
+  team:         '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  asana:        '<circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/>',
 };
 
-function Icon({ name }: { name: string }) {
-  const path = ICONS[name] || "";
+function Icon({ name, size = 16 }: { name: string; size?: number }) {
   return (
-    <i data-ic={name}>
-      <svg viewBox="0 0 24 24" aria-hidden="true" dangerouslySetInnerHTML={{ __html: path }} />
-    </i>
+    <svg viewBox="0 0 24 24" width={size} height={size}
+      style={{ display:"inline-block", flexShrink:0 }}
+      stroke="currentColor" fill="none" strokeWidth={1.7}
+      strokeLinecap="round" strokeLinejoin="round"
+      dangerouslySetInnerHTML={{ __html: ICONS[name] ?? "" }} />
   );
 }
 
-/* ── Static data ── */
-const CHANNELS = [
-  ["SMS", "sms", true, "Confirming exams · 38s avg reply", { sent: "214", reply: "38s" }],
-  ["Email", "mail", true, "Intake packets to claimants", { sent: "96", reply: "4m" }],
-  ["Phone", "phone", true, "2 reminder calls in progress", { sent: "31", reply: "live" }],
-  ["WhatsApp", "whatsapp", true, "1 claimant thread · awaiting reply", { sent: "18", reply: "2m" }],
-  ["Web Intake", "globe", false, "No new submissions in 12m", { sent: "7", reply: "—" }],
-  ["Fax / Records", "fax", true, "Pulling records for 3 claims", { sent: "12", reply: "9m" }],
-] as [string, string, boolean, string, { sent: string; reply: string }][];
-
-const QUEUE = [
-  ["22:00", "Send next-day reminders to 14 claimants"],
-  ["23:30", "Sync confirmed exams to scheduling system"],
-  ["05:00", "Chase 5 outstanding record requests"],
-  ["06:30", "Compile coordinator morning brief"],
-] as [string, string][];
-
-const ACTS = [
-  ["09:42:18", "CONFIRMED", "b-confirmed", "Confirmed IME with Dr. Patel (Ortho) for claim", "#RE-20481", "sms"],
-  ["09:39:55", "SCHEDULED", "b-scheduled", "Booked exam — claimant J. Alvarez, Tue 10:30 AM", "#RE-20479", "mail"],
-  ["09:36:40", "COLLECTED", "b-collected", "Received medical records (42 pp) for", "#RE-20455", "fax"],
-  ["09:31:12", "ESCALATED", "b-escalated", "Claimant unresponsive after 3 attempts — flagged", "#RE-20460", "phone"],
-  ["09:24:47", "CONFIRMED", "b-confirmed", "Reminder acknowledged by claimant", "#RE-20468", "whatsapp"],
-  ["09:18:03", "RESCHEDULED", "b-rescheduled", "Moved exam — examiner conflict resolved", "#RE-20451", "mail"],
-  ["09:11:29", "SENT", "b-sent", "Dispatched intake packets to 6 new claimants", "batch", "mail"],
-  ["09:04:50", "SCHEDULED", "b-scheduled", "Booked neuro exam — Dr. Reyes, Thu 2:00 PM", "#RE-20472", "sms"],
-  ["08:57:16", "COLLECTED", "b-collected", "Pulled imaging from provider portal for", "#RE-20444", "folder"],
-  ["08:49:38", "QUEUED", "b-queued", "Queued no-show follow-up sequence — 4 claimants", "batch", "clock"],
-  ["08:40:02", "CONFIRMED", "b-confirmed", "Confirmed orthopedic exam for claimant", "#RE-20438", "phone"],
-  ["08:32:55", "SENT", "b-sent", "Sent appointment confirmations to 8 claimants", "batch", "mail"],
-  ["08:21:17", "COLLECTED", "b-collected", "Logged returned records packet for", "#RE-20429", "fax"],
-  ["08:09:44", "SCHEDULED", "b-scheduled", "Booked psych eval — Dr. Hahn, Fri 11:00 AM", "#RE-20422", "whatsapp"],
-] as [string, string, string, string, string, string][];
-
-const RECORDS = [
-  ["#RE-20481", "Marcus Patel", "Orthopedic IME", "CONFIRMED", "b-confirmed", "Today 10:00"],
-  ["#RE-20479", "Jordan Alvarez", "Orthopedic IME", "SCHEDULED", "b-scheduled", "Tue 10:30"],
-  ["#RE-20472", "Maya Osei", "Neurological", "SCHEDULED", "b-scheduled", "Thu 14:00"],
-  ["#RE-20468", "Priya Raman", "Psychological", "CONFIRMED", "b-confirmed", "Fri 09:00"],
-  ["#RE-20460", "Devon Clarke", "Orthopedic IME", "ESCALATED", "b-escalated", "Unresponsive"],
-  ["#RE-20455", "Sofia Lindqvist", "Records pending", "COLLECTED", "b-collected", "42 pp in"],
-  ["#RE-20451", "Aaron Webb", "Neurological", "RESCHEDULED", "b-rescheduled", "Mon 13:00"],
-  ["#RE-20444", "Hannah Kim", "Imaging review", "COLLECTED", "b-collected", "Imaging in"],
-  ["#RE-20438", "Theo Marsh", "Orthopedic IME", "CONFIRMED", "b-confirmed", "Wed 11:30"],
-] as [string, string, string, string, string, string][];
-
-const EXAMS = [
-  ["08:30", "AM", "Intake review — overnight submissions", "Operator · automated", "flat"],
-  ["10:00", "AM", "IME · J. Alvarez — Dr. Patel (Ortho)", "#RE-20479 · confirmed", "accent"],
-  ["11:00", "AM", "Records call — provider portal follow-up", "#RE-20455 · in progress", "flat"],
-  ["12:30", "PM", "Neuro exam · M. Osei — Dr. Reyes", "#RE-20472 · confirmed", "flat"],
-  ["14:00", "PM", "Coordinator sync — Dr. Patel's office", "Recurring", "flat"],
-  ["15:30", "PM", "Psych eval · L. Tran — Dr. Hahn", "#RE-20422 · confirmed", "flat"],
-  ["16:45", "PM", "Escalation review — unresponsive claimants", "2 flagged · needs you", "flat"],
-] as [string, string, string, string, string][];
-
-/* ── Page metadata ── */
-const PAGE_META: Record<Page, [string, string]> = {
-  home: ["Today · Friday May 30", "Command Center"],
-  conversations: ["Live · responds instantly", "Conversations"],
-  activity: ["Real-time feed", "Activity"],
-  schedule: ["Friday · May 30", "Schedule"],
-  channels: ["6 channels", "Channels"],
-  records: ["Open claims", "Records"],
-  settings: ["Workspace", "Settings"],
-};
-
-/* ── Operator reply logic ── */
-function operatorReply(text: string): string {
-  const t = text.toLowerCase();
-  if (/(schedul|book|exam|appoint|slot)/.test(t))
-    return "On it. I'll find the next open examiner slot that fits the claimant's location and specialty, book it, and send a confirmation on their preferred channel. You'll see it land in the activity log within a minute.";
-  if (/(record|document|file|imaging|auth)/.test(t))
-    return "I'll chase the outstanding records now — re-sending secure links to the providers and faxing the two that prefer it. Anything that comes back gets logged straight to the claim and flagged for review.";
-  if (/(escalat|stuck|unrespons|no.?show|follow)/.test(t))
-    return "Looking at it. I'll run one more multi-channel attempt with the alternate contact details, and if it's still quiet I'll hand it to a coordinator with the full timeline attached. No claim falls through.";
-  if (/(remind|confirm|message|text|notify)/.test(t))
-    return "Reminders are going out on each claimant's preferred channel, timed to their appointment. I'll watch for acknowledgements and re-send to anyone who goes quiet.";
-  if (/(thank|great|perfect|nice|good job|awesome)/.test(t))
-    return "Anytime. I'll keep the queue moving and surface anything that needs your judgment.";
-  if (/(report|summary|brief|status|how|what)/.test(t))
-    return "Here's where things stand: 27 exams scheduled in the last 24h, 88% no-show recovery, and 2 items flagged for you. Everything else is running autonomously. Want the full breakdown by channel?";
-  return "Understood — I'll take it from here and update the activity log as I go. I'll only ping you if something needs a decision.";
-}
-
-/* ── Toast hook ── */
-function useToasts() {
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const show = useCallback((msg: string) => {
-    const id = Date.now();
-    setToasts((t) => [...t, { id, msg }]);
-    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 2700);
-  }, []);
-  return { toasts, show };
-}
-
-/* ── Count-up hook ── */
-function useCountUp(target: number, active: boolean) {
-  const [value, setValue] = useState(0);
+/* ─── COUNT-UP ───────────────────────────────────────────────────────── */
+function CountUp({ to }: { to: number }) {
+  const [val, setVal] = useState(0);
   useEffect(() => {
-    if (!active) return;
-    setValue(0);
-    const t0 = performance.now();
-    const dur = 1000;
+    setVal(0);
     let raf: number;
-    function step(t: number) {
+    const t0 = performance.now(), dur = 600;
+    const tick = (t: number) => {
       const k = Math.min(1, (t - t0) / dur);
-      const e = 1 - Math.pow(1 - k, 3);
-      setValue(Math.round(target * e));
-      if (k < 1) raf = requestAnimationFrame(step);
-      else setValue(target);
-    }
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, [target, active]);
-  return value;
-}
-
-/* ── Activity row ── */
-function ActRow({
-  row,
-  isFirst,
-  onToast,
-}: {
-  row: [string, string, string, string, string, string];
-  isFirst: boolean;
-  onToast: (msg: string) => void;
-}) {
-  const [time, label, cls, desc, ref, ico] = row;
-  return (
-    <button
-      className={`act${isFirst ? " latest" : ""}`}
-      onClick={() => onToast(ref === "batch" ? "Batch action — opening details" : "Opening " + ref)}
-    >
-      <span className="act-time">{time}</span>
-      <span className={`badge ${cls}`}>{label}</span>
-      <span className="act-desc">
-        {desc} <span className="ref">{ref}</span>
-      </span>
-      <span className="act-chan">
-        <Icon name={ico} />
-      </span>
-    </button>
-  );
-}
-
-/* ── Schedule row ── */
-function SchedRow({
-  exam,
-  onToast,
-}: {
-  exam: [string, string, string, string, string];
-  onToast: (msg: string) => void;
-}) {
-  const [t, ap, title, sub, tone] = exam;
-  return (
-    <div className={`sched-row${tone === "accent" ? " accent" : ""}`} onClick={() => onToast(title)}>
-      <div className="sched-time">
-        {t}
-        <span>{ap}</span>
-      </div>
-      <div>
-        <div className="sched-title">{title}</div>
-        <div className="sched-sub">{sub}</div>
-      </div>
-      <Icon name="arrow" />
-    </div>
-  );
-}
-
-/* ── Stat card ── */
-function StatCard({
-  label,
-  target,
-  suf,
-  delta,
-  gold,
-  active,
-  onToast,
-}: {
-  label: string;
-  target: number;
-  suf: string;
-  delta: string;
-  gold?: boolean;
-  active: boolean;
-  onToast: (msg: string) => void;
-}) {
-  const value = useCountUp(target, active);
-  return (
-    <div className={`stat${gold ? " gold" : ""}`} onClick={() => onToast(`${label}: tracking ${target}${suf}`)}>
-      <div className="stat-val">
-        {value}
-        {value === target && suf ? <span className="u">{suf}</span> : null}
-      </div>
-      <div className="stat-label">{label}</div>
-      <div className="stat-delta">{delta}</div>
-    </div>
-  );
-}
-
-/* ── Setting row ── */
-function SettingRow({
-  label,
-  desc,
-  on,
-  onToggle,
-}: {
-  label: string;
-  desc: string;
-  on: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <div className="set-row">
-      <div>
-        <div className="set-label">{label}</div>
-        <div className="set-desc">{desc}</div>
-      </div>
-      <div className={`toggle${on ? " on" : ""}`} role="switch" onClick={onToggle} />
-    </div>
-  );
-}
-
-/* ── Main component ── */
-export function OperatorCommandCenter({ client }: { client: Client }) {
-  const [page, setPage] = useState<Page>("home");
-  const [activeThread, setActiveThread] = useState("briefing");
-  const [threadMessages, setThreadMessages] = useState<Record<string, Msg[]>>(() => {
-    const briefingMsg = client.todaySummaryBody
-      ? `Good morning, Dana. ${client.todaySummaryBody}`
-      : "Good morning, Dana. Overnight I confirmed <b>11 exams</b>, recovered <b>3 no-shows</b>, and collected records on 7 claims. Two items need your eyes today.";
-
-    const escMsg =
-      client.escalations[0]
-        ? `Heads up — <b>${client.escalations[0].title}</b>: ${client.escalations[0].why} ${client.escalations[0].next}`
-        : "Heads up — <b>#RE-20460</b> (Devon Clarke) hasn't responded after 3 contact attempts across SMS and phone. I've paused automated outreach and flagged it for you.";
-
-    return {
-      briefing: [
-        { who: "op", text: briefingMsg },
-        { who: "me", text: "What still needs a human today?" },
-        {
-          who: "op",
-          text: "Two items: one claim needs an examiner override (specialty mismatch), and a claimant asked to speak with a coordinator. Everything else is moving on its own. Want me to draft the override request?",
-        },
-      ],
-      escalations: [
-        { who: "op", text: escMsg },
-        { who: "me", text: "Why did it stall?" },
-        {
-          who: "op",
-          text: "Wrong number on the intake form, and the email bounced. I found an alternate number in the claim file. Want me to try it, or have a coordinator call directly?",
-        },
-      ],
-      scheduling: [
-        {
-          who: "op",
-          text: "I have 9 exams on the board for today and 14 reminders queued for tonight. Dr. Reyes opened two Thursday slots — I can pull forward the two neuro exams waiting on availability.",
-        },
-        { who: "me", text: "Do it, and confirm with the claimants." },
-        {
-          who: "op",
-          text: "Done — both moved to Thursday and confirmation texts are out. I'll watch for replies and lock the slots once acknowledged.",
-        },
-      ],
-      records: [
-        {
-          who: "op",
-          text: "5 record requests are outstanding. I re-sent secure links to 3 providers this morning and faxed the other 2. <b>#RE-20455</b> just returned a 42-page packet — already logged to the claim.",
-        },
-        { who: "me", text: "Anything blocked?" },
-        {
-          who: "op",
-          text: "One provider needs a signed authorization on file before they'll release. I've drafted the auth and queued it for your e-signature.",
-        },
-      ],
-      alvarez: [
-        {
-          who: "op",
-          text: "Jordan Alvarez confirmed the Tuesday 10:30 orthopedic exam with Dr. Patel and asked about parking. I sent the clinic's parking details and the intake checklist.",
-        },
-        { who: "me", text: "Great. Remind them the day before." },
-        {
-          who: "op",
-          text: "Reminder is scheduled for Monday 5:00 PM via SMS — their preferred channel. I'll notify you if anything changes.",
-        },
-      ],
+      const ease = 1 - Math.pow(1 - k, 3);
+      setVal(Math.round(to * ease));
+      if (k < 1) raf = requestAnimationFrame(tick);
     };
-  });
-  const [typing, setTyping] = useState(false);
-  const [chatInput, setChatInput] = useState("");
-  const [actFilter, setActFilter] = useState("all");
-  const [clock, setClock] = useState("");
-  const [settingsToggles, setSettingsToggles] = useState<Record<string, boolean>>({
-    "Auto-confirm exams": true,
-    "Auto-recover no-shows": true,
-    "Auto-collect records": true,
-    "Escalate before sending": false,
-    "SMS reminders": true,
-    WhatsApp: true,
-    "After-hours autonomy": true,
-    "Weekend operation": false,
-    "Morning brief": true,
-    "Escalation alerts": true,
-    "Weekly digest": false,
-  });
-  const { toasts, show: showToast } = useToasts();
-  const chatBodyRef = useRef<HTMLDivElement>(null);
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [to]);
+  return <>{val}</>;
+}
 
-  // Clock
+/* ─── CLIENT A — REAL ESTATE ────────────────────────────────────────── */
+const CFG_A: ClientCfg = {
+  eyebrow: "OPERATOR FOR REAL ESTATE",
+  statusChip: "MONITORING PIPELINE",
+  nav: [
+    { id:"home",        label:"Command Center", ico:"dashboard" },
+    { id:"leads",       label:"Leads",          ico:"leads" },
+    { id:"inbox",       label:"Inbox",          ico:"inbox" },
+    { id:"tasks",       label:"Tasks",          ico:"tasks" },
+    { id:"calendar",    label:"Calendar",       ico:"calendar" },
+    { id:"pipeline",    label:"Pipeline",       ico:"pipeline" },
+    { id:"escalations", label:"Escalations",    ico:"escalations" },
+    { id:"reports",     label:"Reports",        ico:"reports" },
+  ],
+  stats: [
+    { to:12, label:"Active Leads",       detail:"+3 this week" },
+    { to:4,  label:"Showings Today",     detail:"2 confirmed" },
+    { to:3,  label:"Awaiting Follow-Up", detail:"oldest: 4 days", gold:true },
+  ],
+  chatIntro: "I'm managing your leads, appointments, and follow-ups. Tell me what you need or ask me about your pipeline.",
+  prompts: [
+    "Who needs follow-up today?",
+    "Any showings confirmed?",
+    "What leads came in this week?",
+    "Show my pipeline.",
+    "Any escalations?",
+    "Who hasn't responded?",
+  ],
+  seedThread: [
+    { who:"me", text:"Who needs follow-up today?" },
+    { who:"op", text:"Sarah Klein has not responded in 4 days — budget $1.2M, pre-approval pending. Follow-up recommended within 24 hours. David Rosen confirmed tomorrow's showing at 123 Ocean Ave — high motivation, 60-day close target. Miriam Cohen requested updated comps for Bergen County — sent to queue." },
+  ],
+  acts: [
+    { time:"8:14 AM",  desc:"New lead received — David Rosen — $850K budget — WhatsApp",   badge:"COMPLETED",  cls:"b-confirmed",  ico:"whatsapp", latest:true },
+    { time:"9:02 AM",  desc:"Showing confirmed — 123 Ocean Ave — David Rosen — Email",      badge:"CONFIRMED",  cls:"b-confirmed",  ico:"mail" },
+    { time:"9:45 AM",  desc:"Follow-up sent — Sarah Klein — pre-approval reminder",          badge:"SENT",       cls:"b-sent",       ico:"sms" },
+    { time:"10:30 AM", desc:"Comps requested — Miriam Cohen — Bergen County",               badge:"QUEUED",     cls:"b-queued",     ico:"mail" },
+    { time:"11:05 AM", desc:"Negotiation escalated — buyer requesting price reduction",      badge:"ESCALATED",  cls:"b-escalated",  ico:"phone" },
+    { time:"11:48 AM", desc:"Reminder sent — tomorrow's showing — David Rosen — SMS",       badge:"SENT",       cls:"b-sent",       ico:"sms" },
+    { time:"12:15 PM", desc:"Pipeline updated — 3 active deals — 1 under contract",        badge:"COMPLETED",  cls:"b-confirmed",  ico:"pipeline" },
+  ],
+  attnHeader: "People Needing Attention",
+  attnItems: [
+    { ref:"Rosen", name:"David Rosen",  meta1:"Budget: $850,000",   meta2:"Status: Showing Scheduled",    statusCls:"b-confirmed", statusLabel:"READY",  note:"Highly motivated buyer. Close target 60 days.",          actions:["Book Showing","Send Reminder"] },
+    { ref:"Klein", name:"Sarah Klein",  meta1:"Budget: $1,200,000", meta2:"Status: Pre-Approval Pending", statusCls:"b-escalated", statusLabel:"URGENT", note:"Strong lead. Follow up within 24 hours.",                actions:["Follow Up","Send Comps"] },
+    { ref:"Cohen", name:"Miriam Cohen", meta1:"Budget: $975,000",   meta2:"Status: Comps Requested",      statusCls:"b-queued",    statusLabel:"QUEUED", note:"Waiting on Bergen County data. No action needed yet.",   actions:["View Details"] },
+  ],
+  escs: [
+    { title:"Negotiation Request", body:"Buyer requesting lower purchase price on 47 Maple Dr.",      rec:"Operator recommendation: Escalate to broker — pricing decision required.",          actions:["Review Now"] },
+    { title:"Commission Question",  body:"Seller asking about reduced commission structure.",           rec:"Operator recommendation: Escalate to Chaim — not within Operator authority.",      actions:["Review Now"] },
+  ],
+  chans: [
+    { name:"WhatsApp",  ico:"whatsapp", active:true,  note:"3 active threads · 2m avg" },
+    { name:"SMS",       ico:"sms",      active:true,  note:"Reminders queued for 4 leads" },
+    { name:"Email",     ico:"mail",     active:true,  note:"6 emails sent today" },
+    { name:"Phone",     ico:"phone",    active:false, note:"No calls in progress" },
+    { name:"Asana",     ico:"asana",    active:true,  note:"5 tasks updated · synced" },
+  ],
+  overnightLabel: "Delegate Tonight",
+  overnightTask:  "Review all unresponsive leads and prepare morning follow-up drafts with suggested next steps.",
+  replies: [
+    { pat:/follow/i,         text:"Sarah Klein — 4 days no response, budget $1.2M. David Rosen — confirmed showing tomorrow. Miriam Cohen — comps queued. I recommend contacting Sarah first." },
+    { pat:/show/i,           text:"David Rosen confirmed tomorrow's showing at 123 Ocean Ave. 2 more showings this week are pending confirmation — I'll send reminders tonight." },
+    { pat:/week|came in/i,   text:"3 new leads this week: David Rosen ($850K, WhatsApp), Sarah Klein ($1.2M, referral), and Miriam Cohen ($975K, online form). All qualified and active." },
+    { pat:/pipeline/i,       text:"Pipeline: 12 active leads, 3 showings scheduled, 2 offers pending, 1 under contract. Highest urgency: Sarah Klein and David Rosen." },
+    { pat:/escalat/i,        text:"2 open escalations: (1) Negotiation request — buyer wants price reduction on 47 Maple Dr. (2) Commission question — seller asking about reduced rate. Both need your decision." },
+    { pat:/respond|hasn.t/i, text:"Sarah Klein hasn't responded in 4 days. Two other leads haven't acknowledged last week's follow-up. I'll queue a re-engagement sequence if you'd like." },
+  ],
+  fallback: "I'm monitoring your pipeline. Could you be more specific? You can ask about follow-ups, showings, leads, or escalations.",
+  userName:"Chaim Grossman", userCo:"Real Estate · Operator", userInitials:"CG",
+};
+
+/* ─── CLIENT B — TITLE OPERATIONS ───────────────────────────────────── */
+const CFG_B: ClientCfg = {
+  eyebrow: "OPERATOR FOR TITLE OPERATIONS",
+  statusChip: "MONITORING ORDERS",
+  nav: [
+    { id:"home",        label:"Command Center", ico:"dashboard" },
+    { id:"orders",      label:"Orders",         ico:"orders" },
+    { id:"projects",    label:"Projects",       ico:"projects" },
+    { id:"documents",   label:"Documents",      ico:"documents" },
+    { id:"inbox",       label:"Inbox",          ico:"inbox" },
+    { id:"tasks",       label:"Tasks",          ico:"tasks" },
+    { id:"calendar",    label:"Calendar",       ico:"calendar" },
+    { id:"escalations", label:"Escalations",    ico:"escalations" },
+    { id:"reports",     label:"Reports",        ico:"reports" },
+  ],
+  stats: [
+    { to:18, label:"Active Orders",   detail:"6 due today" },
+    { to:3,  label:"Escalated",       detail:"Human review needed", gold:true },
+    { to:5,  label:"Awaiting County", detail:"Oldest: 5 days" },
+  ],
+  chatIntro: "I'm tracking your active orders, document requests, and county timelines. Ask me what needs attention or pull up any order.",
+  prompts: [
+    "What needs attention today?",
+    "Which orders are delayed?",
+    "Show escalations.",
+    "RE-2847 status?",
+    "Any missing documents?",
+    "What's due this week?",
+  ],
+  seedThread: [
+    { who:"me", text:"What needs my attention today?" },
+    { who:"op", text:"RE-2847 — Kings County records requested 2 days ago, no response. Follow-up call to clerk recommended. RE-2854 — Lien search produced a possible open judgment. Human review required before report release. RE-2858 — Recording cannot proceed. Signed authorization form missing. Request from client immediately." },
+  ],
+  acts: [
+    { time:"8:42 AM",  desc:"New order opened — RE-2847 — Full Title Search 40yr — ABC Title", badge:"COMPLETED",  cls:"b-confirmed",  ico:"orders", latest:true },
+    { time:"9:05 AM",  desc:"County request submitted — Kings County — RE-2847",               badge:"WAITING",    cls:"b-scheduled",  ico:"doc" },
+    { time:"9:31 AM",  desc:"Certified copy retrieved + verified — RE-2851",                   badge:"COMPLETED",  cls:"b-confirmed",  ico:"doc" },
+    { time:"10:04 AM", desc:"Status update sent to client — RE-2851 — Goldman Law PLLC",       badge:"SENT",       cls:"b-sent",       ico:"mail" },
+    { time:"10:37 AM", desc:"Possible judgment detected — RE-2854 — Flatbush Closing Group",   badge:"ESCALATED",  cls:"b-escalated",  ico:"warning" },
+    { time:"11:16 AM", desc:"Recording deadline approaching — RE-2858",                        badge:"WAITING",    cls:"b-scheduled",  ico:"clock" },
+    { time:"11:42 AM", desc:"Internal note — missing authorization required — RE-2858",        badge:"QUEUED",     cls:"b-queued",     ico:"doc" },
+    { time:"12:08 PM", desc:"Delivery prepared — certified copy package — RE-2851",            badge:"COMPLETED",  cls:"b-confirmed",  ico:"folder" },
+  ],
+  attnHeader: "Orders Needing Attention",
+  attnItems: [
+    { ref:"RE-2847", name:"RE-2847", meta1:"Client: ABC Title Agency · Full Title Search 40yr",    meta2:"Property: 1457 Ocean Parkway · Awaiting County Records",   statusCls:"b-scheduled", statusLabel:"WAITING", note:"County request submitted 2 days ago. Follow-up recommended.",      actions:["Follow Up County","Notify Client"] },
+    { ref:"RE-2851", name:"RE-2851", meta1:"Client: Goldman Law PLLC · Certified Copy Request",   meta2:"Status: Ready for Delivery",                                statusCls:"b-confirmed", statusLabel:"READY",   note:"Certified copy received and verified. Ready to send.",           actions:["Deliver","View Doc"] },
+    { ref:"RE-2854", name:"RE-2854", meta1:"Client: Flatbush Closing Group · Lien Search",        meta2:"Status: Escalated — Possible Judgment",                     statusCls:"b-escalated", statusLabel:"URGENT",  note:"Open judgment detected. Do not release report without review.",  actions:["Review Now"] },
+  ],
+  escs: [
+    { title:"County Non-Response — RE-2847", body:"No reply from Kings County after 5 business days.",          rec:"Recommendation: Call clerk directly and notify client of delay.",     actions:["Call County","Notify Client"] },
+    { title:"Missing Authorization — RE-2858", body:"Recording blocked. No signed authorization on file.",       rec:"Recommendation: Request signed form from client immediately.",         actions:["Request Form"] },
+    { title:"Possible Judgment — RE-2854",   body:"Lien search match requires attorney review before delivery.", rec:"Recommendation: Hold report and escalate to examiner.",               actions:["Escalate"] },
+  ],
+  chans: [
+    { name:"WhatsApp",       ico:"whatsapp", active:true,  note:"1 client thread · awaiting reply" },
+    { name:"Email",          ico:"mail",     active:true,  note:"Status updates to 3 clients" },
+    { name:"Google Sheets",  ico:"sheets",   active:true,  note:"Order tracker synced · 5m ago" },
+    { name:"Google Keep",    ico:"keep",     active:false, note:"No new notes today" },
+    { name:"Team Messaging", ico:"team",     active:true,  note:"2 internal threads active" },
+  ],
+  overnightLabel: "Overnight Sweep",
+  overnightTask:  "Chase 5 outstanding county requests, re-send authorization form requests, and compile the morning order digest.",
+  replies: [
+    { pat:/attention|needs/i, text:"RE-2847 — County follow-up overdue. RE-2854 — Judgment detected, human review required. RE-2858 — Authorization missing, blocks recording. These three need action today." },
+    { pat:/delay/i,           text:"RE-2847 is the most delayed — Kings County request is now 5 days old with no response. RE-2860 is behind on Surrogates Court documents." },
+    { pat:/escalat/i,         text:"3 escalations: (1) County non-response on RE-2847. (2) Missing authorization on RE-2858. (3) Possible open judgment on RE-2854. All require your decision before I can proceed." },
+    { pat:/2847/i,            text:"RE-2847 — Full Title Search 40yr for ABC Title Agency at 1457 Ocean Parkway. County request submitted to Kings County 2 days ago, no clerk response yet. Follow-up call recommended today." },
+    { pat:/document|missing/i,text:"RE-2858 needs a signed authorization form before recording can proceed. RE-2847 is waiting on Kings County for the actual document return. I've flagged both for follow-up." },
+    { pat:/due|week/i,        text:"This week: RE-2858 recording deadline is Friday. RE-2851 delivery is ready today. RE-2847 county follow-up is overdue. RE-2860 Surrogates Court deadline is Thursday." },
+  ],
+  fallback: "I'm monitoring your orders. Could you be more specific? You can ask about delayed orders, escalations, missing documents, or a specific order number.",
+  userName:"Lazer Grossman", userCo:"Rapid Examiners · Operator", userInitials:"LG",
+};
+
+const CFGS: Record<ClientId, ClientCfg> = { A: CFG_A, B: CFG_B };
+
+/* ─── MAIN COMPONENT ─────────────────────────────────────────────────── */
+export function OperatorCommandCenter({ client }: { client: Client }) {
+  const initId: ClientId = client.slug === "lazer" ? "B" : "A";
+  const [cid, setCid]       = useState<ClientId>(initId);
+  const [fading, setFading] = useState(false);
+  const [clock, setClock]   = useState("");
+  const [msgs, setMsgs]     = useState<Msg[]>(CFGS[initId].seedThread);
+  const [input, setInput]   = useState("");
+  const [typing, setTyping] = useState(false);
+  const [toasts, setToasts] = useState<{id:number; msg:string}[]>([]);
+  const chatRef             = useRef<HTMLDivElement>(null);
+
+  const cfg   = CFGS[cid];
+  const theme = THEMES[cid];
+
+  /* live clock */
   useEffect(() => {
     const tick = () => {
-      const d = new Date();
-      const p = (n: number) => String(n).padStart(2, "0");
+      const d = new Date(), p = (n:number) => String(n).padStart(2,"0");
       setClock(`${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`);
     };
     tick();
@@ -376,759 +298,355 @@ export function OperatorCommandCenter({ client }: { client: Client }) {
     return () => clearInterval(id);
   }, []);
 
-  // Scroll chat to bottom
+  /* reset chat thread on client switch */
   useEffect(() => {
-    if (chatBodyRef.current) {
-      chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
-    }
-  }, [activeThread, threadMessages, typing]);
+    setMsgs(CFGS[cid].seedThread);
+    setInput("");
+    setTyping(false);
+  }, [cid]);
 
-  const goPage = (p: Page, opts?: { thread?: string }) => {
-    setPage(p);
-    if (opts?.thread) setActiveThread(opts.thread);
+  /* keep chat scrolled to bottom */
+  useEffect(() => {
+    if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
+  }, [msgs, typing]);
+
+  /* client toggle — 150 ms fade out → swap → fade in */
+  const switchClient = (id: ClientId) => {
+    if (id === cid) return;
+    setFading(true);
+    setTimeout(() => { setCid(id); setFading(false); }, 150);
   };
 
-  const sendMessage = useCallback(
-    (text: string) => {
-      text = text.trim();
-      if (!text) return;
-      setThreadMessages((prev) => ({
-        ...prev,
-        [activeThread]: [...(prev[activeThread] || []), { who: "me" as const, text }],
-      }));
-      setChatInput("");
-      setTyping(true);
-      setTimeout(() => {
-        const rep = operatorReply(text);
-        setTyping(false);
-        setThreadMessages((prev) => ({
-          ...prev,
-          [activeThread]: [...(prev[activeThread] || []), { who: "op" as const, text: rep }],
-        }));
-      }, 900 + Math.random() * 500);
-    },
-    [activeThread]
-  );
+  /* toast helper */
+  const toast = (msg: string) => {
+    const id = Date.now();
+    setToasts(t => [...t, { id, msg }]);
+    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 2700);
+  };
 
-  const handleAsk = (q: string) => {
-    goPage("conversations", { thread: "briefing" });
+  /* chat send */
+  const send = (text: string) => {
+    const t = text.trim();
+    if (!t || typing) return;
+    setMsgs(m => [...m, { who:"me", text:t }]);
+    setInput("");
+    setTyping(true);
     setTimeout(() => {
-      if (!/open the full chat/i.test(q)) sendMessage(q);
-    }, 260);
+      const reply = cfg.replies.find(r => r.pat.test(t))?.text ?? cfg.fallback;
+      setMsgs(m => [...m, { who:"op", text:reply }]);
+      setTyping(false);
+    }, 900 + Math.random() * 400);
   };
-
-  const threads = [
-    { id: "briefing", name: "Operator", sub: "Daily briefing", av: "O", gold: false, time: "9:42", pin: true },
-    { id: "escalations", name: "Escalations", sub: "2 items need you", av: "!", gold: true, time: "9:31", pin: false },
-    { id: "scheduling", name: "Scheduling", sub: "Exam bookings", av: "S", gold: false, time: "9:18", pin: false },
-    { id: "records", name: "Records requests", sub: "Provider follow-ups", av: "R", gold: false, time: "8:57", pin: false },
-    { id: "alvarez", name: "J. Alvarez · #RE-20479", sub: "Claimant thread", av: "JA", gold: false, time: "8:40", pin: false },
-  ];
-
-  const threadPrompts: Record<string, string[]> = {
-    escalations: ["Try the alternate number", "Hand to a coordinator", "Show the contact timeline"],
-    scheduling: ["Pull forward the neuro exams", "How many reminders tonight?", "Any conflicts?"],
-    records: ["What's blocked?", "Send the auth for signature", "Chase the slow providers"],
-    alvarez: ["Remind them Monday", "Send parking details", "Any special instructions?"],
-    briefing: ["Show me the escalations", "Draft the override request", "What's the day look like?"],
-  };
-
-  const filteredActs =
-    actFilter === "all" ? ACTS : ACTS.filter((a) => a[2] === actFilter);
-
-  const kpi0 = client.kpis[0];
-  const kpi1 = client.kpis[1];
-  const kpi2 = client.kpis[2];
-
-  const stats = [
-    {
-      to: kpi0 ? parseInt(kpi0.value, 10) || 27 : 27,
-      suf: "",
-      label: kpi0?.label || "Exams scheduled · 24h",
-      delta: kpi0?.detail || "+9 vs prev day",
-      gold: false,
-    },
-    {
-      to: kpi1 ? parseInt(kpi1.value, 10) || 41 : 41,
-      suf: "s",
-      label: kpi1?.label || "Avg response time",
-      delta: kpi1?.detail || "−12s this week",
-      gold: false,
-    },
-    {
-      to: kpi2 ? parseInt(kpi2.value, 10) || 88 : 88,
-      suf: "%",
-      label: kpi2?.label || "No-show recovery",
-      delta: kpi2?.detail || "+6 pts",
-      gold: true,
-    },
-  ];
-
-  const [eyebrow, tbTitle] = PAGE_META[page];
 
   return (
-    <div className="app">
-      {/* ── Sidebar ── */}
+    <div style={theme as React.CSSProperties} className="app">
+
+      {/* ── SIDEBAR ─────────────────────────────────────────────────── */}
       <aside className="side">
         <div className="brand">
           <div className="brand-badge">O</div>
           <div className="brand-meta">
             <span className="brand-name">Operator</span>
-            <span className="brand-status">
-              <span className="pulse" />
-              Running · 240h
-            </span>
+            <span className="brand-status"><span className="pulse" />Running · Active</span>
           </div>
         </div>
+
         <div className="nav-sec">Workspace</div>
         <nav className="nav">
-          {(
-            [
-              ["home", "dashboard", "Command Center", null],
-              ["conversations", "comments", "Conversations", "12"],
-              ["activity", "activity", "Activity", null],
-              ["schedule", "calendar", "Schedule", "9"],
-              ["channels", "broadcast", "Channels", null],
-              ["records", "folder", "Records", null],
-            ] as [Page, string, string, string | null][]
-          ).map(([pid, icon, label, cnt]) => (
-            <button
-              key={pid}
-              className={`nav-item${page === pid ? " active" : ""}`}
-              onClick={() => goPage(pid)}
-            >
-              <Icon name={icon} />
-              <span className="lbl">{label}</span>
-              {cnt ? <span className="cnt">{cnt}</span> : null}
+          {cfg.nav.map((item, i) => (
+            <button key={item.id} className={`nav-item${i === 0 ? " active" : ""}`}
+              onClick={() => toast(item.label)}>
+              <Icon name={item.ico} size={17} />
+              <span className="lbl">{item.label}</span>
             </button>
           ))}
         </nav>
+
         <div className="side-foot">
-          <button
-            className={`nav-item${page === "settings" ? " active" : ""}`}
-            onClick={() => goPage("settings")}
-          >
-            <Icon name="gear" />
+          <button className="nav-item" onClick={() => toast("Settings")}>
+            <Icon name="gear" size={17} />
             <span className="lbl">Settings</span>
           </button>
           <div className="account">
-            <div className="avatar">DM</div>
+            <div className="avatar">{cfg.userInitials}</div>
             <div className="account-meta">
-              <span className="account-name">Dana Morales</span>
-              <span className="account-co">{client.company} · Ops Lead</span>
+              <span className="account-name">{cfg.userName}</span>
+              <span className="account-co">{cfg.userCo}</span>
             </div>
           </div>
         </div>
       </aside>
 
-      {/* ── Main ── */}
+      {/* ── MAIN ────────────────────────────────────────────────────── */}
       <div className="main">
-        {/* Topbar */}
+
+        {/* TOPBAR */}
         <header className="topbar">
           <div className="tb-title">
-            <span className="tb-eyebrow">{eyebrow}</span>
-            <span className="tb-h">{tbTitle}</span>
+            <span className="tb-eyebrow">{cfg.eyebrow}</span>
+            <span className="tb-h">Command Center</span>
           </div>
           <div className="tb-spacer" />
           <div className="search">
-            <Icon name="search" />
-            <input placeholder="Search claims, threads, exams…" />
+            <Icon name="search" size={13} />
+            <input placeholder="Search…" readOnly />
           </div>
           <span className="monitor">
-            <span className="pulse" />
-            MONITORING
+            <span className="pulse" />{cfg.statusChip}
           </span>
-          <span className="clock">
-            {clock}
-            <span className="z"> LOCAL</span>
-          </span>
+          <span className="clock">{clock}<span className="z"> LOCAL</span></span>
+
+          {/* A / B client toggle */}
+          <div className="ab-toggle">
+            <button className={`ab-seg${cid === "A" ? " ab-on" : ""}`} onClick={() => switchClient("A")}>A</button>
+            <button className={`ab-seg${cid === "B" ? " ab-on" : ""}`} onClick={() => switchClient("B")}>B</button>
+          </div>
         </header>
 
-        {/* Pages */}
-        <div className="view">
+        {/* 3-COLUMN PAGE */}
+        <div className="view" style={{ opacity:fading ? 0 : 1, transition:"opacity .2s ease" }}>
+          <div className="cc-grid">
 
-          {/* ── HOME ── */}
-          <section className={`page${page === "home" ? " active" : ""}`}>
-            <div className="cc-grid">
-              {/* Left col */}
-              <div className="stack">
-                {/* Op preview */}
-                <div className="op-prev">
-                  <div className="op-prev-h">
-                    <div className="op-mini">O</div>
-                    <div>
-                      <div className="op-prev-name">
-                        Operator
-                        <span>
-                          <span className="pulse" style={{ display: "inline-block", width: 6, height: 6 }} />
-                          &nbsp;Online · working {client.company}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="op-prev-body">
-                    <div className="op-bubble">
-                      Good morning, Dana. Overnight I confirmed <b>11 exams</b>, recovered <b>3 no-shows</b>, and
-                      collected records on 7 claims. Two items need your eyes today.
-                    </div>
-                  </div>
-                  <div className="op-prev-foot">
-                    <button className="chip" onClick={() => handleAsk("What needs me today?")}>
-                      What needs me today?
-                    </button>
-                    <button className="chip" onClick={() => handleAsk("Show escalations")}>
-                      Show escalations
-                    </button>
-                    <button className="chip" onClick={() => goPage("conversations", { thread: "briefing" })}>
-                      Open chat →
-                    </button>
-                  </div>
-                </div>
+            {/* ── LEFT: Chat · Quick Actions · Overnight Queue ── */}
+            <div className="stack">
 
-                {/* Quick actions */}
-                <div className="card">
-                  <div className="card-h">
-                    <h2>Quick actions</h2>
-                    <span className="sub">one tap</span>
-                  </div>
-                  <div className="qa">
-                    <button
-                      className="qa-btn"
-                      onClick={() => showToast("Scheduling sweep started — checking examiner availability")}
-                    >
-                      <Icon name="bolt" />
-                      Run scheduling sweep
-                    </button>
-                    <button className="qa-btn" onClick={() => showToast("Pulling records from 3 provider portals")}>
-                      <Icon name="file" />
-                      Pull records
-                    </button>
-                    <button className="qa-btn" onClick={() => showToast("Reminders queued for 14 claimants")}>
-                      <Icon name="bell" />
-                      Send reminders
-                    </button>
-                    <button
-                      className="qa-btn gold"
-                      onClick={() => goPage("conversations", { thread: "escalations" })}
-                    >
-                      <Icon name="warning" />
-                      Review escalations
-                    </button>
-                  </div>
-                </div>
-
-                {/* Channel map */}
-                <div className="card">
-                  <div className="card-h">
-                    <h2>Channel map</h2>
-                    <button className="link" onClick={() => goPage("channels")}>
-                      Details <Icon name="arrow" />
-                    </button>
-                  </div>
-                  <div className="chan-grid">
-                    {CHANNELS.map(([name, ico, active, note]) => (
-                      <button
-                        key={name as string}
-                        className={`chan ${active ? "active" : "idle"}`}
-                        onClick={() => goPage("channels")}
-                      >
-                        <div className="chan-top">
-                          <span className="chan-ico">
-                            <Icon name={ico as string} />
-                          </span>
-                          <span className="chan-name">{name}</span>
-                          <span className={`chan-pill ${active ? "p-active" : "p-idle"}`}>
-                            {active ? "ACTIVE" : "IDLE"}
-                          </span>
-                        </div>
-                        <div className="chan-note">{note}</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Middle col */}
-              <div className="stack">
-                <div className="stats">
-                  {stats.map((s) => (
-                    <StatCard
-                      key={s.label}
-                      label={s.label}
-                      target={s.to}
-                      suf={s.suf}
-                      delta={s.delta}
-                      gold={s.gold}
-                      active={page === "home"}
-                      onToast={showToast}
-                    />
-                  ))}
-                </div>
-                <div className="card">
-                  <div className="card-h">
-                    <h2>Live Activity</h2>
-                    <span className="live-badge">
-                      <span className="ld" />
-                      LIVE
-                    </span>
-                  </div>
+              {/* Operator Chat */}
+              <div className="op-prev">
+                <div className="op-prev-h">
+                  <div className="op-mini">O</div>
                   <div>
-                    {ACTS.slice(0, 8).map((row, i) => (
-                      <ActRow key={row[0] + i} row={row} isFirst={i === 0} onToast={showToast} />
-                    ))}
-                  </div>
-                  <div style={{ padding: "13px 16px", borderTop: "1px solid var(--line-2)" }}>
-                    <button className="link" onClick={() => goPage("activity")}>
-                      View all activity <Icon name="arrow" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right col */}
-              <div className="stack">
-                <div className="card">
-                  <div className="card-h">
-                    <h2>Overnight Queue</h2>
-                    <span className="q-badge">
-                      <Icon name="clock" />
-                      Scheduled
-                    </span>
-                  </div>
-                  <div className="q-list">
-                    {QUEUE.map(([t, d]) => (
-                      <div key={t} className="q-item" onClick={() => showToast(`Queued: ${d}`)}>
-                        <span className="q-time">{t}</span>
-                        <span className="q-ico">
-                          <Icon name="clock" />
-                        </span>
-                        <span className="q-desc">{d}</span>
-                        <span className="badge b-queued">Queued</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="card">
-                  <div className="card-h">
-                    <h2>Today&apos;s exams</h2>
-                    <button className="link" onClick={() => goPage("schedule")}>
-                      Schedule <Icon name="arrow" />
-                    </button>
-                  </div>
-                  <div className="sched">
-                    {EXAMS.slice(0, 4).map((exam) => (
-                      <SchedRow key={exam[0] + exam[2]} exam={exam} onToast={showToast} />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* ── CONVERSATIONS ── */}
-          <section className={`page${page === "conversations" ? " active" : ""}`}>
-            <div className="conv">
-              <div className="thread-list">
-                <div className="tl-h">
-                  <h3>Conversations</h3>
-                  <button className="btn btn-ghost btn-sm" onClick={() => showToast("New conversation started")}>
-                    <Icon name="plus" />
-                  </button>
-                </div>
-                <div className="tl-scroll">
-                  {threads.map((t) => {
-                    const msgs = threadMessages[t.id] || [];
-                    const last = (msgs[msgs.length - 1]?.text || "").replace(/<[^>]+>/g, "");
-                    return (
-                      <button
-                        key={t.id}
-                        className={`thread${activeThread === t.id ? " active" : ""}`}
-                        onClick={() => setActiveThread(t.id)}
-                      >
-                        <span className={`th-av${t.gold ? " gold" : ""}`}>{t.av}</span>
-                        <span className="th-meta">
-                          <span className="th-name">{t.name}</span>
-                          <span className="th-last">{last}</span>
-                        </span>
-                        <span className="th-right">
-                          <span className="th-time">{t.time}</span>
-                          {t.pin ? <Icon name="pin" /> : null}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="chatwrap">
-                {(() => {
-                  const t = threads.find((x) => x.id === activeThread) || threads[0];
-                  return (
-                    <div className="chat-h">
-                      <div className="op-mini" style={{ width: 34, height: 34 }}>
-                        O
-                      </div>
-                      <div className="chat-h-meta">
-                        <div className="chat-h-name">
-                          {t.name === "Operator" ? "Operator" : `Operator · ${t.name}`}
-                        </div>
-                        <div className="chat-h-sub">
-                          <span className="pulse" style={{ width: 6, height: 6 }} />
-                          {t.sub} · responds instantly
-                        </div>
-                      </div>
-                      <button
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => showToast("Operator is handling this thread")}
-                      >
-                        <Icon name="bolt" />
-                        Auto-run
-                      </button>
+                    <div className="op-prev-name">
+                      Operator
+                      <span>
+                        <span className="pulse" style={{ display:"inline-block", width:6, height:6, verticalAlign:"middle" }} />
+                        &nbsp;Online · working
+                      </span>
                     </div>
-                  );
-                })()}
+                  </div>
+                </div>
 
-                <div className="chat-body" ref={chatBodyRef}>
-                  <div className="daydiv">Today · Friday May 30</div>
-                  {(threadMessages[activeThread] || []).map((m, i) =>
+                <div ref={chatRef} className="op-prev-body" style={{ maxHeight:240, overflowY:"auto" }}>
+                  {msgs.map((m, i) =>
                     m.who === "op" ? (
-                      <div key={i} className="msg op">
-                        <span className="msg-av">O</span>
-                        <div className="bubble" dangerouslySetInnerHTML={{ __html: m.text }} />
-                      </div>
+                      <div key={i} className="op-bubble">{m.text}</div>
                     ) : (
-                      <div key={i} className="msg me">
-                        <div className="bubble">{m.text}</div>
-                      </div>
+                      <div key={i} style={{
+                        alignSelf:"flex-end", background:"var(--teal)", color:"#fff",
+                        borderRadius:"12px 4px 12px 12px", padding:"10px 13px",
+                        fontSize:12.5, lineHeight:1.5, maxWidth:"82%",
+                      }}>{m.text}</div>
                     )
                   )}
-                  {typing ? (
-                    <div className="msg op">
-                      <span className="msg-av">O</span>
-                      <div className="bubble typing">
-                        <span />
-                        <span />
-                        <span />
-                      </div>
+                  {typing && (
+                    <div className="op-bubble" style={{ display:"flex", gap:4, padding:"12px 14px" }}>
+                      {[0,1,2].map(i => (
+                        <span key={i} style={{
+                          width:7, height:7, borderRadius:"50%",
+                          background:"var(--teal)", display:"inline-block",
+                          animation:`tdot 1.2s infinite ${i * 200}ms`,
+                        }} />
+                      ))}
                     </div>
-                  ) : null}
+                  )}
                 </div>
 
-                <div className="chat-foot">
-                  <div className="chat-prompts">
-                    {(threadPrompts[activeThread] || threadPrompts.briefing).map((p) => (
-                      <button key={p} className="chip" onClick={() => sendMessage(p)}>
-                        {p}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="chat-input">
-                    <input
-                      value={chatInput}
-                      onChange={(e) => setChatInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          sendMessage(chatInput);
-                        }
-                      }}
-                      placeholder="Message the Operator…"
-                      autoComplete="off"
-                    />
-                    <button className="send-btn" onClick={() => sendMessage(chatInput)}>
-                      <Icon name="send" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* ── ACTIVITY ── */}
-          <section className={`page${page === "activity" ? " active" : ""}`}>
-            <div className="section-head">
-              <div className="filters">
-                {(["all", "b-confirmed", "b-scheduled", "b-collected", "b-escalated", "b-queued"] as const).map(
-                  (f) => (
-                    <button
-                      key={f}
-                      className={`filter${actFilter === f ? " on" : ""}`}
-                      onClick={() => setActFilter(f)}
-                    >
-                      {f === "all"
-                        ? "All"
-                        : (f.replace("b-", "").charAt(0).toUpperCase() + f.replace("b-", "").slice(1))}
-                    </button>
-                  )
-                )}
-              </div>
-              <button className="btn btn-ghost btn-sm" onClick={() => showToast("Activity log refreshed")}>
-                <Icon name="refresh" />
-                Refresh
-              </button>
-            </div>
-            <div className="card">
-              <div className="card-h">
-                <h2>Activity log</h2>
-                <span className="sub">{filteredActs.length} actions · 0 errors</span>
-              </div>
-              <div>
-                {filteredActs.map((row, i) => (
-                  <ActRow
-                    key={row[0] + i}
-                    row={row}
-                    isFirst={i === 0 && actFilter === "all"}
-                    onToast={showToast}
-                  />
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* ── SCHEDULE ── */}
-          <section className={`page${page === "schedule" ? " active" : ""}`}>
-            <div className="section-head">
-              <div>
-                <span className="eyebrow">Friday · May 30</span>
-                <div
-                  style={{ fontFamily: "var(--serif)", fontSize: 20, fontWeight: 700, marginTop: 3 }}
-                >
-                  7 exams · 3 confirmed overnight
-                </div>
-              </div>
-              <button className="btn btn-primary btn-sm" onClick={() => showToast("Opening new exam booking")}>
-                <Icon name="plus" />
-                Book exam
-              </button>
-            </div>
-            <div className="card">
-              <div className="sched">
-                {EXAMS.map((exam) => (
-                  <SchedRow key={exam[0] + exam[2]} exam={exam} onToast={showToast} />
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* ── CHANNELS ── */}
-          <section className={`page${page === "channels" ? " active" : ""}`}>
-            <div className="section-head">
-              <div>
-                <span className="eyebrow">Channel response map</span>
-                <div
-                  style={{ fontFamily: "var(--serif)", fontSize: 20, fontWeight: 700, marginTop: 3 }}
-                >
-                  5 active · 1 idle
-                </div>
-              </div>
-              <button className="btn btn-ghost btn-sm" onClick={() => showToast("Channel settings")}>
-                <Icon name="gear" />
-                Configure
-              </button>
-            </div>
-            <div className="chan-detail">
-              {CHANNELS.map(([name, ico, active, note, m]) => (
-                <div key={name as string} className={`card chd${active ? "" : " idle"}`}>
-                  <div className="chd-top">
-                    <span className="chd-ico">
-                      <Icon name={ico as string} />
-                    </span>
-                    <div style={{ flex: 1 }}>
-                      <div className="chd-name">{name as string}</div>
-                      <div className="chan-note" style={{ marginTop: 3 }}>
-                        {note as string}
-                      </div>
-                    </div>
-                    <span className={`chan-pill ${active ? "p-active" : "p-idle"}`}>
-                      {active ? "ACTIVE" : "IDLE"}
-                    </span>
-                  </div>
-                  <div className="chd-metrics">
-                    <div className="chd-metric">
-                      <div className="v">{(m as { sent: string; reply: string }).sent}</div>
-                      <div className="l">Messages · today</div>
-                    </div>
-                    <div className="chd-metric">
-                      <div className="v">{(m as { sent: string; reply: string }).reply}</div>
-                      <div className="l">Avg reply</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* ── RECORDS ── */}
-          <section className={`page${page === "records" ? " active" : ""}`}>
-            <div className="bigcards">
-              {(
-                [
-                  ["Open claims", "42", ""],
-                  ["Records collected · 7d", "128", ""],
-                  ["Awaiting authorization", "5", "gold"],
-                ] as [string, string, string][]
-              ).map(([label, v, g]) => (
-                <div key={label} className={`stat${g ? " gold" : ""}`} onClick={() => showToast(label)}>
-                  <div className="stat-val">{v}</div>
-                  <div className="stat-label">{label}</div>
-                </div>
-              ))}
-            </div>
-            <div className="card">
-              <div className="card-h">
-                <h2>Claims &amp; records</h2>
-                <span className="sub">{RECORDS.length} open claims</span>
-              </div>
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Claim</th>
-                    <th>Claimant</th>
-                    <th>Exam type</th>
-                    <th>Status</th>
-                    <th>Next</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {RECORDS.map((r) => (
-                    <tr key={r[0]} onClick={() => showToast(`Opening ${r[0]} · ${r[1]}`)}>
-                      <td className="rid">{r[0]}</td>
-                      <td>{r[1]}</td>
-                      <td>{r[2]}</td>
-                      <td>
-                        <span className={`badge ${r[4]}`}>{r[3]}</span>
-                      </td>
-                      <td className="rid">{r[5]}</td>
-                    </tr>
+                <div className="op-prev-foot">
+                  {cfg.prompts.slice(0,4).map(p => (
+                    <button key={p} className="chip" onClick={() => send(p)}>{p}</button>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          {/* ── SETTINGS ── */}
-          <section className={`page${page === "settings" ? " active" : ""}`}>
-            <div className="set-grid">
-              <div className="card">
-                <div className="card-h">
-                  <h2>Autonomy</h2>
                 </div>
-                {(
-                  [
-                    ["Auto-confirm exams", "Operator books and confirms without asking"],
-                    ["Auto-recover no-shows", "Re-engage missed appointments automatically"],
-                    ["Auto-collect records", "Chase provider records on a schedule"],
-                    ["Escalate before sending", "Hold sensitive replies for your approval"],
-                  ] as [string, string][]
-                ).map(([label, desc]) => (
-                  <SettingRow
-                    key={label}
-                    label={label}
-                    desc={desc}
-                    on={!!settingsToggles[label]}
-                    onToggle={() => {
-                      const wasOn = settingsToggles[label];
-                      setSettingsToggles((prev) => ({ ...prev, [label]: !prev[label] }));
-                      showToast(`Setting ${wasOn ? "disabled" : "enabled"}`);
-                    }}
-                  />
-                ))}
-              </div>
 
-              <div className="card">
-                <div className="card-h">
-                  <h2>Channels &amp; hours</h2>
-                </div>
-                {(
-                  [
-                    ["SMS reminders", "Primary channel for claimant reminders"],
-                    ["WhatsApp", "Enabled for claimants who opt in"],
-                    ["After-hours autonomy", "Keep working overnight, 22:00–07:00"],
-                    ["Weekend operation", "Run reduced sweeps on weekends"],
-                  ] as [string, string][]
-                ).map(([label, desc]) => (
-                  <SettingRow
-                    key={label}
-                    label={label}
-                    desc={desc}
-                    on={!!settingsToggles[label]}
-                    onToggle={() => {
-                      const wasOn = settingsToggles[label];
-                      setSettingsToggles((prev) => ({ ...prev, [label]: !prev[label] }));
-                      showToast(`Setting ${wasOn ? "disabled" : "enabled"}`);
-                    }}
-                  />
-                ))}
-              </div>
-
-              <div className="card">
-                <div className="card-h">
-                  <h2>Notifications</h2>
-                </div>
-                {(
-                  [
-                    ["Morning brief", "Daily summary at 7:00 AM"],
-                    ["Escalation alerts", "Ping me when a claim needs a human"],
-                    ["Weekly digest", "Performance recap every Monday"],
-                  ] as [string, string][]
-                ).map(([label, desc]) => (
-                  <SettingRow
-                    key={label}
-                    label={label}
-                    desc={desc}
-                    on={!!settingsToggles[label]}
-                    onToggle={() => {
-                      const wasOn = settingsToggles[label];
-                      setSettingsToggles((prev) => ({ ...prev, [label]: !prev[label] }));
-                      showToast(`Setting ${wasOn ? "disabled" : "enabled"}`);
-                    }}
-                  />
-                ))}
-              </div>
-
-              <div className="card">
-                <div className="card-h">
-                  <h2>Workspace</h2>
-                </div>
-                <div className="set-row">
-                  <div>
-                    <div className="set-label">Client</div>
-                    <div className="set-desc">{client.company} · IME scheduling</div>
+                <div style={{ padding:"0 16px 14px" }}>
+                  <div className="chat-input" style={{ borderRadius:"var(--rad-sm)" }}>
+                    <input
+                      value={input}
+                      onChange={e => setInput(e.target.value)}
+                      onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); send(input); } }}
+                      placeholder="Ask the Operator…"
+                      style={{ fontSize:12.5 }}
+                    />
+                    <button className="send-btn" style={{ width:32, height:32 }} onClick={() => send(input)}>
+                      <Icon name="send" size={13} />
+                    </button>
                   </div>
-                  <span className="badge b-confirmed">Active</span>
                 </div>
-                <div className="set-row">
-                  <div>
-                    <div className="set-label">Connected systems</div>
-                    <div className="set-desc">Scheduling, CRM, provider portal, fax</div>
-                  </div>
-                  <button className="link" onClick={() => showToast("Manage connections")}>
-                    Manage
+              </div>
+
+              {/* Quick Actions */}
+              <div className="card">
+                <div className="card-h"><h2>Quick actions</h2><span className="sub">one tap</span></div>
+                <div className="qa">
+                  <button className="qa-btn" onClick={() => toast(cid === "A" ? "Lead sweep started" : "County records chase queued")}>
+                    <Icon name="bolt" size={15} />
+                    {cid === "A" ? "Run lead sweep" : "Chase county records"}
+                  </button>
+                  <button className="qa-btn" onClick={() => toast(cid === "A" ? "Reminders queued for 4 leads" : "Client updates queued")}>
+                    <Icon name="bell" size={15} />
+                    {cid === "A" ? "Send reminders" : "Notify clients"}
+                  </button>
+                  <button className="qa-btn" onClick={() => toast("Follow-ups queued")}>
+                    <Icon name="refresh" size={15} />
+                    {cid === "A" ? "Queue follow-ups" : "Send status updates"}
+                  </button>
+                  <button className="qa-btn gold" onClick={() => toast("Opening escalations review")}>
+                    <Icon name="warning" size={15} />
+                    Review escalations
                   </button>
                 </div>
-                <div className="set-row">
-                  <div>
-                    <div className="set-label">Operator uptime</div>
-                    <div className="set-desc">240 hours · 0 errors</div>
+              </div>
+
+              {/* Overnight Queue */}
+              <div className="card">
+                <div className="card-h">
+                  <h2>{cfg.overnightLabel}</h2>
+                  <span className="q-badge"><Icon name="clock" size={11} />Scheduled</span>
+                </div>
+                <div className="q-list">
+                  <div className="q-item" onClick={() => toast("Task queued for tonight")}>
+                    <span className="q-time">22:00</span>
+                    <span style={{ color:"var(--ink-dim)", display:"inline-flex" }}><Icon name="clock" size={12} /></span>
+                    <span className="q-desc">{cfg.overnightTask}</span>
+                    <span className="badge b-queued">Queued</span>
                   </div>
-                  <span className="badge b-scheduled">Healthy</span>
                 </div>
               </div>
             </div>
-          </section>
-        </div>
-      </div>
 
-      {/* ── Toasts ── */}
+            {/* ── CENTER: Stats · Live Activity ── */}
+            <div className="stack">
+
+              {/* Stats */}
+              <div className="stats">
+                {cfg.stats.map(s => (
+                  <div key={`${cid}-${s.label}`} className={`stat${s.gold ? " gold" : ""}`}
+                    onClick={() => toast(s.label)}>
+                    <div className="stat-val">
+                      <CountUp key={`${cid}-${s.to}`} to={s.to} />
+                    </div>
+                    <div className="stat-label">{s.label}</div>
+                    <div className="stat-delta">{s.detail}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Live Activity */}
+              <div className="card">
+                <div className="card-h">
+                  <h2>Live Activity</h2>
+                  <span className="live-badge"><span className="ld" />LIVE</span>
+                </div>
+                <div key={cid}>
+                  {cfg.acts.map((a, i) => (
+                    <button key={i} className={`act${a.latest ? " latest" : ""}`}
+                      style={{ animationDelay:`${i * 55}ms` }}
+                      onClick={() => toast(a.desc)}>
+                      <span className="act-time">{a.time}</span>
+                      <span className={`badge ${a.cls}`}>{a.badge}</span>
+                      <span className="act-desc">{a.desc}</span>
+                      <span className="act-chan"><Icon name={a.ico} size={13} /></span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* ── RIGHT: Attention · Escalations · Channels ── */}
+            <div className="stack">
+
+              {/* Attention Panel */}
+              <div className="card">
+                <div className="card-h">
+                  <h2>{cfg.attnHeader}</h2>
+                  <span className="sub">{cfg.attnItems.length} items</span>
+                </div>
+                {cfg.attnItems.map((item, i) => (
+                  <div key={i} className="attn-item">
+                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8 }}>
+                      <div>
+                        <div className="attn-name">{item.name}</div>
+                        <div className="attn-meta">{item.meta1}</div>
+                        <div className="attn-meta">{item.meta2}</div>
+                      </div>
+                      <span className={`badge ${item.statusCls}`} style={{ flexShrink:0, marginTop:2 }}>{item.statusLabel}</span>
+                    </div>
+                    <div className="attn-note">Operator: {item.note}</div>
+                    <div className="attn-actions">
+                      {item.actions.map(action => (
+                        <button key={action} className="btn btn-ghost btn-sm"
+                          onClick={() => toast(`${action} — ${item.ref}`)}>
+                          {action}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Escalations */}
+              <div className="card" style={{ borderColor:"rgba(207,64,48,.25)" }}>
+                <div className="card-h">
+                  <h2>Escalations</h2>
+                  <span className="badge b-escalated">{cfg.escs.length} open</span>
+                </div>
+                {cfg.escs.map((esc, i) => (
+                  <div key={i} className="esc-item esc-open">
+                    <div className="esc-title">
+                      <span style={{ color:"var(--danger)", display:"inline-flex" }}><Icon name="warning" size={13} /></span>
+                      {esc.title}
+                    </div>
+                    <div className="esc-body">{esc.body}</div>
+                    <div className="esc-rec">{esc.rec}</div>
+                    <div className="esc-actions">
+                      {esc.actions.map(action => (
+                        <button key={action} className="btn btn-ghost btn-sm btn-danger"
+                          onClick={() => toast(`${action} — reviewing`)}>
+                          {action}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Channel Map */}
+              <div className="card">
+                <div className="card-h"><h2>Channel map</h2></div>
+                <div style={{ padding:"10px 14px 14px", display:"flex", flexDirection:"column", gap:8 }}>
+                  {cfg.chans.map(ch => (
+                    <button key={ch.name} className={`chan ${ch.active ? "active" : "idle"}`}
+                      style={{ width:"100%", flexDirection:"row", justifyContent:"space-between",
+                               gap:10, padding:"10px 12px" }}
+                      onClick={() => toast(`${ch.name}: ${ch.note}`)}>
+                      <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                        <span className="chan-ico"><Icon name={ch.ico} size={13} /></span>
+                        <span className="chan-name">{ch.name}</span>
+                      </div>
+                      <div style={{ display:"flex", alignItems:"center", gap:8, minWidth:0 }}>
+                        <span className="chan-note" style={{ textAlign:"right" }}>{ch.note}</span>
+                        <span className={`chan-pill ${ch.active ? "p-active" : "p-idle"}`}>
+                          {ch.active ? "ACTIVE" : "IDLE"}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+          </div>{/* /cc-grid */}
+        </div>{/* /view */}
+      </div>{/* /main */}
+
+      {/* TOASTS */}
       <div className="toast-wrap">
-        {toasts.map((t) => (
+        {toasts.map(t => (
           <div key={t.id} className="toast">
-            <Icon name="check" />
+            <span style={{ color:"var(--teal-2)", display:"inline-flex" }}><Icon name="check" size={15} /></span>
             {t.msg}
           </div>
         ))}
       </div>
+
     </div>
   );
 }

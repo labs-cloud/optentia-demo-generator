@@ -38,7 +38,39 @@ i[data-ic] svg{width:1em;height:1em;display:block;stroke:currentColor;fill:none;
 .col::-webkit-scrollbar-track,.scroll::-webkit-scrollbar-track{background:transparent}
 
 /* ── App shell ── */
-.app{display:grid;grid-template-columns:218px 1fr;height:100vh}
+.app{display:grid;grid-template-columns:218px 1fr;height:100vh;background:var(--bg)}
+
+/* ── A/B client toggle ── */
+.ab-toggle{display:flex;border:1px solid var(--line);border-radius:999px;padding:2px;background:var(--panel-2);gap:2px;flex-shrink:0}
+.ab-seg{padding:5px 14px;border-radius:999px;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.06em;color:var(--ink-dim);transition:.15s;line-height:1}
+.ab-seg.ab-on{background:var(--teal);color:#fff;box-shadow:0 2px 8px rgba(30,113,128,.3)}
+.ab-seg:hover:not(.ab-on){color:var(--teal-ink);background:var(--teal-soft)}
+
+/* ── Typing dots ── */
+@keyframes tdot{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-4px)}}
+
+/* ── Activity item entrance ── */
+@keyframes actIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+.act{animation:actIn .28s ease both}
+
+/* ── Attention card ── */
+.attn-item{padding:14px 16px;border-bottom:1px solid var(--line-2)}
+.attn-item:last-child{border-bottom:none}
+.attn-name{font-size:13.5px;font-weight:600;color:var(--ink)}
+.attn-meta{font-family:var(--mono);font-size:10.5px;color:var(--ink-dim);margin-top:2px;line-height:1.4}
+.attn-note{font-family:var(--mono);font-size:10.5px;color:var(--teal-ink);margin:7px 0 8px;line-height:1.4}
+.attn-actions{display:flex;gap:6px;flex-wrap:wrap}
+
+/* ── Escalation card ── */
+.esc-item{padding:14px 16px;border-bottom:1px solid var(--line-2);border-left:3px solid transparent;transition:.2s}
+.esc-item:last-child{border-bottom:none}
+.esc-item.esc-open{border-left-color:var(--danger)}
+.esc-title{font-size:13px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.esc-body{font-size:12.5px;color:var(--ink-2);line-height:1.5;margin-bottom:5px}
+.esc-rec{font-family:var(--mono);font-size:10px;color:var(--ink-dim);margin-bottom:8px;line-height:1.4}
+.esc-actions{display:flex;gap:6px}
+.btn-danger{color:var(--danger);border-color:rgba(207,64,48,.4);background:var(--danger-soft)}
+.btn-danger:hover{border-color:var(--danger);background:var(--danger-soft)}
 
 /* ── Sidebar ── */
 .side{border-right:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;padding:16px 12px;gap:6px;z-index:5}
