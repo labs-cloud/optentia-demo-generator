@@ -287,7 +287,14 @@ export function OperatorCommandCenter({ client }: { client: Client }) {
             {view === "leads" ? <LeadsView leads={leads} onOpen={(lead) => setDetail({ type: "lead", item: lead })} /> : null}
             {view === "inbox" ? <InboxView inbox={client.inbox} onOpen={(thread) => setDetail({ type: "conversation", item: thread })} onAsk={askOperator} /> : null}
             {view === "tasks" ? <TasksView tasks={client.tasks} onOpen={(task) => setDetail({ type: "task", item: task })} /> : null}
-            {view === "calendar" ? <CalendarView appointments={client.appointments} onOpen={(appointment) => setDetail({ type: "appointment", item: appointment })} /> : null}
+            {view === "calendar" ? (
+              <CalendarView
+                appointments={client.appointments}
+                tasks={client.tasks}
+                onOpenAppointment={(appointment) => setDetail({ type: "appointment", item: appointment })}
+                onOpenTask={(task) => setDetail({ type: "task", item: task })}
+              />
+            ) : null}
             {view === "pipeline" ? <PipelineView client={client} onOpen={(lead, stage) => setDetail({ type: "opportunity", item: lead, stage })} onAsk={askOperator} /> : null}
             {view === "escalations" ? <EscalationsView escalations={client.escalations} onOpen={(escalation) => setDetail({ type: "escalation", item: escalation })} onAction={approveAction} /> : null}
             {view === "reports" ? <ReportsView client={client} leads={leads} /> : null}
@@ -591,15 +598,117 @@ function TasksView({ tasks, onOpen }: { tasks: Task[]; onOpen: (task: Task) => v
   );
 }
 
-function CalendarView({ appointments, onOpen }: { appointments: Appointment[]; onOpen: (appointment: Appointment) => void }) {
+function CalendarView({
+  appointments,
+  tasks,
+  onOpenAppointment,
+  onOpenTask
+}: {
+  appointments: Appointment[];
+  tasks: Task[];
+  onOpenAppointment: (appointment: Appointment) => void;
+  onOpenTask: (task: Task) => void;
+}) {
+  const timeSlots = ["9 AM", "10 AM", "11 AM", "12 PM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM", "6 PM"];
+  const todaysTasks = tasks.filter((task) => task.due.toLowerCase().includes("today"));
+  const laterTasks = tasks.filter((task) => !task.due.toLowerCase().includes("today"));
+
+  const itemsForSlot = (slot: string) => {
+    const slotHour = slot.replace(" AM", "").replace(" PM", "");
+    const slotPeriod = slot.includes("AM") ? "AM" : "PM";
+
+    return {
+      appointments: appointments.filter((appointment) => appointment.time.includes(`${slotHour}:`) && appointment.time.includes(slotPeriod)),
+      tasks: todaysTasks.filter((task) => task.due.includes(`${slotHour}:`) && task.due.includes(slotPeriod))
+    };
+  };
+
   return (
-    <div className="space-y-4">
-      {appointments.map((appointment) => (
-        <RecordCard key={`${appointment.time}-${appointment.title}`} title={appointment.title} meta={appointment.time} onClick={() => onOpen(appointment)}>
-          <Pill tone={appointment.status.includes("Needs") ? "danger" : "teal"}>{appointment.status}</Pill>
-          <p className="mt-3">Operator has reminder status, notes, and preparation ready.</p>
-        </RecordCard>
-      ))}
+    <div className="space-y-5">
+      <section className="rounded-[2rem] border border-white/60 bg-white/76 p-5 shadow-sm backdrop-blur-xl">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2a7a8a]">Calendar workspace</p>
+            <h3 className="mt-2 text-2xl font-semibold tracking-tight">Today with Operator tasks</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-500">
+              Appointments and tasks live together so the broker can see what is booked, what is due, and what the Operator is preparing.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Pill tone="teal">{appointments.length} appointments</Pill>
+            <Pill tone="gold">{todaysTasks.length} tasks today</Pill>
+          </div>
+        </div>
+      </section>
+
+      <section className="overflow-hidden rounded-[2rem] border border-white/60 bg-white/72 shadow-sm backdrop-blur-xl">
+        <div className="grid grid-cols-[82px_1fr] border-b border-white/70 bg-white/50">
+          <div className="border-r border-white/70 p-4 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Time</div>
+          <div className="grid grid-cols-2">
+            <div className="border-r border-white/70 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#c9a84c]">Appointments</p>
+              <p className="mt-1 font-semibold">Broker calendar</p>
+            </div>
+            <div className="p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2a7a8a]">Tasks</p>
+              <p className="mt-1 font-semibold">Operator work</p>
+            </div>
+          </div>
+        </div>
+
+        {timeSlots.map((slot) => {
+          const slotItems = itemsForSlot(slot);
+          return (
+            <div key={slot} className="grid min-h-[116px] grid-cols-[82px_1fr] border-b border-white/60 last:border-b-0">
+              <div className="border-r border-white/70 bg-white/35 p-4 text-sm font-semibold text-slate-400">{slot}</div>
+              <div className="grid grid-cols-2">
+                <div className="space-y-3 border-r border-white/70 p-3">
+                  {slotItems.appointments.length ? slotItems.appointments.map((appointment) => (
+                    <button key={`${appointment.time}-${appointment.title}`} onClick={() => onOpenAppointment(appointment)} className="w-full rounded-2xl border border-[#2a7a8a]/20 bg-[#2a7a8a]/10 p-4 text-left transition hover:border-[#2a7a8a]/40 hover:bg-[#2a7a8a]/15">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-xs font-semibold text-[#1f6471]">{appointment.time}</p>
+                          <p className="mt-1 font-semibold">{appointment.title}</p>
+                        </div>
+                        <Pill tone={appointment.status.includes("Needs") ? "danger" : "teal"}>{appointment.status}</Pill>
+                      </div>
+                    </button>
+                  )) : <p className="p-3 text-sm text-slate-400">No appointment scheduled.</p>}
+                </div>
+                <div className="space-y-3 p-3">
+                  {slotItems.tasks.length ? slotItems.tasks.map((task) => (
+                    <button key={`${task.due}-${task.title}`} onClick={() => onOpenTask(task)} className="w-full rounded-2xl border border-[#c9a84c]/25 bg-[#c9a84c]/10 p-4 text-left transition hover:border-[#c9a84c]/45 hover:bg-[#c9a84c]/15">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-xs font-semibold text-[#7a6120]">{task.due}</p>
+                          <p className="mt-1 font-semibold">{task.title}</p>
+                        </div>
+                        <Pill tone={task.priority === "Urgent" ? "danger" : task.priority === "High" ? "gold" : "neutral"}>{task.priority}</Pill>
+                      </div>
+                    </button>
+                  )) : <p className="p-3 text-sm text-slate-400">No task due in this slot.</p>}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </section>
+
+      {laterTasks.length ? (
+        <section className="rounded-[2rem] border border-white/60 bg-white/72 p-5 shadow-sm backdrop-blur-xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#c9a84c]">Upcoming task lane</p>
+          <h3 className="mt-2 text-2xl font-semibold tracking-tight">Tomorrow and later</h3>
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            {laterTasks.map((task) => (
+              <button key={`${task.due}-${task.title}`} onClick={() => onOpenTask(task)} className="rounded-3xl border border-white/70 bg-[#fffaf0]/70 p-4 text-left transition hover:bg-white">
+                <p className="text-sm font-semibold text-slate-500">{task.due}</p>
+                <p className="mt-1 font-semibold">{task.title}</p>
+                <p className="mt-2 text-sm text-slate-500">Assigned to {task.assignedTo}</p>
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }
