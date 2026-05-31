@@ -413,9 +413,12 @@ function OperatorHome({
         <section className="rounded-[2rem] border border-white/60 bg-white/72 p-5 shadow-sm backdrop-blur-xl">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#c9a84c]">Scheduled operator work</p>
           <h3 className="mt-2 text-2xl font-semibold tracking-tight">Overnight queue</h3>
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            Anything scheduled from the Operator panel appears here immediately, just like a real after-hours work queue.
+          </p>
           <div className="mt-5 space-y-3">
-            {scheduledTasks.map((task) => (
-              <div key={`${task.title}-${task.window}`} className="rounded-3xl border border-white/70 bg-[#fffaf0]/70 p-4">
+            {scheduledTasks.map((task, index) => (
+              <div key={`${task.title}-${task.window}-${index}`} className="rounded-3xl border border-white/70 bg-[#fffaf0]/70 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-semibold">{task.title}</p>
@@ -439,6 +442,19 @@ function OvernightScheduler({ onScheduleTask }: { onScheduleTask: (task: Schedul
   const [title, setTitle] = useState("Prepare morning pipeline brief");
   const [window, setWindow] = useState("Tonight, 11:30 PM");
   const [instructions, setInstructions] = useState("Review WhatsApp, Telegram, Email, Slack, and Asana. Summarize hot leads, unanswered messages, tasks due tomorrow, and escalations needing approval.");
+  const [sentTask, setSentTask] = useState<ScheduledOperatorTask | null>(null);
+
+  const scheduleTask = () => {
+    const task = {
+      title: title.trim() || "Untitled overnight task",
+      window: window.trim() || "Tonight",
+      instructions: instructions.trim() || "Review the workspace and prepare a morning summary.",
+      status: "Scheduled" as const
+    };
+
+    onScheduleTask(task);
+    setSentTask(task);
+  };
 
   return (
     <section className="rounded-[2rem] border border-white/60 bg-white/76 p-5 shadow-sm backdrop-blur-xl">
@@ -452,11 +468,26 @@ function OvernightScheduler({ onScheduleTask }: { onScheduleTask: (task: Schedul
         <input value={window} onChange={(event) => setWindow(event.target.value)} className="w-full rounded-2xl border border-white/70 bg-white/80 px-4 py-3 text-sm outline-none focus:border-[#2a7a8a]/40" />
         <textarea value={instructions} onChange={(event) => setInstructions(event.target.value)} rows={4} className="w-full resize-none rounded-2xl border border-white/70 bg-white/80 px-4 py-3 text-sm leading-6 outline-none focus:border-[#2a7a8a]/40" />
       </div>
+      {sentTask ? (
+        <div className="mt-4 rounded-3xl border border-[#2a7a8a]/25 bg-[#2a7a8a]/10 p-4" aria-live="polite">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-[#1f6471]">Sent to Operator queue</p>
+              <p className="mt-1 text-sm leading-6 text-slate-600">
+                {sentTask.title} is scheduled for {sentTask.window}. It now appears in the Overnight queue.
+              </p>
+            </div>
+            <Pill tone="teal">In queue</Pill>
+          </div>
+        </div>
+      ) : null}
       <button
-        onClick={() => onScheduleTask({ title, window, instructions, status: "Scheduled" })}
-        className="mt-4 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+        onClick={scheduleTask}
+        className={`mt-4 rounded-2xl px-5 py-3 text-sm font-semibold transition ${
+          sentTask ? "bg-[#2a7a8a] text-white hover:bg-[#236b79]" : "bg-slate-950 text-white hover:bg-slate-800"
+        }`}
       >
-        Schedule with Operator
+        {sentTask ? "Sent - In Overnight Queue" : "Send to Operator Queue"}
       </button>
     </section>
   );
