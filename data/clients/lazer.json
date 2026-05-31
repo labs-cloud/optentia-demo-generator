@@ -1,0 +1,200 @@
+{
+  "slug": "lazer",
+  "clientName": "Rapid Examiners",
+  "companyName": "Rapid Examiners",
+  "company": "Rapid Examiners",
+  "industry": "Title abstracting and legal support",
+  "demoLabel": "Title operations demo",
+  "operatorSubtitle": "Monitoring Rapid Examiners",
+  "navigationLabels": {
+    "operator": "Operator",
+    "leads": "Orders",
+    "inbox": "Inbox",
+    "tasks": "Tasks",
+    "calendar": "Calendar",
+    "pipeline": "Projects",
+    "documents": "Documents",
+    "escalations": "Escalations",
+    "reports": "Reports"
+  },
+  "terms": {
+    "recordSingular": "order",
+    "recordPlural": "orders",
+    "pipelineSingular": "project",
+    "pipelinePlural": "projects",
+    "appointmentPlural": "deadlines and recordings",
+    "taskPlural": "operator tasks",
+    "escalationPlural": "title issues",
+    "monitoredBusiness": "Rapid Examiners"
+  },
+  "operatorPrincipleTitle": "The examiner stays focused on clearance decisions.",
+  "operatorPrincipleBody": "The Operator manages order intake, county follow-ups, document procurement, recording deadlines, certified copy delivery, and client status updates before escalating only the items that need human title judgment.",
+  "operatorPrincipleMetric": "91%",
+  "operatorPrincipleMetricDetail": "of order coordination handled without interrupting the examiner.",
+  "todaySummaryValue": "38 order actions handled",
+  "todaySummaryBody": "County requests submitted, certified copies retrieved, client updates sent, recordings tracked, and three title issues escalated for review.",
+  "kpis": [
+    { "label": "Open Orders", "value": "18", "detail": "6 due today" },
+    { "label": "County Requests", "value": "7", "detail": "3 pending clerk response" },
+    { "label": "Documents Retrieved", "value": "12", "detail": "4 certified copies" },
+    { "label": "Recordings Due", "value": "5", "detail": "2 missing authorization" },
+    { "label": "Client Updates Sent", "value": "24", "detail": "same-day coverage" },
+    { "label": "Escalated Title Issues", "value": "3", "detail": "human review needed" }
+  ],
+  "activityFeed": [
+    { "time": "8:42 AM", "channel": "Email", "status": "Completed", "summary": "New Full Search 40 Years order opened for ABC Title Agency" },
+    { "time": "9:05 AM", "channel": "CRM", "status": "Waiting", "summary": "Kings County record request submitted for Order RE-2847" },
+    { "time": "9:31 AM", "channel": "Asana", "status": "Completed", "summary": "Certified copy retrieved and verified for RE-2851" },
+    { "time": "10:04 AM", "channel": "Email", "status": "Completed", "summary": "Client status update sent to Flatbush Closing Group" },
+    { "time": "10:37 AM", "channel": "CRM", "status": "Escalated", "summary": "Possible open judgment detected on RE-2854 lien search" },
+    { "time": "11:16 AM", "channel": "Calendar", "status": "Waiting", "summary": "Recording deadline approaching for RE-2858" },
+    { "time": "11:42 AM", "channel": "Slack", "status": "Completed", "summary": "Internal note posted: missing authorization required before recording" },
+    { "time": "12:08 PM", "channel": "Email", "status": "Completed", "summary": "Client delivery email prepared for certified copy package" }
+  ],
+  "pipeline": [
+    {
+      "title": "New Orders",
+      "leads": [
+        { "name": "RE-2859 - Park Slope Title", "type": "Refinance Search", "interest": "321 8th Street, Brooklyn, NY", "source": "Email", "urgency": 74, "next": "Verify title company name and borrower details" }
+      ]
+    },
+    {
+      "title": "County Request",
+      "leads": [
+        { "name": "RE-2847 - ABC Title Agency", "type": "Full Search 40 Years", "interest": "1457 Ocean Parkway, Brooklyn, NY", "source": "CRM", "urgency": 88, "next": "Follow up with Kings County Clerk" },
+        { "name": "RE-2860 - Meridian Abstract", "type": "Surrogates Court Requests", "interest": "Estate file request, Queens County", "source": "Email", "urgency": 69, "next": "Confirm index number and decedent name" }
+      ]
+    },
+    {
+      "title": "Document Review",
+      "leads": [
+        { "name": "RE-2851 - Goldman Law PLLC", "type": "Certified Copies", "interest": "Mortgage Satisfaction", "source": "Email", "urgency": 82, "next": "Send verified certified copy package" },
+        { "name": "RE-2856 - Hudson Settlement", "type": "C&R Search", "interest": "Condo common charges and restrictions", "source": "CRM", "urgency": 76, "next": "Review C&R search notes before delivery" }
+      ]
+    },
+    {
+      "title": "Recording",
+      "leads": [
+        { "name": "RE-2858 - Kingsbridge Legal", "type": "County Clerk Filing", "interest": "Deed recording package", "source": "Email", "urgency": 92, "next": "Request signed authorization form before filing" }
+      ]
+    },
+    {
+      "title": "Escalated",
+      "leads": [
+        { "name": "RE-2854 - Flatbush Closing Group", "type": "Lien Search", "interest": "88 East 7th Street, Brooklyn, NY", "source": "Email", "urgency": 96, "next": "Review possible open judgment before final report" }
+      ]
+    },
+    {
+      "title": "Ready for Delivery",
+      "leads": [
+        { "name": "RE-2852 - Bedford Funding", "type": "Last Owner with Open Mortgages", "interest": "Bedford Avenue refinance file", "source": "CRM", "urgency": 58, "next": "Send completed report to client portal" }
+      ]
+    }
+  ],
+  "inbox": [
+    {
+      "channel": "Email",
+      "messages": [
+        { "speaker": "ABC Title Agency", "message": "Can you confirm status on the 40-year search for 1457 Ocean Parkway?" },
+        { "speaker": "Operator", "message": "The Kings County request is already submitted. I am following up with the clerk because no record response has been returned yet." },
+        { "speaker": "Operator Action", "message": "Status update sent + county follow-up task created for RE-2847." }
+      ]
+    },
+    {
+      "channel": "Slack",
+      "messages": [
+        { "speaker": "Examiner", "message": "Do we have the authorization for RE-2858 filing?" },
+        { "speaker": "Operator", "message": "Not yet. I flagged it as required before recording and prepared the client request." },
+        { "speaker": "Operator Action", "message": "Missing authorization escalated + recording deadline added to calendar." }
+      ]
+    },
+    {
+      "channel": "Asana",
+      "messages": [
+        { "speaker": "Operator", "message": "Created task: Call Kings County Clerk for RE-2847 record delay." },
+        { "speaker": "Operator", "message": "Created task: Verify possible judgment match for RE-2854." },
+        { "speaker": "Operator Action", "message": "Order tasks linked to project stages and due dates." }
+      ]
+    },
+    {
+      "channel": "Telegram",
+      "messages": [
+        { "speaker": "Client Runner", "message": "Certified copy for Goldman Law is in hand." },
+        { "speaker": "Operator", "message": "Received. I marked RE-2851 ready for client delivery and prepared the email." },
+        { "speaker": "Operator Action", "message": "Certified copy retrieved, verified, and queued for delivery." }
+      ]
+    },
+    {
+      "channel": "Phone",
+      "messages": [
+        { "speaker": "County Clerk", "message": "Voicemail left regarding pending document retrieval." },
+        { "speaker": "Operator", "message": "Logged clerk callback window and updated the client status note." },
+        { "speaker": "Operator Action", "message": "County record delay remains open until clerk response is received." }
+      ]
+    }
+  ],
+  "tasks": [
+    { "title": "Call Kings County Clerk for RE-2847", "due": "Today, 10:00 AM", "priority": "Urgent", "assignedTo": "Operator", "createdBy": "Operator" },
+    { "title": "Send certified copy package for RE-2851", "due": "Today, 12:30 PM", "priority": "High", "assignedTo": "Operator", "createdBy": "Operator" },
+    { "title": "Review possible judgment match for RE-2854", "due": "Today, 2:00 PM", "priority": "Urgent", "assignedTo": "Examiner", "createdBy": "Operator" },
+    { "title": "Request signed authorization for RE-2858", "due": "Today, 3:30 PM", "priority": "High", "assignedTo": "Operator", "createdBy": "Operator" },
+    { "title": "Prepare client status digest", "due": "Today, 5:00 PM", "priority": "Medium", "assignedTo": "Operator", "createdBy": "Operator" },
+    { "title": "Update RE-2860 Surrogates Court request", "due": "Tomorrow", "priority": "Medium", "assignedTo": "Operator", "createdBy": "Operator" }
+  ],
+  "appointments": [
+    { "time": "10:00 AM", "title": "County follow-up: RE-2847 Kings County Clerk", "status": "Needs Review" },
+    { "time": "12:30 PM", "title": "Delivery deadline: RE-2851 certified copy package", "status": "Confirmed" },
+    { "time": "2:00 PM", "title": "Examiner review: RE-2854 possible judgment", "status": "Needs Review" },
+    { "time": "3:30 PM", "title": "Recording prep: RE-2858 authorization form", "status": "Tentative" }
+  ],
+  "escalations": [
+    {
+      "title": "Possible open judgment found",
+      "why": "The lien search returned a possible match that may affect title clearance.",
+      "next": "Review judgment details before releasing the report.",
+      "draft": "We identified a potential judgment match during the search and are verifying whether it attaches to the subject property."
+    },
+    {
+      "title": "County record delay",
+      "why": "Kings County Clerk has not returned the requested document after 5 business days.",
+      "next": "Call clerk office and send client status update.",
+      "draft": "The county request remains pending. We are following up directly with the clerk and will update you as soon as the record is returned."
+    },
+    {
+      "title": "Missing authorization form",
+      "why": "Recording cannot proceed without signed authorization.",
+      "next": "Request signed form from client today.",
+      "draft": "We are ready to proceed with recording, but need the signed authorization form before filing can move forward."
+    }
+  ],
+  "capabilities": [
+    "Order intake",
+    "Title search tracking",
+    "Document procurement",
+    "Certified copy delivery",
+    "County clerk follow-up",
+    "Recording deadline tracking",
+    "Lien issue detection",
+    "Client status updates",
+    "Missing document escalation",
+    "Daily order digest"
+  ],
+  "demoScenario": {
+    "title": "Operator Review",
+    "eyebrow": "Order operations",
+    "steps": [
+      "New order arrives from a title agency",
+      "Operator classifies service type and required documents",
+      "Examiner only gets notified when title judgment is needed"
+    ],
+    "buttonLabel": "Start Operator Review",
+    "completedLabel": "Operator Review Added",
+    "events": [
+      { "time": "Now", "channel": "Email", "status": "Waiting", "summary": "New County Clerk Filing order received" },
+      { "time": "Now", "channel": "CRM", "status": "Completed", "summary": "Operator classified order type and opened project" },
+      { "time": "Now", "channel": "Asana", "status": "Completed", "summary": "Document checklist task created" },
+      { "time": "Now", "channel": "Calendar", "status": "Waiting", "summary": "Recording deadline added to calendar" },
+      { "time": "Now", "channel": "CRM", "status": "Escalated", "summary": "Missing authorization escalated before recording" }
+    ]
+  }
+}
