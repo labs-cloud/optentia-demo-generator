@@ -1,0 +1,73 @@
+{
+  "slug": "lawfirm",
+  "company": "Sterling & Rowe LLP",
+  "industry": "Law firm",
+  "demoLabel": "Legal intake demo",
+  "operatorPrincipleTitle": "Partners stay focused on legal judgment.",
+  "operatorPrincipleBody": "The Operator handles intake, response timing, appointment coordination, task creation, document follow-up, and escalation filtering before a partner is interrupted.",
+  "operatorPrincipleMetric": "89%",
+  "operatorPrincipleMetricDetail": "of intake and follow-up actions handled before partner review.",
+  "todaySummaryValue": "37 actions handled",
+  "todaySummaryBody": "New matters triaged, consults booked, documents requested, tasks created, and only high-risk issues escalated.",
+  "kpis": [
+    { "label": "New Inquiries Today", "value": "11", "detail": "5 high intent" },
+    { "label": "Qualified Matters", "value": "7", "detail": "63% fit" },
+    { "label": "Consults Booked", "value": "4", "detail": "2 same-day" },
+    { "label": "Follow-Ups Sent", "value": "19", "detail": "no stale intake" },
+    { "label": "Partner Escalations", "value": "3", "detail": "risk review" },
+    { "label": "Tasks Created", "value": "15", "detail": "routed by practice" }
+  ],
+  "activityFeed": [
+    { "time": "8:48 AM", "channel": "Email", "status": "Completed", "summary": "Qualified new estate planning inquiry" },
+    { "time": "9:05 AM", "channel": "SMS", "status": "Completed", "summary": "Sent consult availability to litigation prospect" },
+    { "time": "9:22 AM", "channel": "Asana", "status": "Completed", "summary": "Created document request task for trust review" },
+    { "time": "9:44 AM", "channel": "Calendar", "status": "Completed", "summary": "Booked consult with managing partner" },
+    { "time": "10:08 AM", "channel": "CRM", "status": "Escalated", "summary": "Escalated conflict-sensitive matter" },
+    { "time": "10:29 AM", "channel": "Email", "status": "Waiting", "summary": "Requested signed engagement packet" },
+    { "time": "10:51 AM", "channel": "CRM", "status": "Completed", "summary": "Updated matter status and source attribution" }
+  ],
+  "pipeline": [
+    { "title": "New", "leads": [{ "name": "Rachel Adler", "type": "Estate Planning", "interest": "Family trust", "source": "Email", "urgency": 74, "next": "Request asset summary" }] },
+    { "title": "Contacted", "leads": [{ "name": "Marcus Bell", "type": "Business", "interest": "Operating agreement", "source": "SMS", "urgency": 66, "next": "Send consult times" }] },
+    { "title": "Qualified", "leads": [{ "name": "Nora Kim", "type": "Litigation", "interest": "Contract dispute", "source": "Phone", "urgency": 88, "next": "Partner conflict check" }] },
+    { "title": "Consult Scheduled", "leads": [{ "name": "Daniel Price", "type": "Real Estate", "interest": "Lease review", "source": "Email", "urgency": 81, "next": "Collect lease copy" }] },
+    { "title": "Review / Engagement", "leads": [{ "name": "Amira Shah", "type": "Employment", "interest": "Severance review", "source": "WhatsApp", "urgency": 93, "next": "Attorney to approve scope" }] },
+    { "title": "Closed", "leads": [{ "name": "Victor Lane", "type": "Corporate", "interest": "Formation package", "source": "CRM", "urgency": 42, "next": "Send onboarding checklist" }] }
+  ],
+  "inbox": [
+    { "channel": "Email", "messages": [{ "speaker": "Prospect", "message": "Can someone review a lease before Friday?" }, { "speaker": "Operator", "message": "Yes. I can collect the lease, deadline, and key concerns now so the attorney has context." }, { "speaker": "Operator Action", "message": "Qualified matter + booked consult." }] },
+    { "channel": "SMS", "messages": [{ "speaker": "Prospect", "message": "Is this urgent enough for a lawyer today?" }, { "speaker": "Operator", "message": "I can triage the issue now. If it involves a deadline or legal risk, I will escalate it immediately." }, { "speaker": "Operator Action", "message": "Escalated because legal deadline was detected." }] },
+    { "channel": "Missed Calls", "messages": [{ "speaker": "Caller", "message": "Missed call from Marcus Bell at 9:17 AM" }, { "speaker": "Operator", "message": "Sent callback text and requested practice area, deadline, and opposing party." }, { "speaker": "Operator Action", "message": "Logged inquiry + created conflict-check task." }] }
+  ],
+  "tasks": [
+    { "title": "Run conflict check for Nora Kim", "due": "Today, 11:30 AM", "priority": "Urgent", "assignedTo": "Partner", "createdBy": "Operator" },
+    { "title": "Request lease PDF from Daniel Price", "due": "Today, 12:00 PM", "priority": "High", "assignedTo": "Paralegal", "createdBy": "Operator" },
+    { "title": "Send estate planning questionnaire", "due": "Today, 2:00 PM", "priority": "Medium", "assignedTo": "Operator", "createdBy": "Operator" }
+  ],
+  "appointments": [
+    { "time": "11:45 AM", "title": "Consult: Daniel Price lease review", "status": "Confirmed" },
+    { "time": "2:30 PM", "title": "Estate planning intro: Rachel Adler", "status": "Reminder Sent" },
+    { "time": "4:00 PM", "title": "Partner review: conflict-sensitive matter", "status": "Needs Review" }
+  ],
+  "escalations": [
+    { "title": "Potential conflict-sensitive matter", "why": "Prospect named an opposing party that may overlap with current clients.", "next": "Run conflict check before sharing legal guidance.", "draft": "Before we discuss the facts, I need to complete a conflict check. Please send the opposing party name and related entities." },
+    { "title": "Deadline-driven litigation inquiry", "why": "Prospect indicated a response deadline within 48 hours.", "next": "Partner should determine whether same-day review is appropriate.", "draft": "This may be time-sensitive. I am routing it for attorney review so we can advise on the right next step." },
+    { "title": "Scope request outside standard intake", "why": "Prospect requested custom engagement terms.", "next": "Partner should approve scope and fee posture.", "draft": "I can have the attorney review the requested scope and confirm what we can include." }
+  ],
+  "capabilities": ["Matter qualification", "Instant follow-up", "Consult booking", "Task creation", "CRM updates", "Document intake", "Client nurturing", "Deadline reminders", "Escalation filtering", "Daily summary reports"],
+  "demoScenario": {
+    "title": "Live Demo Scenario",
+    "eyebrow": "Partner sees only what matters",
+    "steps": ["New inquiry arrives", "Operator qualifies and books consult", "Partner is notified only when legal judgment is needed"],
+    "buttonLabel": "Run Demo Flow",
+    "completedLabel": "Demo Flow Added",
+    "events": [
+      { "time": "11:02 AM", "channel": "Email", "status": "Waiting", "summary": "New legal inquiry received" },
+      { "time": "11:03 AM", "channel": "Email", "status": "Completed", "summary": "Operator responded with intake questions" },
+      { "time": "11:06 AM", "channel": "CRM", "status": "Completed", "summary": "Matter qualified and categorized" },
+      { "time": "11:09 AM", "channel": "Calendar", "status": "Completed", "summary": "Consult booked" },
+      { "time": "11:10 AM", "channel": "Asana", "status": "Completed", "summary": "Document request task created" },
+      { "time": "11:12 AM", "channel": "CRM", "status": "Escalated", "summary": "Escalation created because conflict risk was detected" }
+    ]
+  }
+}

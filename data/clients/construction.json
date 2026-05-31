@@ -1,0 +1,71 @@
+{
+  "slug": "construction",
+  "company": "Northline Builders",
+  "industry": "Construction",
+  "demoLabel": "Construction operations demo",
+  "operatorPrincipleTitle": "Owners stay focused on bids, crews, and cash flow.",
+  "operatorPrincipleBody": "The Operator handles inbound bid requests, vendor follow-up, site appointments, task routing, CRM updates, and exception escalation.",
+  "operatorPrincipleMetric": "91%",
+  "operatorPrincipleMetricDetail": "of coordination actions handled before owner involvement.",
+  "todaySummaryValue": "52 actions handled",
+  "todaySummaryBody": "Bid leads triaged, site walks booked, subcontractor tasks created, reminders sent, and only risky issues escalated.",
+  "kpis": [
+    { "label": "New Bid Leads", "value": "8", "detail": "3 urgent" },
+    { "label": "Qualified Projects", "value": "5", "detail": "$1.7M pipeline" },
+    { "label": "Site Walks Booked", "value": "4", "detail": "2 this week" },
+    { "label": "Follow-Ups Sent", "value": "27", "detail": "vendors covered" },
+    { "label": "Owner Escalations", "value": "2", "detail": "pricing risk" },
+    { "label": "Tasks Created", "value": "21", "detail": "crew + office" }
+  ],
+  "activityFeed": [
+    { "time": "7:42 AM", "channel": "Email", "status": "Completed", "summary": "Qualified commercial renovation lead" },
+    { "time": "8:06 AM", "channel": "SMS", "status": "Completed", "summary": "Confirmed subcontractor availability" },
+    { "time": "8:31 AM", "channel": "Asana", "status": "Completed", "summary": "Created RFI task for project manager" },
+    { "time": "9:15 AM", "channel": "Calendar", "status": "Completed", "summary": "Booked site walk for warehouse buildout" },
+    { "time": "9:38 AM", "channel": "CRM", "status": "Escalated", "summary": "Escalated margin-risk change order" },
+    { "time": "10:11 AM", "channel": "Email", "status": "Waiting", "summary": "Requested drawings from prospect" },
+    { "time": "10:49 AM", "channel": "CRM", "status": "Completed", "summary": "Updated project stage and estimator notes" }
+  ],
+  "pipeline": [
+    { "title": "New", "leads": [{ "name": "Harbor Foods", "type": "Commercial", "interest": "Kitchen expansion", "source": "Email", "urgency": 80, "next": "Request drawings" }] },
+    { "title": "Contacted", "leads": [{ "name": "Mason Realty", "type": "Tenant Buildout", "interest": "Office refresh", "source": "Phone", "urgency": 64, "next": "Send scope checklist" }] },
+    { "title": "Qualified", "leads": [{ "name": "Pinecrest School", "type": "Renovation", "interest": "Summer classroom work", "source": "SMS", "urgency": 86, "next": "Estimator review" }] },
+    { "title": "Site Walk Scheduled", "leads": [{ "name": "Atlas Warehousing", "type": "Industrial", "interest": "Warehouse buildout", "source": "Email", "urgency": 88, "next": "Confirm plans" }] },
+    { "title": "Bid / Negotiation", "leads": [{ "name": "Metro Dental", "type": "Medical Office", "interest": "Change order review", "source": "CRM", "urgency": 94, "next": "Owner to approve margin" }] },
+    { "title": "Won", "leads": [{ "name": "Oak & Main", "type": "Retail", "interest": "Facade work", "source": "Email", "urgency": 48, "next": "Kickoff checklist" }] }
+  ],
+  "inbox": [
+    { "channel": "Email", "messages": [{ "speaker": "Prospect", "message": "Can you price a warehouse buildout if we send plans today?" }, { "speaker": "Operator", "message": "Yes. I can collect drawings, timeline, site access, and decision criteria so the estimator can review quickly." }, { "speaker": "Operator Action", "message": "Qualified project + booked site walk." }] },
+    { "channel": "SMS", "messages": [{ "speaker": "Subcontractor", "message": "We can cover Thursday but need final scope." }, { "speaker": "Operator", "message": "I logged that and created a scope confirmation task for the PM." }, { "speaker": "Operator Action", "message": "Task created + vendor marked tentative." }] }
+  ],
+  "tasks": [
+    { "title": "Request drawings from Harbor Foods", "due": "Today, 9:30 AM", "priority": "High", "assignedTo": "Operator", "createdBy": "Operator" },
+    { "title": "Confirm site walk for Atlas Warehousing", "due": "Today, 1:00 PM", "priority": "Urgent", "assignedTo": "Project Manager", "createdBy": "Operator" },
+    { "title": "Review margin on Metro Dental change order", "due": "Today, 3:00 PM", "priority": "Urgent", "assignedTo": "Owner", "createdBy": "Operator" }
+  ],
+  "appointments": [
+    { "time": "10:30 AM", "title": "Estimator review: Pinecrest School", "status": "Confirmed" },
+    { "time": "1:45 PM", "title": "Site walk: Atlas Warehousing", "status": "Reminder Sent" },
+    { "time": "4:15 PM", "title": "Owner review: Metro Dental change order", "status": "Needs Review" }
+  ],
+  "escalations": [
+    { "title": "Margin-risk change order", "why": "Client requested custom terms that could compress gross margin.", "next": "Owner should approve pricing posture before reply.", "draft": "We can review the change order, but I want to confirm the scope and pricing impact before committing." },
+    { "title": "Compressed project timeline", "why": "Prospect requested start date inside crew availability window.", "next": "Confirm crew capacity and owner appetite before promising schedule.", "draft": "The timeline may be possible, but I need to confirm crew availability and lead times first." }
+  ],
+  "capabilities": ["Bid qualification", "Instant follow-up", "Site walk booking", "Task creation", "CRM updates", "Vendor coordination", "Client nurturing", "Deadline reminders", "Escalation filtering", "Daily summary reports"],
+  "demoScenario": {
+    "title": "Live Demo Scenario",
+    "eyebrow": "Owner sees the exception",
+    "steps": ["New bid request arrives", "Operator qualifies and books site walk", "Owner is notified only if margin or timeline risk appears"],
+    "buttonLabel": "Run Demo Flow",
+    "completedLabel": "Demo Flow Added",
+    "events": [
+      { "time": "11:15 AM", "channel": "Email", "status": "Waiting", "summary": "New bid request received" },
+      { "time": "11:17 AM", "channel": "Email", "status": "Completed", "summary": "Operator responded with scope questions" },
+      { "time": "11:21 AM", "channel": "CRM", "status": "Completed", "summary": "Project qualified" },
+      { "time": "11:24 AM", "channel": "Calendar", "status": "Completed", "summary": "Site walk booked" },
+      { "time": "11:26 AM", "channel": "Asana", "status": "Completed", "summary": "Estimator task created" },
+      { "time": "11:29 AM", "channel": "CRM", "status": "Escalated", "summary": "Escalation created because timeline risk was detected" }
+    ]
+  }
+}

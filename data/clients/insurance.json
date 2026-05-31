@@ -1,0 +1,72 @@
+{
+  "slug": "insurance",
+  "company": "Harbor Shield Insurance",
+  "industry": "Insurance agency",
+  "demoLabel": "Insurance agency demo",
+  "operatorPrincipleTitle": "Producers stay focused on advice and closing.",
+  "operatorPrincipleBody": "The Operator handles lead response, policy intake, renewal reminders, appointment booking, task creation, carrier follow-up, and escalation routing.",
+  "operatorPrincipleMetric": "94%",
+  "operatorPrincipleMetricDetail": "of service and intake actions handled before producer involvement.",
+  "todaySummaryValue": "48 actions handled",
+  "todaySummaryBody": "Quotes triaged, renewals chased, appointments booked, tasks routed, and only advisory decisions escalated.",
+  "kpis": [
+    { "label": "New Quote Requests", "value": "16", "detail": "6 high intent" },
+    { "label": "Qualified Prospects", "value": "10", "detail": "multi-line fit" },
+    { "label": "Appointments Booked", "value": "7", "detail": "5 confirmed" },
+    { "label": "Follow-Ups Sent", "value": "31", "detail": "renewals protected" },
+    { "label": "Producer Escalations", "value": "3", "detail": "coverage judgment" },
+    { "label": "Tasks Created", "value": "24", "detail": "service + sales" }
+  ],
+  "activityFeed": [
+    { "time": "8:12 AM", "channel": "WhatsApp", "status": "Completed", "summary": "Qualified new homeowners quote request" },
+    { "time": "8:33 AM", "channel": "Email", "status": "Completed", "summary": "Sent renewal reminder to commercial client" },
+    { "time": "8:58 AM", "channel": "Asana", "status": "Completed", "summary": "Created task to collect driver details" },
+    { "time": "9:26 AM", "channel": "Calendar", "status": "Completed", "summary": "Booked coverage review appointment" },
+    { "time": "9:52 AM", "channel": "CRM", "status": "Escalated", "summary": "Escalated coverage gap question to producer" },
+    { "time": "10:19 AM", "channel": "SMS", "status": "Waiting", "summary": "Requested declarations page from prospect" },
+    { "time": "10:43 AM", "channel": "CRM", "status": "Completed", "summary": "Updated policy stage and next action" }
+  ],
+  "pipeline": [
+    { "title": "New", "leads": [{ "name": "Julia Santos", "type": "Homeowners", "interest": "New purchase", "source": "WhatsApp", "urgency": 82, "next": "Collect closing date" }] },
+    { "title": "Contacted", "leads": [{ "name": "Evergreen Cafe", "type": "Commercial", "interest": "General liability", "source": "Email", "urgency": 70, "next": "Request payroll estimate" }] },
+    { "title": "Qualified", "leads": [{ "name": "Ben Walker", "type": "Auto", "interest": "Family bundle", "source": "SMS", "urgency": 78, "next": "Collect driver info" }] },
+    { "title": "Review Scheduled", "leads": [{ "name": "Maya Patel", "type": "Life", "interest": "Term policy", "source": "Phone", "urgency": 76, "next": "Producer consult" }] },
+    { "title": "Quote / Advisory", "leads": [{ "name": "Summit Logistics", "type": "Commercial Auto", "interest": "Coverage gap", "source": "CRM", "urgency": 95, "next": "Producer to advise" }] },
+    { "title": "Bound", "leads": [{ "name": "Ethan Brooks", "type": "Umbrella", "interest": "Personal umbrella", "source": "Email", "urgency": 44, "next": "Send welcome packet" }] }
+  ],
+  "inbox": [
+    { "channel": "WhatsApp", "messages": [{ "speaker": "Prospect", "message": "We close on a house next month. Can you quote homeowners insurance?" }, { "speaker": "Operator", "message": "Yes. I can collect the address, closing date, lender requirements, and current coverage details now." }, { "speaker": "Operator Action", "message": "Qualified prospect + booked coverage review." }] },
+    { "channel": "Email", "messages": [{ "speaker": "Client", "message": "Our renewal premium jumped. Can someone review it?" }, { "speaker": "Operator", "message": "I can gather the renewal documents and route this for review." }, { "speaker": "Operator Action", "message": "Created renewal review task + escalated coverage question." }] }
+  ],
+  "tasks": [
+    { "title": "Collect closing date from Julia Santos", "due": "Today, 11:00 AM", "priority": "High", "assignedTo": "Operator", "createdBy": "Operator" },
+    { "title": "Request driver details from Ben Walker", "due": "Today, 1:30 PM", "priority": "Medium", "assignedTo": "CSR", "createdBy": "Operator" },
+    { "title": "Review coverage gap for Summit Logistics", "due": "Today, 3:30 PM", "priority": "Urgent", "assignedTo": "Producer", "createdBy": "Operator" }
+  ],
+  "appointments": [
+    { "time": "11:15 AM", "title": "Coverage review: Julia Santos", "status": "Confirmed" },
+    { "time": "2:00 PM", "title": "Commercial renewal: Evergreen Cafe", "status": "Reminder Sent" },
+    { "time": "4:45 PM", "title": "Producer review: Summit Logistics", "status": "Needs Review" }
+  ],
+  "escalations": [
+    { "title": "Coverage gap question", "why": "Client described exposure that may require advisory judgment.", "next": "Producer should review existing limits before reply.", "draft": "I want to review your current limits before recommending a path. We will look at the exposure and options carefully." },
+    { "title": "Premium increase objection", "why": "Client may need retention strategy and remarketing decision.", "next": "Producer should decide whether to remarket or explain carrier factors.", "draft": "I understand the concern. We can review what changed and decide whether a remarket makes sense." },
+    { "title": "Carrier exception request", "why": "Prospect asked for coverage outside normal appetite.", "next": "Producer should approve carrier approach.", "draft": "This may require a carrier exception. I am routing it for review before we set expectations." }
+  ],
+  "capabilities": ["Quote qualification", "Instant follow-up", "Coverage review booking", "Task creation", "CRM updates", "Renewal intake", "Client nurturing", "Deadline reminders", "Escalation filtering", "Daily summary reports"],
+  "demoScenario": {
+    "title": "Live Demo Scenario",
+    "eyebrow": "Producer sees the advisory moment",
+    "steps": ["New quote request arrives", "Operator qualifies and books review", "Producer is notified only if coverage judgment is needed"],
+    "buttonLabel": "Run Demo Flow",
+    "completedLabel": "Demo Flow Added",
+    "events": [
+      { "time": "11:20 AM", "channel": "WhatsApp", "status": "Waiting", "summary": "New insurance quote request received" },
+      { "time": "11:21 AM", "channel": "WhatsApp", "status": "Completed", "summary": "Operator responded with intake questions" },
+      { "time": "11:24 AM", "channel": "CRM", "status": "Completed", "summary": "Prospect qualified" },
+      { "time": "11:27 AM", "channel": "Calendar", "status": "Completed", "summary": "Coverage review booked" },
+      { "time": "11:29 AM", "channel": "Asana", "status": "Completed", "summary": "Document collection task created" },
+      { "time": "11:31 AM", "channel": "CRM", "status": "Escalated", "summary": "Escalation created because coverage judgment was detected" }
+    ]
+  }
+}
