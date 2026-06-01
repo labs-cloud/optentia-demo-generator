@@ -80,13 +80,16 @@ export function Console() {
   const { font } = useGraphFont();
   const p = data.persona;
   const [page, setPage] = useState<string>(() => (typeof window === 'undefined' ? 'command' : localStorage.getItem('op-console-page') || 'command'));
-  const go = (id: string) => { setPage(id); try { localStorage.setItem('op-console-page', id); } catch (e) {} };
+  const [navOpen, setNavOpen] = useState(false);
+  const go = (id: string) => { setPage(id); setNavOpen(false); try { localStorage.setItem('op-console-page', id); } catch (e) {} };
   const meta = (PAGE_META[page] || PAGE_META.command)(data);
 
   return (
     <div className={'op-console theme-' + theme + ' font-' + font}>
+      {/* Mobile drawer scrim */}
+      <div className={'con-scrim' + (navOpen ? ' is-open' : '')} onClick={() => setNavOpen(false)} aria-hidden="true" />
       {/* Sidebar */}
-      <aside className="con-side">
+      <aside className={'con-side' + (navOpen ? ' is-open' : '')}>
         <div className="con-brand">
           <span className="con-brand-badge"><OperatorMark size={40} variant="cream" /></span>
           <div className="con-brand-meta">
@@ -122,6 +125,9 @@ export function Console() {
       {/* Main */}
       <div className="con-main">
         <header className="con-top">
+          <button className="con-hamburger" onClick={() => setNavOpen((v) => !v)} aria-label="Toggle navigation" aria-expanded={navOpen}>
+            <OpIcon name={navOpen ? 'close' : 'menu'} size={20} />
+          </button>
           <div className="con-top-title">
             <span className="con-top-eyebrow">{meta[0]}</span>
             <span className="con-top-h">{meta[1]}</span>

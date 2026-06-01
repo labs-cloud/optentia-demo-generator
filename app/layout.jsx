@@ -1,8 +1,13 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Operator Command Center",
+  title: "Operator Console",
   description: "Your AI Chief of Staff. Powered by Optentia."
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1
 };
 
 export default function RootLayout({ children }) {
