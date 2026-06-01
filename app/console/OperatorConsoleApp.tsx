@@ -4,18 +4,20 @@
    Shared by the root, the per-client demo route, and /console. */
 
 import './operator-console.css';
-import { GraphFontProvider, GraphThemeProvider } from './graph';
+import { GraphStyleProvider, GraphFontProvider, GraphThemeProvider } from './graph';
 import { IndustryProvider } from './shared';
 import { Console } from './Console';
 
 export default function OperatorConsoleApp() {
   return (
-    <GraphFontProvider>
-      <GraphThemeProvider>
-        <IndustryProvider>
-          <Console />
-        </IndustryProvider>
-      </GraphThemeProvider>
-    </GraphFontProvider>
+    <GraphStyleProvider>
+      <GraphFontProvider>
+        <GraphThemeProvider>
+          <IndustryProvider>
+            <Console />
+          </IndustryProvider>
+        </GraphThemeProvider>
+      </GraphFontProvider>
+    </GraphStyleProvider>
   );
 }

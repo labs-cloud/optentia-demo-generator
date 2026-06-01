@@ -25,6 +25,11 @@ export const G_THEMES: GTheme[] = [
   { id: 'slate',     label: 'Slate',     tone: 'mid',   bg: '#243441', primary: '#54C6A8', secondary: '#D7A85A' },
   { id: 'sand',      label: 'Sand',      tone: 'light', bg: '#EFE9DD', primary: '#B5623C', secondary: '#9A7B3A' },
   { id: 'porcelain', label: 'Porcelain', tone: 'light', bg: '#ECEEF2', primary: '#4A55B8', secondary: '#B07A3E' },
+  { id: 'mist',      label: 'Mist',      tone: 'light', bg: '#EBF0F4', primary: '#379AAB', secondary: '#B98A3C' },
+  { id: 'blush',     label: 'Blush',     tone: 'light', bg: '#F6EDEA', primary: '#D67F73', secondary: '#B68A4A' },
+  { id: 'mint',      label: 'Mint',      tone: 'light', bg: '#ECF3ED', primary: '#44B98A', secondary: '#B6923E' },
+  { id: 'aurora',    label: 'Aurora',    tone: 'light', bg: 'linear-gradient(135deg,#E3F1F0,#ECE7F6,#FBEDE6)', primary: '#3F9FAE', secondary: '#D98A5A' },
+  { id: 'dawn',      label: 'Dawn',      tone: 'light', bg: 'linear-gradient(135deg,#FDEEE4,#F8E4EA,#ECE6F6)', primary: '#E08769', secondary: '#C29A4E' },
 ];
 interface GThemeCtxValue { theme: string; setTheme: (id: string) => void; themes: GTheme[]; }
 const GThemeCtx = createContext<GThemeCtxValue | null>(null);
@@ -130,6 +135,45 @@ export function GraphFontSwitcher() {
       <span className="g-fontsel-aa">Aa</span>
       <select value={font} onChange={(e) => setFont(e.target.value)}>
         {fonts.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
+      </select>
+      <svg width="10" height="10" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M2 4l3.5 3.5L9 4" /></svg>
+    </label>
+  );
+}
+
+/* ── Style system (surface / border / graphics presets) ────── */
+export interface GStyle { id: string; label: string; }
+export const G_STYLES: GStyle[] = [
+  { id: 'aura',      label: 'Aura' },
+  { id: 'blueprint', label: 'Blueprint' },
+  { id: 'glass',     label: 'Glass' },
+  { id: 'editorial', label: 'Editorial' },
+  { id: 'neon',      label: 'Neon HUD' },
+];
+interface GStyleCtxValue { style: string; setStyle: (id: string) => void; styles: GStyle[]; }
+const GStyleCtx = createContext<GStyleCtxValue | null>(null);
+const G_STYLE_KEY = 'op-graph-style';
+
+export function GraphStyleProvider({ children }: { children: React.ReactNode }) {
+  const [style, setStyle] = useState<string>(() => {
+    if (typeof window === 'undefined') return 'aura';
+    const s = localStorage.getItem(G_STYLE_KEY);
+    return G_STYLES.some((x) => x.id === s) ? (s as string) : 'aura';
+  });
+  const set = (id: string) => { setStyle(id); try { localStorage.setItem(G_STYLE_KEY, id); } catch (e) {} };
+  return <GStyleCtx.Provider value={{ style, setStyle: set, styles: G_STYLES }}>{children}</GStyleCtx.Provider>;
+}
+export const useGraphStyle = (): GStyleCtxValue => useContext(GStyleCtx) || { style: 'aura', setStyle: () => {}, styles: G_STYLES };
+
+export function GraphStyleSwitcher() {
+  const { style, setStyle, styles } = useGraphStyle();
+  return (
+    <label className="g-fontsel g-stylesel" title="Surface & graphics style">
+      <svg className="g-stylesel-ico" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <rect x="2" y="2" width="12" height="12" rx="2" /><path d="M2 6h12M6 6v8" strokeWidth="1.2" />
+      </svg>
+      <select value={style} onChange={(e) => setStyle(e.target.value)}>
+        {styles.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
       </select>
       <svg width="10" height="10" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M2 4l3.5 3.5L9 4" /></svg>
     </label>
