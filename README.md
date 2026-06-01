@@ -37,6 +37,33 @@ If port `3000` is already in use, Next.js will print the alternate local URL.
 
 The root route `/` redirects to `/demo/chaim`.
 
+## Operator Console
+
+A second, self-contained surface lives at:
+
+```text
+/console
+```
+
+The Operator Console is the unified dashboard from the Claude Design handoff — a
+sidebar shell with every tab (Command Center, Conversations, Activity, Schedule,
+Channels, Records, Agent Graph, Settings) plus three top-bar selectors that
+re-skin the whole console live:
+
+- **Type** — six curated font pairings (Editorial, Grotesk, Newsprint, Display, Elegant, Technical)
+- **Theme** — six premium palettes (Optentia, Graphite, Aubergine, Slate, Sand, Porcelain)
+- **Demo industry** — ten industries that repopulate every screen from one data model
+
+The **Agent Graph** tab carries three living layouts as sub-tabs — Hierarchy
+(Mesh), Mission Control (Orbit), and Pipeline Flow — with animated delegation,
+escalation, and inbound pulses. The Operator silhouette is the brand mark
+throughout. Selections persist in `localStorage`.
+
+Implementation lives in `app/console/` (styles in `operator-console.css`,
+data in `data.ts`, primitives in `shared.tsx` / `graph.tsx`, screens in
+`concepts.tsx` / `pages.tsx`, shell in `Console.tsx`). The silhouette and brand
+assets are served from `public/console/`.
+
 ## Project Overview
 
 This app turns a single polished client dashboard into a reusable demo-generation platform. Dashboard code stays stable while each prospect demo is powered by a JSON file in `/data/clients`.
