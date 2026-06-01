@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import OperatorConsoleApp from "./console/OperatorConsoleApp";
 
 export default function Home() {
-  redirect("/demo/chaim");
+  return <OperatorConsoleApp />;
 }
