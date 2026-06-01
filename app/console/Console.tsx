@@ -6,7 +6,8 @@
 import React, { useState, useEffect } from 'react';
 import { useIndustry, OpIcon, IndustrySwitcher } from './shared';
 import {
-  OperatorMark, useGraphTheme, useGraphFont, GraphThemeSwitcher, GraphFontSwitcher,
+  OperatorMark, useGraphTheme, useGraphFont, useGraphStyle,
+  GraphThemeSwitcher, GraphFontSwitcher, GraphStyleSwitcher,
 } from './graph';
 import { ConceptCommand, ConceptChat, ConceptStream, ConceptMesh, ConceptOrbit, ConceptFlow } from './concepts';
 import { PageSchedule, PageChannels, PageRecords, PageSettings } from './pages';
@@ -78,6 +79,7 @@ export function Console() {
   const { data } = useIndustry();
   const { theme } = useGraphTheme();
   const { font } = useGraphFont();
+  const { style } = useGraphStyle();
   const p = data.persona;
   const [page, setPage] = useState<string>(() => (typeof window === 'undefined' ? 'command' : localStorage.getItem('op-console-page') || 'command'));
   const [navOpen, setNavOpen] = useState(false);
@@ -85,7 +87,7 @@ export function Console() {
   const meta = (PAGE_META[page] || PAGE_META.command)(data);
 
   return (
-    <div className={'op-console theme-' + theme + ' font-' + font}>
+    <div className={'op-console theme-' + theme + ' font-' + font + ' style-' + style}>
       {/* Mobile drawer scrim */}
       <div className={'con-scrim' + (navOpen ? ' is-open' : '')} onClick={() => setNavOpen(false)} aria-hidden="true" />
       {/* Sidebar */}
@@ -133,6 +135,7 @@ export function Console() {
             <span className="con-top-h">{meta[1]}</span>
           </div>
           <div className="con-top-spacer" />
+          <GraphStyleSwitcher />
           <GraphFontSwitcher />
           <GraphThemeSwitcher />
           <div className="con-top-div" />
