@@ -982,3 +982,82 @@
 .con-kpi-val { font-family: var(--font-display); font-size: 32px; font-weight: 700; color: var(--color-text-strong); line-height: 1.05; margin: 8px 0 6px; letter-spacing: -0.01em; }
 .con-kpi-delta { font-family: var(--font-mono); font-size: 10px; color: var(--color-text-muted); }
 .con-kpi-delta.up { color: var(--color-success); }
+
+/* ════════════════════════════════════════════════════════════
+   Responsive / mobile — drawer sidebar, compact wrapping topbar,
+   stacking grids. The desktop layout above is untouched at wide
+   widths; everything below only engages under each breakpoint.
+   ════════════════════════════════════════════════════════════ */
+
+/* dynamic viewport height so mobile browser chrome doesn't clip the shell */
+.op-console { height: 100dvh; }
+.con-hamburger { display: none; }
+.con-scrim { display: none; }
+
+/* ── Tablet / small desktop: collapse the multi-column screens ── */
+@media (max-width: 1024px) {
+  .cc-main { grid-template-columns: 1fr; }
+  .ch-body { grid-template-columns: 1fr; }
+  .st-grid { grid-template-columns: 1fr; }
+  .con-grid-2 { grid-template-columns: 1fr; }
+  .con-grid-3 { grid-template-columns: repeat(2, 1fr); }
+  .cc-kpis, .con-kpis { grid-template-columns: repeat(2, 1fr); }
+  .ch-draft { min-width: 0; }
+  .cc-h1 { font-size: 38px; white-space: normal; }
+}
+
+/* ── Phone: off-canvas sidebar drawer + compact topbar ───────── */
+@media (max-width: 768px) {
+  .op-console { grid-template-columns: 1fr; }
+
+  /* sidebar becomes a slide-in drawer */
+  .con-side {
+    position: fixed; top: 0; left: 0; bottom: 0;
+    width: 264px; max-width: 84vw; overflow-y: auto;
+    transform: translateX(-100%);
+    transition: transform var(--dur-base) var(--ease-emphasized);
+    z-index: 60; box-shadow: var(--shadow-lg);
+  }
+  .con-side.is-open { transform: none; }
+  .con-scrim.is-open {
+    display: block; position: fixed; inset: 0; z-index: 55;
+    background: rgba(5, 12, 20, 0.5);
+  }
+
+  /* hamburger toggle in the topbar */
+  .con-hamburger {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px; border-radius: var(--radius-md); flex-shrink: 0; order: -2;
+    border: 1px solid var(--color-border); color: var(--color-text);
+    background: color-mix(in srgb, var(--color-surface-2) 50%, transparent);
+  }
+
+  /* topbar wraps: row 1 = menu + title; switchers wrap onto following rows */
+  .con-top {
+    height: auto; min-height: 60px; flex-wrap: wrap;
+    padding: 10px 14px; gap: 10px 12px; align-items: center;
+  }
+  .con-top-title { order: -1; flex: 1 1 auto; min-width: 0; }
+  .con-top-h { font-size: 18px; }
+  .con-top-eyebrow { font-size: 9px; }
+  .con-top-spacer, .con-top-div, .con-monitor, .con-clock { display: none; }
+  .op-switcher-label { display: none; }
+  .op-switcher { flex: 1 1 100%; }
+  .op-seg-rail { max-width: none; }
+
+  /* tighter gutters across the embedded screens + pages */
+  .con-graphbar { flex-wrap: wrap; gap: 10px; padding: 14px 16px 0; }
+  .con-page { padding: 18px 16px; }
+  .cc-inner, .ch-inner, .st-inner, .mesh-inner, .orbit-inner, .flow-inner { padding: 18px 16px; }
+  .cc-title { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .cc-actions { flex-wrap: wrap; }
+  .con-page-head { flex-direction: column; align-items: flex-start; }
+  .con-page-title, .g-title { font-size: 22px; }
+  .cc-h1 { font-size: 30px; }
+}
+
+/* ── Narrow phone: single-column stat grids ──────────────────── */
+@media (max-width: 520px) {
+  .cc-kpis, .con-kpis, .con-grid-3 { grid-template-columns: 1fr; }
+  .cc-search { display: none; }
+}
