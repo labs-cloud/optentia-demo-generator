@@ -573,46 +573,48 @@ export const OP_INDUSTRIES: Industry[] = [
     date: 'Friday · May 30',
     streak: '198h streak',
     kpis: [
-      { label: 'Wholesale pipeline · 7d', value: '$34,800', delta: '+$8.2K vs prev 7d', tone: 'up', accent: true },
-      { label: 'Shopify orders to fulfill', value: '23', delta: '5 flagged delayed', tone: 'flat' },
-      { label: 'Supplier follow-ups pending', value: '7', delta: '3 past due', tone: 'flat' },
+      { label: 'Shopify orders · 7d', value: '47', delta: '12 pending fulfillment', tone: 'flat' },
+      { label: 'Wholesale pipeline', value: '$34,800', delta: '+$8.2K vs prev 7d', tone: 'up', accent: true },
+      { label: 'Supplier follow-ups', value: '9', delta: '4 past due', tone: 'flat' },
       { label: 'Hours given back', value: '6.4', unit: 'hr', delta: '≈ 1 work day · this week', tone: 'flat' },
     ],
     pipeline: [
-      { stage: 'Wholesale inquiries', value: 18 },
-      { stage: 'Quoted', value: 11 },
-      { stage: 'Confirmed', value: 7 },
-      { stage: 'Shipped', value: 5 },
+      { stage: 'Wholesale inquiries', value: 16 },
+      { stage: 'Quoted', value: 9 },
+      { stage: 'Confirmed', value: 6 },
+      { stage: 'Fulfilled', value: 4 },
     ],
     log: [
-      ['07:10', 'Done', 'Followed up with 3 suppliers on open fabric orders. 2 responded. 1 still pending.'],
-      ['07:46', 'Done', 'Logged 4 new wholesale inquiries from boutique buyers. Drafted intro replies.'],
-      ['08:22', 'Done', 'Flagged 2 Shopify orders as delayed — notified buyers with updated ETAs.'],
-      ['08:58', 'Review', 'Drafted a reorder proposal to the Lakewood boutique account — needs your sign-off.'],
-      ['09:31', 'Failed', 'Could not pull inventory count from Shopify — reconnect integration in Settings.'],
-      ['10:05', 'Note', '5 DMs came in via Instagram — 2 are wholesale inquiries, routed to your email.'],
-      ['10:48', 'Done', 'Updated fulfillment status on 11 open wholesale orders from this morning.'],
+      ['07:02', 'Done', 'Fulfilled 6 Shopify orders from the Elegant collection. Tracking numbers sent automatically.'],
+      ['07:38', 'Done', 'Flagged 3 Little Parni layette sets as low stock — reorder threshold hit. Draft PO ready for review.'],
+      ['08:05', 'Done', 'Followed up with 4 suppliers on open fabric orders. 2 confirmed. 2 still pending.'],
+      ['08:31', 'Review', 'Drafted wholesale proposal for new boutique account — needs your sign-off before sending.'],
+      ['09:05', 'Done', 'Synced inventory counts across Parni Adult and Little Parni lines. 2 SKUs updated.'],
+      ['09:33', 'Failed', 'Could not pull fulfillment status on 2 orders — Shopify webhook timed out. Retrying.'],
+      ['10:02', 'Note', '3 wholesale inquiries came in via the website form overnight. Routed to your inbox.'],
+      ['10:40', 'Done', 'Sent shipping update to 8 customers with delayed Sport line orders. No replies flagged.'],
     ],
     drafts: [
-      { who: 'Lakewood boutique', co: 'Wholesale · reorder', channel: 'Email', subj: 'Re: Spring restock — adult + kids line', preview: 'Hi — so glad the first drop sold through. I’ve put together a reorder across both lines with updated wholesale pricing and a ship window…', flag: 'at-risk', when: '8m ago' },
-      { who: 'Fabric supplier', co: 'Open fabric order', channel: 'WhatsApp', subj: 'Re: Cotton order — delivery update', preview: 'Hi — just following up on the open organic-cotton order. Can you confirm the new delivery window so I can hold the kids run on schedule?…', flag: null, when: '34m ago' },
-      { who: 'Shopify customer', co: 'DTC · order delayed', channel: 'Email', subj: 'Re: Your order — updated ETA', preview: 'Hi — thank you so much for your order! One item shipped a little behind. Here’s your updated tracking and ETA, plus a small thank-you…', flag: null, when: '1h ago' },
+      { who: 'New boutique account', co: 'Wholesale · new account', channel: 'Email', subj: 'Re: Wholesale proposal — Elegant + Little Parni', preview: 'Hi — wonderful to connect. Attached is your opening wholesale order across the Elegant and Little Parni lines, with tiered pricing and a first-ship window…', flag: 'urgent', when: '6m ago' },
+      { who: 'Shopify customer', co: 'DTC · Sport line delayed', channel: 'Shopify', subj: 'Re: Your order — updated shipping ETA', preview: 'Hi — thank you for your order! Your Sport line item shipped just behind schedule. Here’s your updated tracking and a revised ETA…', flag: null, when: '52m ago' },
+      { who: 'Children’s boutique', co: 'Wholesale form · website', channel: 'Wholesale Form', subj: 'New wholesale inquiry — Little Parni layette', preview: 'Hi! We’re a children’s boutique and would love to carry the Little Parni layette sets. Could you send your line sheet and minimums?…', flag: null, when: '1h ago' },
+      { who: 'Fabric supplier', co: 'SS26 · open fabric order', channel: 'WhatsApp', subj: 'Re: SS26 fabric delivery date', preview: 'Hi — following up on the open SS26 fabric order. Can you confirm the delivery date so I can lock the cut on the Sport line?…', flag: null, when: '1h ago' },
     ],
     events: [
-      { t: '09:00', title: 'Supplier call · fabric delivery update', who: 'Recurring', tone: 'flat' },
-      { t: '11:30', title: 'Wholesale buyer — Lakewood boutique', who: 'Booked overnight', tone: 'accent' },
-      { t: '14:00', title: 'Sample review · Little line new drop', who: 'Booked overnight', tone: 'flat' },
-      { t: '16:00', title: 'Shopify inventory sync check', who: 'Recurring', tone: 'flat' },
+      { t: '09:00', title: 'Supplier call · SS26 fabric delivery', who: 'Recurring', tone: 'flat' },
+      { t: '11:00', title: 'Wholesale buyer · new boutique onboarding', who: 'Booked overnight', tone: 'accent' },
+      { t: '13:30', title: 'Little Parni layette reorder review', who: 'Flagged by Operator', tone: 'flat' },
+      { t: '16:00', title: 'Shopify inventory audit · weekly', who: 'Recurring', tone: 'flat' },
     ],
     flows: [
-      { name: 'Wholesale inquiry triage', last: 'ran 14m ago', state: 'live' },
-      { name: 'Supplier follow-up loop', last: 'ran 2h ago', state: 'live' },
-      { name: 'Shopify delay notifier', last: 'ran 45m ago', state: 'live' },
-      { name: 'Weekly reorder digest', last: 'next: 17:00', state: 'scheduled' },
+      { name: 'Shopify fulfillment tracker', last: 'ran 22m ago', state: 'live' },
+      { name: 'Supplier follow-up loop', last: 'ran 1h ago', state: 'live' },
+      { name: 'Wholesale inquiry router', last: 'ran 3h ago', state: 'live' },
+      { name: 'Low stock reorder alert', last: 'next: 18:00', state: 'scheduled' },
     ],
-    briefLede: 'Before you opened your laptop, the Operator worked both channels — followed up with 3 suppliers, logged 4 new wholesale inquiries with intro replies drafted, and flagged 2 delayed Shopify orders with updated ETAs out to buyers.',
-    chatOpener: 'Morning, Sara. Both channels ran themselves overnight — suppliers are followed up, new wholesale inquiries are logged with intro replies drafted, and the delayed Shopify orders already have updated ETAs out to buyers.',
-    chatConfirm: 'Sent. The Lakewood reorder proposal is on its way across both lines — I’ll watch for their reply and queue the fulfillment update the moment they confirm.',
+    briefLede: 'Before you opened your laptop, the Operator worked the Shopify queue and the wholesale inbox — fulfilled 6 Elegant-collection orders with tracking sent, flagged 3 Little Parni layette sets for reorder, and chased 4 suppliers on open fabric orders.',
+    chatOpener: 'Morning, Sara. Shopify ran itself overnight — 6 Elegant orders are fulfilled with tracking out, the low-stock Little Parni layette sets have a draft PO ready, and the wholesale proposal for the new boutique is waiting on your sign-off.',
+    chatConfirm: 'Sent. The new boutique has your wholesale proposal across the Elegant and Little Parni lines — I’ll log it in the pipeline and chase if they’re quiet by Monday.',
   },
 ];
 
@@ -690,7 +692,7 @@ export const OP_TEAMS: Record<string, TeamMember[]> = {
 
 /* Channels the agents actually work, derived per industry from drafts. */
 export const OP_CHANNELS = (data: Industry): string[] => {
-  const order = ['Dialer', 'Email', 'WhatsApp', 'SMS'];
+  const order = ['Shopify', 'Dialer', 'Email', 'Wholesale Form', 'WhatsApp', 'SMS'];
   const seen = [...new Set((data.drafts || []).map((d: Draft) => d.channel))];
   return order.filter((c: string) => seen.includes(c)).concat(seen.filter((c: string) => !order.includes(c)));
 };

@@ -129,6 +129,8 @@ export const Tag = ({ tone, children }: { tone: string; children: React.ReactNod
 export const ChannelDot = ({ channel }: { channel: string }) => {
   const icon = channel === 'WhatsApp' ? 'whatsapp'
     : (channel === 'SMS' || channel === 'Dialer') ? 'phone'
+    : channel === 'Shopify' ? 'ecommerce'
+    : channel === 'Wholesale Form' ? 'drafts'
     : 'mail';
   return (
     <span className="op-channel" title={channel}>

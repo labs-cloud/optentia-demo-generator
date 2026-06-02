@@ -1,0 +1,47 @@
+flowchart TD
+    subgraph IN["Inbound channels"]
+        E["Email"]
+        W["WhatsApp"]
+        IG["Instagram DM"]
+        SH["Shopify wholesale form"]
+    end
+    E --> TRI
+    W --> TRI
+    IG --> TRI
+    SH --> TRI
+    TRI{{"Operator · Wholesale inquiry triage<br/>captures · classifies · dedupes"}}
+    TRI -->|Spam / not a fit| DROP["Archive · no action"]
+    TRI -->|DTC customer| DTC["Route to Shopify flow"]
+    TRI -->|Wholesale buyer| QUAL
+    QUAL["Log inquiry + enrich<br/>boutique · location · line interest (adult / kids)"]
+    QUAL --> REPLY["Draft intro reply<br/>auto-send low-risk"]
+    REPLY --> PIPE1["Pipeline: New inquiry / Quoted"]
+    PIPE1 --> SUP{{"Supplier follow-up loop<br/>check fabric availability for requested line"}}
+    SUP -->|In stock| PROP
+    SUP -->|Needs reorder| SUPACT["Follow up with supplier<br/>confirm delivery window"]
+    SUPACT --> PROP
+    PROP["Draft reorder / quote proposal<br/>across both lines"]
+    PROP --> REV{"Review gate<br/>needs sign-off"}
+    REV -->|Sara approves| SEND
+    REV -->|Edits / escalation| TEAM
+    subgraph HUMAN["Small team — escalations & sign-off"]
+        SARA["Sara · Founder"]
+        WL["Maya · Wholesale Lead"]
+        FUL["Sam · Fulfillment"]
+        SRC["Lia · Sourcing"]
+    end
+    REV -.-> SARA
+    TEAM["Route to owner"] --> WL
+    SEND["Send proposal · book buyer call"]
+    SEND --> PIPE2["Pipeline: Confirmed"]
+    PIPE2 --> FULFILL{{"Fulfillment<br/>Shopify delay notifier · status updates"}}
+    FULFILL -->|On time| SHIP["Pipeline: Shipped"]
+    FULFILL -->|Delayed| ETA["Notify buyer · updated ETA"]
+    ETA --> SHIP
+    DIGEST["Weekly reorder digest · recurring"] -.-> PIPE1
+    classDef agent fill:#0d4f4a,stroke:#14b8a6,color:#fff;
+    classDef human fill:#1f2937,stroke:#9ca3af,color:#fff;
+    classDef gate fill:#3f2d0d,stroke:#f59e0b,color:#fff;
+    class TRI,SUP,FULFILL agent;
+    class SARA,WL,FUL,SRC human;
+    class REV gate;

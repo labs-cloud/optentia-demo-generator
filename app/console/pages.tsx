@@ -6,8 +6,8 @@ import React, { useState } from 'react';
 import { useIndustry, OpIcon, ChannelDot, useDetail, clickProps } from './shared';
 import { OP_CHANNELS } from './data';
 
-const CHAN_ICON: Record<string, string> = { Email: 'mail', WhatsApp: 'whatsapp', SMS: 'phone' };
-const CHAN_REPLY: Record<string, string> = { Email: '4 min', WhatsApp: '40 s', SMS: '38 s' };
+const CHAN_ICON: Record<string, string> = { Email: 'mail', WhatsApp: 'whatsapp', SMS: 'phone', Shopify: 'ecommerce', 'Wholesale Form': 'drafts' };
+const CHAN_REPLY: Record<string, string> = { Email: '4 min', WhatsApp: '40 s', SMS: '38 s', Shopify: 'auto', 'Wholesale Form': '6 min' };
 
 /* ── Schedule ─────────────────────────────────────────────── */
 export function PageSchedule() {
