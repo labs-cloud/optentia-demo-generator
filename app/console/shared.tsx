@@ -205,3 +205,73 @@ export function HoursRing({ value, max = 14, size = 92, label = 'hrs back' }: { 
     </div>
   );
 }
+
+/* ── Clickable detail modal ─────────────────────────────────────
+   Every section/card/row in the console is clickable. Clicking opens
+   a lightweight detail sheet populated with (mock) demo data. */
+export interface DetailRow { k: string; v: string; }
+export interface DetailSpec {
+  title: string;
+  subtitle?: string;
+  tag?: { tone: string; label: string };
+  meta?: string;
+  rows?: DetailRow[];
+  body?: string;
+  actions?: { label: string; primary?: boolean }[];
+}
+
+const DetailCtx = createContext<{ open: (d: DetailSpec) => void }>({ open: () => {} });
+export const useDetail = () => useContext(DetailCtx);
+
+export function DetailProvider({ children }: { children: React.ReactNode }) {
+  const [spec, setSpec] = useState<DetailSpec | null>(null);
+  useEffect(() => {
+    if (!spec) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setSpec(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [spec]);
+  return (
+    <DetailCtx.Provider value={{ open: setSpec }}>
+      {children}
+      {spec && (
+        <div className="op-modal-scrim" onClick={() => setSpec(null)}>
+          <div className="op-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <button className="op-modal-x" onClick={() => setSpec(null)} aria-label="Close"><OpIcon name="close" size={16} /></button>
+            <div className="op-modal-head">
+              {spec.tag && <span className={'op-tag op-tag--' + spec.tag.tone}>{spec.tag.label}</span>}
+              <h3 className="op-modal-title">{spec.title}</h3>
+              {spec.subtitle && <span className="op-modal-sub">{spec.subtitle}</span>}
+              {spec.meta && <span className="op-modal-meta"><span className="op-livedot op-livedot--teal" />{spec.meta}</span>}
+            </div>
+            {spec.rows && spec.rows.length > 0 && (
+              <dl className="op-modal-rows">
+                {spec.rows.map((r, i) => (
+                  <div key={i} className="op-modal-row"><dt>{r.k}</dt><dd>{r.v}</dd></div>
+                ))}
+              </dl>
+            )}
+            {spec.body && <p className="op-modal-body">{spec.body}</p>}
+            <div className="op-modal-actions">
+              {(spec.actions && spec.actions.length ? spec.actions : [{ label: 'Close', primary: true }]).map((a, i) => (
+                <button key={i} className={a.primary ? 'op-cta op-cta--sm' : 'op-ghost'} onClick={() => setSpec(null)}>{a.label}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </DetailCtx.Provider>
+  );
+}
+
+/* Keyboard-accessible click props for any element turned into a button. */
+export function clickProps(onOpen: () => void) {
+  return {
+    onClick: onOpen,
+    role: 'button' as const,
+    tabIndex: 0,
+    onKeyDown: (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(); }
+    },
+  };
+}

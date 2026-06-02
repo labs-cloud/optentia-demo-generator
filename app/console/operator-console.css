@@ -1199,3 +1199,51 @@
   .cc-kpis, .con-kpis, .con-grid-3 { grid-template-columns: 1fr; }
   .cc-search { display: none; }
 }
+
+/* ── Clickable affordance ─────────────────────────────────────── */
+.is-clickable { cursor: pointer; }
+.is-clickable:hover { filter: brightness(1.06); }
+.is-clickable:focus-visible {
+  outline: 2px solid var(--color-brand-teal-light); outline-offset: 2px; border-radius: var(--radius-sm);
+}
+.con-table tr.is-clickable:hover { background: color-mix(in srgb, var(--color-surface-2) 60%, transparent); }
+
+/* ── Detail modal (every section opens mock detail) ───────────── */
+.op-modal-scrim {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(5, 12, 20, 0.62);
+  backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+  animation: opModalIn 0.16s ease;
+}
+@keyframes opModalIn { from { opacity: 0; } to { opacity: 1; } }
+.op-modal {
+  position: relative; width: 100%; max-width: 460px; max-height: 86vh; overflow: auto;
+  border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, var(--color-surface), var(--color-bg));
+  box-shadow: var(--shadow-lg); padding: 24px 24px 20px;
+  animation: opModalPop 0.18s var(--ease-emphasized);
+}
+@keyframes opModalPop {
+  from { transform: translateY(8px) scale(0.98); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.op-modal-x {
+  position: absolute; top: 14px; right: 14px; width: 30px; height: 30px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--color-border); border-radius: var(--radius-pill);
+  background: var(--color-surface-2); color: var(--color-text-muted); cursor: pointer;
+}
+.op-modal-x:hover { color: var(--color-text-strong); border-color: var(--color-brand-teal-light); }
+.op-modal-head { display: flex; flex-direction: column; gap: 6px; padding-right: 36px; margin-bottom: 14px; }
+.op-modal-head .op-tag { align-self: flex-start; }
+.op-modal-title { margin: 2px 0 0; font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--color-text-strong); letter-spacing: -0.01em; }
+.op-modal-sub { font-size: 13px; color: var(--color-text-muted); }
+.op-modal-meta { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--color-text-muted); }
+.op-modal-rows { margin: 0 0 14px; border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; }
+.op-modal-row { display: grid; grid-template-columns: 40% 1fr; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--color-border); }
+.op-modal-row:last-child { border-bottom: none; }
+.op-modal-row dt { margin: 0; font-size: 12px; color: var(--color-text-muted); }
+.op-modal-row dd { margin: 0; font-size: 13px; color: var(--color-text); font-weight: 500; text-align: right; word-break: break-word; }
+.op-modal-body { margin: 0 0 16px; font-size: 13.5px; line-height: 1.55; color: var(--color-text); }
+.op-modal-actions { display: flex; flex-wrap: wrap; gap: 8px; }
