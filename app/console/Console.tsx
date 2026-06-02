@@ -139,7 +139,7 @@ export function Console() {
           <GraphFontSwitcher />
           <GraphThemeSwitcher />
           <div className="con-top-div" />
-          <IndustrySwitcher compact />
+          <IndustrySwitcher variant="select" />
           <div className="con-top-div" />
           <span className="con-monitor"><span className="op-livedot op-livedot--teal" />Monitoring</span>
           <Clock />

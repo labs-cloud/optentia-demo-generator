@@ -65,6 +65,8 @@ export const ICONS: Record<string, string> = {
   recruiting: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8 M22 21v-2a4 4 0 0 0-3-3.87 M16 3.2a4 4 0 0 1 0 7.6',
   agency: 'M3 11v3l12 5V6L3 11z M15 8a3 3 0 0 1 0 7 M6 14v4a2 2 0 0 0 4 0v-2',
   auto: 'M5 16l1.6-5.3A2 2 0 0 1 8.5 9.3h7a2 2 0 0 1 1.9 1.4L19 16 M4 16h16v3h-2v-1H6v1H4z M7.5 16a1 1 0 1 0 0-.01 M16.5 16a1 1 0 1 0 0-.01',
+  mca: 'M4 12a8 8 0 0 1 16 0 M3 13h3v6H5a2 2 0 0 1-2-2z M21 13h-3v6h1a2 2 0 0 0 2-2z M18 19v1a2 2 0 0 1-2 2h-3',
+  apparel: 'M9 3L4 6l2.2 3.2L9 7.4V20h6V7.4l2.8 1.8L20 6l-5-3a3 3 0 0 1-6 0z',
 };
 
 export const OpIcon = ({ name, size = 18, sw = 1.6, style }: { name: string; size?: number; sw?: number; style?: React.CSSProperties }) => (
@@ -76,9 +78,23 @@ export const OpIcon = ({ name, size = 18, sw = 1.6, style }: { name: string; siz
 );
 
 /* ── Industry switcher (segmented pill row) ────────────────── */
-export function IndustrySwitcher({ compact = false }: { compact?: boolean }) {
+export function IndustrySwitcher({ compact = false, variant = 'rail' }: { compact?: boolean; variant?: 'rail' | 'select' }) {
   const { idx, setIndustry, list } = useIndustry();
   const railRef = useRef<HTMLDivElement>(null);
+  // Dropdown variant — scales cleanly past a handful of industries.
+  if (variant === 'select') {
+    return (
+      <label className="g-fontsel op-indsel" title="Demo industry">
+        <OpIcon name={list[idx].id} size={14} sw={1.7} />
+        <select value={idx} onChange={(e) => setIndustry(Number(e.target.value))}>
+          {list.map((it, i) => (
+            <option key={it.id} value={i}>{it.label}</option>
+          ))}
+        </select>
+        <svg width="10" height="10" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M2 4l3.5 3.5L9 4" /></svg>
+      </label>
+    );
+  }
   // keep active chip in view
   useEffect(() => {
     const el = railRef.current?.querySelector('.op-seg.is-active') as HTMLElement | null;
@@ -109,9 +125,11 @@ export const Tag = ({ tone, children }: { tone: string; children: React.ReactNod
   <span className={'op-tag op-tag--' + tone}>{children}</span>
 );
 
-/* ── Channel dot (Email / WhatsApp / SMS) ──────────────────── */
+/* ── Channel dot (Dialer / Email / WhatsApp / SMS) ─────────── */
 export const ChannelDot = ({ channel }: { channel: string }) => {
-  const icon = channel === 'WhatsApp' ? 'whatsapp' : channel === 'SMS' ? 'phone' : 'mail';
+  const icon = channel === 'WhatsApp' ? 'whatsapp'
+    : (channel === 'SMS' || channel === 'Dialer') ? 'phone'
+    : 'mail';
   return (
     <span className="op-channel" title={channel}>
       <OpIcon name={icon} size={12} sw={1.7} />{channel}

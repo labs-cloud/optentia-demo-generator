@@ -1,5 +1,5 @@
 /* Optentia · Operator Demo Generator — Industry data model
-   One normalized schema, 10 industries. Every concept renders from this.
+   One normalized schema, 12 industries. Every concept renders from this.
    All numbers/names are illustrative mockup data. */
 
 export interface Persona { name: string; initials: string; role: string; company: string; }
@@ -516,6 +516,104 @@ export const OP_INDUSTRIES: Industry[] = [
     chatOpener: 'Morning, Rick. Every overnight internet lead got a reply in minutes — test drives are booked and trade-in numbers are out.',
     chatConfirm: 'Sent. The buyer has the financing terms and a Saturday delivery slot — I\u2019ve held the Highlander and flagged it for the floor.',
   },
+
+  /* ── 11 · MCA / merchant cash advance ──────────────────────── */
+  {
+    id: 'mca', label: 'MCA', tagline: 'Merchant cash advance',
+    persona: { name: 'Tony Marchetti', initials: 'TM', role: 'Owner', company: 'Beacon Capital Funding' },
+    date: 'Friday · May 30',
+    streak: '171h streak',
+    kpis: [
+      { label: 'Funded pipeline · 7d', value: '$620K', delta: '+ $140K vs prev 7d', tone: 'up', accent: true },
+      { label: 'Apps to review', value: '12', delta: '3 flagged hot', tone: 'flat' },
+      { label: 'Callbacks booked', value: '11', delta: '11 booked overnight', tone: 'up' },
+      { label: 'Hours given back', value: '10.4', unit: 'hr', delta: '≈ 1.3 work days · this week', tone: 'flat' },
+    ],
+    pipeline: [
+      { stage: 'Dials connected', value: 96 },
+      { stage: 'Qualified', value: 42 },
+      { stage: 'App + statements', value: 18 },
+      { stage: 'Funded', value: 7 },
+    ],
+    log: [
+      ['07:08', 'Done', 'Worked 240 aged leads with voicemail drops and texts — 34 merchants replied.'],
+      ['07:46', 'Done', 'Booked 11 callbacks for the floor and routed them by time zone.'],
+      ['08:29', 'Done', 'Collected 4 months of bank statements from 6 merchants automatically.'],
+      ['09:15', 'Review', 'Drafted a renewal pitch for a merchant 78% paid down — needs your sign-off.'],
+      ['09:43', 'Failed', 'Could not push the application into the CRM — reconnect in Settings.'],
+      ['10:09', 'Note', '3 merchants asked about rates by text — flagged, kept off specifics until you approve.'],
+      ['11:02', 'Done', 'Submitted 5 complete files to lenders and chased 3 pending stips.'],
+    ],
+    drafts: [
+      { who: 'Riverside Diner', co: 'Renewal · 78% paid', channel: 'Dialer', subj: 'Re: Renewal — talk track ready', preview: 'Owner answers best after 2pm. Lead with the $40K they’re re-qualified for and the lower factor on renewal. I’ve queued the call and the offer summary…', flag: 'hot', when: '7m ago' },
+      { who: 'Vela Logistics', co: 'New · $85K request', channel: 'SMS', subj: 'Re: Sending your application', preview: 'Hi Dawn — thanks for the call. Here’s the one-page app and a secure link to connect 4 months of statements. Takes about 5 minutes…', flag: null, when: '33m ago' },
+      { who: 'Summit HVAC', co: 'Submitted · stips', channel: 'Email', subj: 'Re: Last two items to fund', preview: 'You’re approved pending two stips — a voided check and last month’s statement. Reply with both and we can fund as soon as tomorrow…', flag: null, when: '1h ago' },
+    ],
+    events: [
+      { t: '08:00', title: 'Floor huddle · dial targets', who: 'Recurring', tone: 'flat' },
+      { t: '11:00', title: 'Renewal call · Riverside Diner', who: 'Booked overnight', tone: 'accent' },
+      { t: '13:30', title: 'Vela Logistics — app review', who: 'Booked overnight', tone: 'flat' },
+      { t: '15:30', title: 'Lender submission round', who: 'Recurring', tone: 'flat' },
+    ],
+    flows: [
+      { name: 'Aged-lead reactivation', last: 'ran 9m ago', state: 'live' },
+      { name: 'Voicemail + SMS drops', last: 'ran 30m ago', state: 'live' },
+      { name: 'Statement collection', last: 'ran 1h ago', state: 'live' },
+      { name: 'Renewal radar', last: 'next: 17:00', state: 'scheduled' },
+    ],
+    briefLede: 'Before the floor opened, the Operator worked 240 aged leads, booked 11 callbacks, and collected statements on 6 files worth $310K in requests.',
+    chatOpener: 'Morning, Tony. I worked the aged-lead list overnight — voicemails and texts are out, and 11 merchants want a callback today.',
+    chatConfirm: 'Sent. Riverside has a callback set for after 2pm and I’ve queued the renewal offer — I’ll log the call notes and prep the next file the second it funds.',
+  },
+
+  /* ── 12 · Apparel manufacturing ────────────────────────────── */
+  {
+    id: 'apparel', label: 'Apparel mfg', tagline: 'Clothing manufacturer',
+    persona: { name: 'Mattes', initials: 'MA', role: 'Founder', company: 'Parni Inc' },
+    date: 'Friday · May 30',
+    streak: '198h streak',
+    kpis: [
+      { label: 'Order book · in production', value: '$340K', delta: '+ $72K vs prev 7d', tone: 'up', accent: true },
+      { label: 'Shipments to track', value: '14', delta: '3 flagged at-risk', tone: 'flat' },
+      { label: 'On-time delivery', value: '96%', delta: '+ 4 pts this week', tone: 'up' },
+      { label: 'Hours given back', value: '11.6', unit: 'hr', delta: '≈ 1.5 work days · this week', tone: 'flat' },
+    ],
+    pipeline: [
+      { stage: 'Open orders', value: 52 },
+      { stage: 'In production', value: 34 },
+      { stage: 'QC + pack', value: 19 },
+      { stage: 'Shipped', value: 11 },
+    ],
+    log: [
+      ['07:05', 'Done', 'Tracked 38 outbound shipments and flagged 3 at risk of missing the dock window.'],
+      ['07:44', 'Done', 'Reordered 6 low-stock materials with suppliers before the cutoff.'],
+      ['08:26', 'Done', 'Rerouted 2 delayed freight loads around the port backup.'],
+      ['09:12', 'Review', 'Drafted a delay notice to a wholesale buyer — needs your sign-off.'],
+      ['09:40', 'Failed', 'Could not sync the warehouse system — reconnect in Settings.'],
+      ['10:08', 'Note', '2 fabric POs arrived short — flagged for a claim with the mill.'],
+      ['11:00', 'Done', 'Updated 12 production orders and confirmed 4 delivery dates with carriers.'],
+    ],
+    drafts: [
+      { who: 'Nordhaven Apparel', co: 'Wholesale · 1,200 units', channel: 'Email', subj: 'Re: Delivery date on PO #4471', preview: 'Hi — the knit run finished early. I can ship PO #4471 Thursday and have it on your dock Monday. Tracking and packing list attached…', flag: 'at-risk', when: '9m ago' },
+      { who: 'Yildiz Textiles', co: 'Mill · fabric PO', channel: 'WhatsApp', subj: 'Re: Short shipment on the cotton', preview: 'Hi Emre — the cotton order came in 80kg short. Can you cover it on the next container? I’ve logged a claim and held the cut on style P-22…', flag: null, when: '36m ago' },
+      { who: 'Coastal Freight', co: 'Carrier · LTL', channel: 'Email', subj: 'Re: Pickup window for Friday', preview: 'Confirming the Friday 2–4pm pickup for 6 pallets to the NJ DC. Bills of lading are attached and the dock is booked…', flag: null, when: '1h ago' },
+    ],
+    events: [
+      { t: '08:00', title: 'Floor + cutting standup', who: 'Recurring', tone: 'flat' },
+      { t: '11:00', title: 'Nordhaven delivery call', who: 'Booked overnight', tone: 'accent' },
+      { t: '13:30', title: 'Carrier rate review', who: 'Recurring', tone: 'flat' },
+      { t: '15:30', title: 'Mill claim follow-up · Yildiz', who: 'Booked overnight', tone: 'flat' },
+    ],
+    flows: [
+      { name: 'Shipment tracking + ETA alerts', last: 'ran 7m ago', state: 'live' },
+      { name: 'Low-stock material reorder', last: 'ran 1h ago', state: 'live' },
+      { name: 'Freight rerouting', last: 'ran 40m ago', state: 'live' },
+      { name: 'Delivery-date confirmations', last: 'next: 16:00', state: 'scheduled' },
+    ],
+    briefLede: 'Overnight, the Operator tracked 38 shipments, reordered 6 materials before cutoff, and rerouted 2 freight loads around the port backup.',
+    chatOpener: 'Morning, Mattes. Logistics ran itself overnight — every shipment is tracked, low materials are reordered, and two delayed loads are already rerouted.',
+    chatConfirm: 'Sent. Nordhaven has the Thursday ship date and tracking — I’ll watch the dock window and ping the carrier the moment the ETA slips.',
+  },
 ];
 
 /* Helper: map a status tag to a semantic tone (never teal — teal is brand). */
@@ -578,11 +676,21 @@ export const OP_TEAMS: Record<string, TeamMember[]> = {
     { name: 'Joy Adler', initials: 'JA', role: 'Finance Manager', picks: 'Financing & terms' },
     { name: 'Ned Cole', initials: 'NC', role: 'Service Advisor', picks: 'Upgrade interest' },
   ],
+  mca: [
+    { name: 'Gina Russo', initials: 'GR', role: 'Senior Closer', picks: 'Renewals & big files' },
+    { name: 'Andre Webb', initials: 'AW', role: 'Underwriting', picks: 'Stips & approvals' },
+    { name: 'Mia Sosa', initials: 'MS', role: 'Floor Manager', picks: 'Callbacks & dials' },
+  ],
+  apparel: [
+    { name: 'Elif Demir', initials: 'ED', role: 'Production Lead', picks: 'Order schedules & WIP' },
+    { name: 'Sam Okoro', initials: 'SO', role: 'Logistics Coord.', picks: 'Freight & shipments' },
+    { name: 'Lia Romano', initials: 'LR', role: 'Sourcing', picks: 'Material POs & claims' },
+  ],
 };
 
 /* Channels the agents actually work, derived per industry from drafts. */
 export const OP_CHANNELS = (data: Industry): string[] => {
-  const order = ['Email', 'WhatsApp', 'SMS'];
+  const order = ['Dialer', 'Email', 'WhatsApp', 'SMS'];
   const seen = [...new Set((data.drafts || []).map((d: Draft) => d.channel))];
   return order.filter((c: string) => seen.includes(c)).concat(seen.filter((c: string) => !order.includes(c)));
 };
