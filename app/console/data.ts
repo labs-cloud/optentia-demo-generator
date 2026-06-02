@@ -616,6 +616,57 @@ export const OP_INDUSTRIES: Industry[] = [
     chatOpener: 'Morning, Sara. Shopify ran itself overnight — 6 Elegant orders are fulfilled with tracking out, the low-stock Little Parni layette sets have a draft PO ready, and the wholesale proposal for the new boutique is waiting on your sign-off.',
     chatConfirm: 'Sent. The new boutique has your wholesale proposal across the Elegant and Little Parni lines — I’ll log it in the pipeline and chase if they’re quiet by Monday.',
   },
+
+  /* ── 13 · Field services ───────────────────────────────────── */
+  {
+    id: 'fieldservices', label: 'Field services', tagline: 'Office installation & services',
+    persona: { name: 'Simon R.', initials: 'SR', role: 'Owner & Operations Lead', company: 'Field Services' },
+    date: 'Friday · May 30',
+    streak: '182h streak',
+    kpis: [
+      { label: 'Active jobs · this week', value: '11', delta: '3 scheduled today', tone: 'flat' },
+      { label: 'Invoices pending · QuickBooks', value: '$28,400', delta: '4 overdue 30+ days', tone: 'flat', accent: true },
+      { label: 'Crew dispatches today', value: '6', delta: '2 awaiting confirmation', tone: 'flat' },
+      { label: 'Hours given back', value: '7.2', unit: 'hr', delta: '≈ 1 work day · this week', tone: 'flat' },
+    ],
+    pipeline: [
+      { stage: 'New requests', value: 22 },
+      { stage: 'Quoted', value: 14 },
+      { stage: 'Scheduled', value: 11 },
+      { stage: 'Installed', value: 6 },
+    ],
+    log: [
+      ['06:48', 'Done', 'Sent job brief to warehouse crew for the Parsippany corporate install — 7AM start confirmed.'],
+      ['07:32', 'Done', 'Flagged 2 QuickBooks invoices overdue 30+ days. Drafted follow-up emails to both clients.'],
+      ['08:10', 'Done', 'Sent status update to Morris County client — delivery and install on schedule for Thursday.'],
+      ['08:45', 'Review', 'Drafted change order email for the Edison relocation — scope expanded. Needs your sign-off.'],
+      ['09:20', 'Done', 'Confirmed crew availability for Friday’s healthcare facility installation. All 4 confirmed.'],
+      ['09:48', 'Failed', 'Could not pull updated schedule from shared calendar — reconnect Google Calendar in Settings.'],
+      ['10:15', 'Note', '2 new consultation requests came in via the website contact form. Routed to your inbox.'],
+      ['11:05', 'Done', 'Sent payment reminder to 3 clients with open invoices. 1 replied with ETA.'],
+    ],
+    drafts: [
+      { who: 'Edison facilities mgr', co: 'Office relocation · change order', channel: 'Email', subj: 'Re: Change order — expanded scope', preview: 'Hi — following our walkthrough, here’s the revised scope and updated quote for the added workstations and the second-floor reconfiguration. I’ve flagged the cost delta and a new completion date for your sign-off…', flag: 'urgent', when: '8m ago' },
+      { who: 'Morris County client', co: 'Invoice · 38 days overdue', channel: 'QuickBooks', subj: 'Re: Past-due invoice #1042', preview: 'Hi — a friendly reminder that invoice #1042 is now 38 days past due. I’ve reattached it with a secure pay link, and I’m happy to set up a short payment plan if that’s easier…', flag: 'overdue', when: '34m ago' },
+      { who: 'Healthcare facility', co: 'Friday install · 4-person crew', channel: 'Google Calendar', subj: 'Re: Friday installation — confirm 8AM', preview: 'Hi — I’ve drafted the calendar invite for Friday’s furniture installation with your 4-person crew and an 8AM arrival. Confirm and I’ll send it to the site contact and the team…', flag: null, when: '1h ago' },
+      { who: 'New inquiry', co: 'Consultation · website form', channel: 'WhatsApp', subj: 'Re: Office install quote request', preview: 'Hi — thanks for reaching out about your office install. I can swing by for a walkthrough Tuesday or Wednesday morning to scope it and get you a quote. Which works better for you?', flag: null, when: '1h ago' },
+    ],
+    events: [
+      { t: '07:00', title: 'Crew dispatch · Parsippany corporate install', who: 'Recurring', tone: 'flat' },
+      { t: '10:00', title: 'Client walkthrough · Edison office relocation', who: 'Booked overnight', tone: 'accent' },
+      { t: '13:00', title: 'Warehouse check · incoming furniture delivery', who: 'Flagged by Operator', tone: 'flat' },
+      { t: '15:30', title: 'QuickBooks invoice review · weekly', who: 'Recurring', tone: 'flat' },
+    ],
+    flows: [
+      { name: 'QuickBooks overdue invoice tracker', last: 'ran 18m ago', state: 'live' },
+      { name: 'Crew dispatch & confirmation loop', last: 'ran 2h ago', state: 'live' },
+      { name: 'Client job status updater', last: 'ran 1h ago', state: 'live' },
+      { name: 'New consultation inquiry router', last: 'next: 17:00', state: 'scheduled' },
+    ],
+    briefLede: 'Before the crew rolled out, the Operator briefed the warehouse team for the Parsippany install, flagged two overdue QuickBooks invoices, and kept every active client job on schedule.',
+    chatOpener: 'Morning, Simon. The crew brief for the Parsippany install went out before 7 and every active job is on track — here’s what I handled overnight.',
+    chatConfirm: 'Sent. The Edison client has the change order with the revised scope and completion date — I’ll log it against the job and chase a sign-off if they’re quiet by tomorrow.',
+  },
 ];
 
 /* Helper: map a status tag to a semantic tone (never teal — teal is brand). */
@@ -688,11 +739,16 @@ export const OP_TEAMS: Record<string, TeamMember[]> = {
     { name: 'Sam Okoro', initials: 'SO', role: 'Fulfillment', picks: 'Shopify orders & delays' },
     { name: 'Lia Romano', initials: 'LR', role: 'Sourcing', picks: 'Fabric orders & suppliers' },
   ],
+  fieldservices: [
+    { name: 'Dave Romano', initials: 'DR', role: 'Crew Lead', picks: 'Dispatch & site confirmations' },
+    { name: 'Tina Alvarez', initials: 'TA', role: 'Office Manager', picks: 'Invoices & QuickBooks' },
+    { name: 'Mike Chen', initials: 'MC', role: 'Warehouse Lead', picks: 'Deliveries & staging' },
+  ],
 };
 
 /* Channels the agents actually work, derived per industry from drafts. */
 export const OP_CHANNELS = (data: Industry): string[] => {
-  const order = ['Shopify', 'Dialer', 'Email', 'Wholesale Form', 'WhatsApp', 'SMS'];
+  const order = ['Shopify', 'Dialer', 'QuickBooks', 'Email', 'Google Calendar', 'Wholesale Form', 'WhatsApp', 'SMS'];
   const seen = [...new Set((data.drafts || []).map((d: Draft) => d.channel))];
   return order.filter((c: string) => seen.includes(c)).concat(seen.filter((c: string) => !order.includes(c)));
 };
