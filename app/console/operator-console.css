@@ -549,6 +549,11 @@
 .g-fontsel select option { color: #15202b; background: #fff; }
 .g-fontsel svg { color: var(--color-text-muted); pointer-events: none; flex-shrink: 0; }
 
+/* Industry dropdown variant — leading glyph reads in brand teal */
+.op-indsel { padding: 6px 9px 6px 10px; }
+.op-indsel > svg:first-of-type { color: var(--color-brand-teal); }
+.op-indsel select { font-weight: 500; max-width: 160px; }
+
 /* Concept 1 · Live Command Center — styles */
 .cc-inner { position: relative; z-index: 1; height: 100%; padding: 30px 36px 32px; display: flex; flex-direction: column; gap: 22px; }
 

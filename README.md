@@ -52,7 +52,7 @@ re-skin the whole console live:
 
 - **Type** — six curated font pairings (Editorial, Grotesk, Newsprint, Display, Elegant, Technical)
 - **Theme** — six premium palettes (Optentia, Graphite, Aubergine, Slate, Sand, Porcelain)
-- **Demo industry** — ten industries that repopulate every screen from one data model
+- **Demo industry** — twelve industries that repopulate every screen from one data model
 
 The **Agent Graph** tab carries three living layouts as sub-tabs — Hierarchy
 (Mesh), Mission Control (Orbit), and Pipeline Flow — with animated delegation,
