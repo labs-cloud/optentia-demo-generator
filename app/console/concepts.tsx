@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   useIndustry, IndustrySwitcher, OpIcon, Tag, ChannelDot, Sparkline, HoursRing,
+  useDetail, clickProps,
 } from './shared';
 import {
   OperatorMark, useGraphTheme, GraphThemeSwitcher, GLegend, GEdge,
@@ -16,6 +17,7 @@ import { OP_TONE, OP_TEAMS, OP_CHANNELS, type Industry } from './data';
 /* ── Concept 1 · Live Command Center ───────────────────────── */
 export function ConceptCommand({ embedded }: { embedded?: boolean }) {
   const { data } = useIndustry();
+  const { open } = useDetail();
   const p = data.persona;
   const spark = [22, 26, 24, 30, 28, 34, 33, 40, 44];
 
@@ -44,14 +46,29 @@ export function ConceptCommand({ embedded }: { embedded?: boolean }) {
             <span className="cc-sub">{p.role} · {p.company}</span>
           </div>
           <div className="cc-actions">
-            <div className="cc-search"><OpIcon name="search" size={16} /><span>Search threads, drafts, deals…</span></div>
-            <button className="op-cta"><OpIcon name="zap" size={16} />Run a workflow</button>
+            <div className="cc-search is-clickable" {...clickProps(() => open({
+              title: 'Search', subtitle: p.company, tag: { tone: 'info', label: 'Operator' },
+              rows: [{ k: 'Threads', v: 'All channels' }, { k: 'Drafts', v: String(data.drafts.length) }, { k: 'Deals', v: 'Live pipeline' }],
+              body: 'Ask the Operator anything across threads, drafts, and deals — it answers from everything it’s working.',
+            }))}><OpIcon name="search" size={16} /><span>Search threads, drafts, deals…</span></div>
+            <button className="op-cta" onClick={() => open({
+              title: 'Run a workflow', tag: { tone: 'info', label: 'Workflows' },
+              rows: data.flows.map((f) => ({ k: f.name, v: f.state === 'live' ? 'Autonomous' : 'Scheduled' })),
+              body: 'Kick off any workflow on demand, or let the Operator keep running them on its own.',
+              actions: [{ label: 'Run now', primary: true }, { label: 'Cancel' }],
+            })}><OpIcon name="zap" size={16} />Run a workflow</button>
           </div>
         </div>
 
         <section className="cc-kpis">
           {data.kpis.map((k, i) => (
-            <div key={i} className={'cc-kpi' + (k.accent ? ' is-accent' : '')}>
+            <div key={i} className={'cc-kpi is-clickable' + (k.accent ? ' is-accent' : '')}
+              {...clickProps(() => open({
+                title: k.label, subtitle: p.company,
+                tag: { tone: k.tone === 'up' ? 'success' : 'info', label: k.tone === 'up' ? 'Trending up' : 'This week' },
+                rows: [{ k: 'Current', v: k.value + (k.unit ? ' ' + k.unit : '') }, { k: 'Change', v: k.delta }, { k: 'Window', v: 'Last 7 days' }],
+                body: 'Driven live by the Operator’s activity this week.',
+              }))}>
               <span className="cc-kpi-label">{k.label}</span>
               <span className="cc-kpi-value">{k.value}{k.unit && <span className="cc-kpi-unit">{k.unit}</span>}</span>
               <div className="cc-kpi-foot">
@@ -70,14 +87,26 @@ export function ConceptCommand({ embedded }: { embedded?: boolean }) {
             </header>
             <div className="cc-log-body">
               {data.log.map(([t, status, msg], i) => (
-                <div key={i} className="cc-log-line">
+                <div key={i} className="cc-log-line is-clickable"
+                  {...clickProps(() => open({
+                    title: status + ' · ' + t, tag: { tone: OP_TONE(status), label: status },
+                    rows: [{ k: 'Time', v: t }, { k: 'Outcome', v: status }, { k: 'Run by', v: 'Operator' }],
+                    body: msg,
+                    actions: status === 'Review' ? [{ label: 'Review now', primary: true }, { label: 'Close' }]
+                      : status === 'Failed' ? [{ label: 'Reconnect', primary: true }, { label: 'Close' }]
+                      : undefined,
+                  }))}>
                   <span className="cc-log-time">{t}</span>
                   <Tag tone={OP_TONE(status)}>{status}</Tag>
                   <span className="cc-log-msg">{msg}</span>
                 </div>
               ))}
             </div>
-            <footer className="cc-card-foot"><a href="#">See full activity log</a><OpIcon name="arrowRight" size={13} /></footer>
+            <footer className="cc-card-foot"><a href="#" onClick={(e) => { e.preventDefault(); open({
+              title: 'Full activity log', subtitle: data.date, meta: (data.log.length + 10) + ' actions · 0 errors',
+              rows: data.log.map(([t, status]) => ({ k: t, v: status })),
+              body: 'Every action the Operator took today, oldest to newest.',
+            }); }}>See full activity log</a><OpIcon name="arrowRight" size={13} /></footer>
           </section>
 
           <aside className="cc-rail">
@@ -85,7 +114,14 @@ export function ConceptCommand({ embedded }: { embedded?: boolean }) {
               <header className="cc-card-head cc-card-head--tight"><h3 className="cc-h3">Today</h3><span className="cc-meta">{data.events.length} events</span></header>
               <div className="cc-events">
                 {data.events.map((e, i) => (
-                  <div key={i} className={'cc-event' + (e.tone === 'accent' ? ' is-accent' : '')}>
+                  <div key={i} className={'cc-event is-clickable' + (e.tone === 'accent' ? ' is-accent' : '')}
+                    {...clickProps(() => open({
+                      title: e.title, subtitle: e.t + ' · ' + data.date,
+                      tag: { tone: e.tone === 'accent' ? 'warning' : 'info', label: e.tone === 'accent' ? 'Priority' : 'Scheduled' },
+                      rows: [{ k: 'Time', v: e.t }, { k: 'Source', v: e.who }, { k: 'Owner', v: p.name }],
+                      body: 'Booked and confirmed by the Operator.',
+                      actions: [{ label: 'Reschedule', primary: true }, { label: 'Cancel' }],
+                    }))}>
                     <span className="cc-event-time">{e.t}</span>
                     <div>
                       <span className="cc-event-title">{e.title}</span>
@@ -99,7 +135,14 @@ export function ConceptCommand({ embedded }: { embedded?: boolean }) {
               <header className="cc-card-head cc-card-head--tight"><h3 className="cc-h3">Workflows</h3><span className="cc-meta">{data.flows.length} active</span></header>
               <div className="cc-flows">
                 {data.flows.map((f, i) => (
-                  <div key={i} className="cc-flow">
+                  <div key={i} className="cc-flow is-clickable"
+                    {...clickProps(() => open({
+                      title: f.name, subtitle: 'Workflow',
+                      tag: { tone: f.state === 'live' ? 'success' : 'info', label: f.state === 'live' ? 'Autonomous' : 'Scheduled' },
+                      rows: [{ k: 'State', v: f.state === 'live' ? 'Running' : 'Scheduled' }, { k: 'Last run', v: f.last }, { k: 'Errors', v: '0' }],
+                      body: 'The Operator runs this on its own and only pings you if it gets stuck.',
+                      actions: [{ label: 'View runs', primary: true }, { label: 'Pause' }],
+                    }))}>
                     <span className={'cc-flow-state cc-flow-state--' + f.state} />
                     <span className="cc-flow-name">{f.name}</span>
                     <span className="cc-flow-last">{f.last}</span>
@@ -128,6 +171,7 @@ function Msg({ who, card, children }: { who: string; card?: boolean; children: R
 
 export function ConceptChat({ embedded }: { embedded?: boolean }) {
   const { data } = useIndustry();
+  const { open } = useDetail();
   const p = data.persona;
   const accentKpi = data.kpis.find((k) => k.accent) || data.kpis[0];
   const hours = data.kpis.find((k) => k.unit === 'hr');
@@ -187,9 +231,22 @@ export function ConceptChat({ embedded }: { embedded?: boolean }) {
                 </div>
                 <p className="ch-draft-preview">{d0.preview}</p>
                 <div className="ch-draft-actions">
-                  <button className="op-cta op-cta--sm"><OpIcon name="send" size={14} />Approve &amp; send</button>
-                  <button className="op-ghost">Edit</button>
-                  <button className="op-ghost">Reject</button>
+                  <button className="op-cta op-cta--sm" onClick={() => open({
+                    title: 'Approve & send', subtitle: d0.who + ' · ' + d0.co, tag: { tone: 'success', label: 'Ready to send' },
+                    rows: [{ k: 'Channel', v: d0.channel }, { k: 'Subject', v: d0.subj }],
+                    body: d0.preview,
+                    actions: [{ label: 'Send now', primary: true }, { label: 'Cancel' }],
+                  })}><OpIcon name="send" size={14} />Approve &amp; send</button>
+                  <button className="op-ghost" onClick={() => open({
+                    title: 'Edit draft', subtitle: d0.who, tag: { tone: 'info', label: d0.channel },
+                    rows: [{ k: 'Subject', v: d0.subj }], body: d0.preview,
+                    actions: [{ label: 'Save changes', primary: true }, { label: 'Cancel' }],
+                  })}>Edit</button>
+                  <button className="op-ghost" onClick={() => open({
+                    title: 'Reject draft', subtitle: d0.who, tag: { tone: 'danger', label: 'Discard' },
+                    body: 'The Operator will discard this draft and learn from your decision.',
+                    actions: [{ label: 'Reject', primary: true }, { label: 'Keep' }],
+                  })}>Reject</button>
                 </div>
               </article>
             </Msg>
@@ -204,7 +261,11 @@ export function ConceptChat({ embedded }: { embedded?: boolean }) {
               <header className="ch-ledger-head"><h3 className="cc-h3">Handled while you were away</h3></header>
               <div className="ch-ledger-list">
                 {doneToday.slice(0, 5).map(([t, , msg], i) => (
-                  <div key={i} className="ch-ledger-row">
+                  <div key={i} className="ch-ledger-row is-clickable"
+                    {...clickProps(() => open({
+                      title: 'Done · ' + t, tag: { tone: 'success', label: 'Done' },
+                      rows: [{ k: 'Time', v: t }, { k: 'Run by', v: 'Operator' }], body: msg,
+                    }))}>
                     <OpIcon name="check" size={14} style={{ color: 'var(--color-success)' }} />
                     <span className="ch-ledger-msg">{msg}</span>
                   </div>
@@ -219,9 +280,21 @@ export function ConceptChat({ embedded }: { embedded?: boolean }) {
 
         <footer className="ch-composer">
           <div className="ch-quick">
-            <button className="ch-chip">Approve all safe</button>
-            <button className="ch-chip">Show me the pipeline</button>
-            <button className="ch-chip">What slipped?</button>
+            <button className="ch-chip" onClick={() => open({
+              title: 'Approve all safe', tag: { tone: 'success', label: 'Bulk action' },
+              rows: [{ k: 'Drafts queued', v: String(data.drafts.length) }, { k: 'Auto-send', v: 'Low-risk only' }],
+              body: 'The Operator sends every low-risk draft and holds anything sensitive for you.',
+              actions: [{ label: 'Approve all', primary: true }, { label: 'Cancel' }],
+            })}>Approve all safe</button>
+            <button className="ch-chip" onClick={() => open({
+              title: 'Pipeline', subtitle: p.company, tag: { tone: 'info', label: 'Live' },
+              rows: data.pipeline.map((s) => ({ k: s.stage, v: String(s.value) })),
+            })}>Show me the pipeline</button>
+            <button className="ch-chip" onClick={() => open({
+              title: 'What slipped?', tag: { tone: 'warning', label: 'Needs you' },
+              rows: data.log.filter((l) => l[1] === 'Review' || l[1] === 'Failed').map(([t, s]) => ({ k: t, v: s })),
+              body: 'Everything the Operator couldn’t close on its own and handed back to you.',
+            })}>What slipped?</button>
           </div>
           <div className="ch-input">
             <input placeholder={`Message the Operator…  e.g. "draft a reply to ${d0.who.split(' ')[0]}"`} />
@@ -246,6 +319,7 @@ function LiveClock() {
 
 export function ConceptStream({ embedded }: { embedded?: boolean }) {
   const { data } = useIndustry();
+  const { open } = useDetail();
   const p = data.persona;
   const nowFlow = data.flows[0];
   const actions = (data.log.length + 10);
@@ -292,7 +366,12 @@ export function ConceptStream({ embedded }: { embedded?: boolean }) {
             </header>
             <div className="st-spine">
               {stream.map(([t, status, msg], i) => (
-                <div key={i} className="st-item" style={{ animationDelay: `${i * 90}ms` }}>
+                <div key={i} className="st-item is-clickable" style={{ animationDelay: `${i * 90}ms` }}
+                  {...clickProps(() => open({
+                    title: status + ' · ' + t, tag: { tone: OP_TONE(status), label: status },
+                    rows: [{ k: 'Time', v: t }, { k: 'Outcome', v: status }, { k: 'Run by', v: 'Operator' }],
+                    body: msg,
+                  }))}>
                   <span className={'st-node st-node--' + OP_TONE(status)} />
                   <div className="st-item-body">
                     <div className="st-item-meta">
@@ -314,11 +393,15 @@ export function ConceptStream({ embedded }: { embedded?: boolean }) {
 /* ── Concept 6 · Operator Mesh (top-down hierarchy) ────────── */
 export function ConceptMesh({ embedded }: { embedded?: boolean }) {
   const { data } = useIndustry();
+  const { open } = useDetail();
   const { theme } = useGraphTheme();
   const p = data.persona;
   const team = OP_TEAMS[data.id] || [];
   const agents = data.flows;
   const actions = data.log.length + 10;
+  const openCore = () => open({ title: 'Operator', subtitle: 'Orchestrator', tag: { tone: 'success', label: 'Running' }, meta: actions + ' actions today · 0 errors', rows: [{ k: 'Agents', v: String(agents.length) }, { k: 'Team', v: String(team.length) }, { k: 'Streak', v: data.streak }], body: 'One Operator orchestrating a team of agents for ' + p.company + '.' });
+  const openAgent = (f: typeof agents[number]) => open({ title: f.name, subtitle: 'Specialist agent', tag: { tone: f.state === 'live' ? 'success' : 'info', label: f.state === 'live' ? 'Autonomous' : 'Scheduled' }, rows: [{ k: 'State', v: f.state === 'live' ? 'Running' : 'Scheduled' }, { k: 'Last run', v: f.last }, { k: 'Errors', v: '0' }], body: 'A specialist agent the Operator delegates to.' });
+  const openHuman = (h: any) => open({ title: h.name, subtitle: h.owner ? h.role : h.role + ' · your team', tag: { tone: 'info', label: h.owner ? 'You' : 'Team' }, rows: [{ k: 'Role', v: h.role }, ...(h.picks ? [{ k: 'Picks up', v: h.picks }] : [])], body: h.owner ? 'Escalations route to you.' : 'The Operator hands off ' + (h.picks || 'work') + ' to ' + h.name + '.' });
 
   const VW = 1120, VH = 780;
   const core = { x: VW / 2, y: 116, r: 49 };
@@ -392,7 +475,7 @@ export function ConceptMesh({ embedded }: { embedded?: boolean }) {
           </svg>
 
           <div className="g-node" style={{ left: core.x, top: core.y }}>
-            <div className="g-core"><OperatorMark size={56} variant="cream" /></div>
+            <div className="g-core is-clickable" {...clickProps(openCore)}><OperatorMark size={56} variant="cream" /></div>
           </div>
           <div className="mesh-core-cap" style={{ left: core.x, top: core.y + core.r + 14 }}>
             <span className="mesh-core-name">Operator</span>
@@ -401,7 +484,7 @@ export function ConceptMesh({ embedded }: { embedded?: boolean }) {
 
           {agents.map((f, i) => (
             <div key={i} className="g-node" style={{ left: ax[i], top: agentY }}>
-              <div className={'g-chip g-chip--agent' + (f.state !== 'live' ? ' g-chip--scheduled' : '')}>
+              <div className={'g-chip g-chip--agent is-clickable' + (f.state !== 'live' ? ' g-chip--scheduled' : '')} {...clickProps(() => openAgent(f))}>
                 <span className="g-chip-name">{f.name}</span>
                 <span className="g-chip-sub">{f.state === 'live' ? 'Autonomous' : 'Scheduled'}</span>
                 <span className="mesh-agent-last">{f.last}</span>
@@ -411,7 +494,7 @@ export function ConceptMesh({ embedded }: { embedded?: boolean }) {
 
           {humans.map((h, i) => (
             <div key={i} className="g-node" style={{ left: hx[i], top: humanY }}>
-              <div className={'g-face' + (h.owner ? ' g-face--owner' : '')}>{h.initials}</div>
+              <div className={'g-face is-clickable' + (h.owner ? ' g-face--owner' : '')} {...clickProps(() => openHuman(h))}>{h.initials}</div>
               <span className="g-person-name">{h.owner ? 'You · ' + h.name.split(' ')[0] : h.name}</span>
               <span className="g-person-role">{h.owner ? h.role : h.picks}</span>
             </div>
@@ -425,12 +508,17 @@ export function ConceptMesh({ embedded }: { embedded?: boolean }) {
 /* ── Concept 7 · Mission Control Orbit ─────────────────────── */
 export function ConceptOrbit({ embedded }: { embedded?: boolean }) {
   const { data } = useIndustry();
+  const { open } = useDetail();
   const { theme } = useGraphTheme();
   const p = data.persona;
   const team = (OP_TEAMS[data.id] || []).slice(0, 3);
   const agents = data.flows;
   const channels = OP_CHANNELS(data);
   const actions = data.log.length + 10;
+  const openAgent = (f: typeof agents[number]) => open({ title: f.name, subtitle: 'Specialist agent', tag: { tone: f.state === 'live' ? 'success' : 'info', label: f.state === 'live' ? 'Autonomous' : 'Scheduled' }, rows: [{ k: 'State', v: f.state === 'live' ? 'Running' : 'Scheduled' }, { k: 'Last run', v: f.last }], body: 'A specialist agent on the Operator’s ring.' });
+  const openChan = (c: string) => open({ title: c, subtitle: 'Inbound channel', tag: { tone: 'success', label: 'Active' }, rows: [{ k: 'Status', v: 'Connected' }, { k: 'Drafts', v: String(data.drafts.filter((d) => d.channel === c).length) }], body: 'Work comes in on ' + c + ' and the Operator picks it up.' });
+  const openMember = (h: any) => open({ title: h.name, subtitle: h.role + ' · your team', tag: { tone: 'info', label: 'Team' }, rows: [{ k: 'Role', v: h.role }, { k: 'Picks up', v: h.picks }], body: 'The Operator escalates ' + h.picks + ' to ' + h.name + '.' });
+  const openYou = () => open({ title: 'You · ' + p.name, subtitle: p.role + ' · ' + p.company, tag: { tone: 'info', label: 'Owner' }, rows: [{ k: 'Reports in', v: String(agents.length) + ' agents' }, { k: 'Streak', v: data.streak }], body: 'You sit at the centre — the Operator works the orbit and reports to you.' });
 
   const VW = 980, VH = 840;
   const C = { x: 490, y: 408 };
@@ -520,14 +608,14 @@ export function ConceptOrbit({ embedded }: { embedded?: boolean }) {
           </span>
 
           {cPos.map((c, j) => (
-            <div key={j} className="orbit-chan" style={{ left: c.x, top: c.y }}>
+            <div key={j} className="orbit-chan is-clickable" style={{ left: c.x, top: c.y }} {...clickProps(() => openChan(channels[j]))}>
               <ChannelDot channel={channels[j]} />
             </div>
           ))}
 
           {agents.map((f, i) => (
             <div key={i} className="g-node" style={{ left: aPos[i].x, top: aPos[i].y }}>
-              <div className={'g-chip g-chip--agent' + (f.state !== 'live' ? ' g-chip--scheduled' : '')}>
+              <div className={'g-chip g-chip--agent is-clickable' + (f.state !== 'live' ? ' g-chip--scheduled' : '')} {...clickProps(() => openAgent(f))}>
                 <span className="g-chip-name">{f.name}</span>
                 <span className="g-chip-sub">{f.state === 'live' ? 'Autonomous' : 'Scheduled'}</span>
               </div>
@@ -535,13 +623,13 @@ export function ConceptOrbit({ embedded }: { embedded?: boolean }) {
           ))}
 
           {team.map((h, i) => (
-            <div key={i} className="orbit-team" style={{ left: tPos[i].x, top: tPos[i].y }} title={h.name + ' · ' + h.role}>
+            <div key={i} className="orbit-team is-clickable" style={{ left: tPos[i].x, top: tPos[i].y }} title={h.name + ' · ' + h.role} {...clickProps(() => openMember(h))}>
               <div className="g-face orbit-team-face">{h.initials}</div>
             </div>
           ))}
 
           <div className="g-node orbit-you" style={{ left: C.x, top: C.y }}>
-            <div className="g-face g-face--owner orbit-you-face">{p.initials}</div>
+            <div className="g-face g-face--owner orbit-you-face is-clickable" {...clickProps(openYou)}>{p.initials}</div>
             <span className="g-person-name">You · {p.name.split(' ')[0]}</span>
             <span className="g-person-role">{p.role}</span>
           </div>
@@ -554,6 +642,7 @@ export function ConceptOrbit({ embedded }: { embedded?: boolean }) {
 /* ── Concept 8 · Pipeline Flow ─────────────────────────────── */
 export function ConceptFlow({ embedded }: { embedded?: boolean }) {
   const { data } = useIndustry();
+  const { open } = useDetail();
   const { theme } = useGraphTheme();
   const p = data.persona;
   const team = (OP_TEAMS[data.id] || []).slice(0, 3);
@@ -561,6 +650,10 @@ export function ConceptFlow({ embedded }: { embedded?: boolean }) {
   const agents = data.flows;
   const channels = OP_CHANNELS(data);
   const maxV = Math.max(...stages.map((s) => s.value));
+  const openAgent = (f: typeof agents[number]) => open({ title: f.name, subtitle: 'Specialist agent', tag: { tone: f.state === 'live' ? 'success' : 'info', label: f.state === 'live' ? 'Autonomous' : 'Scheduled' }, rows: [{ k: 'State', v: f.state === 'live' ? 'Running' : 'Scheduled' }, { k: 'Last run', v: f.last }], body: 'Moves work down the pipeline for the Operator.' });
+  const openChan = (c: string) => open({ title: c, subtitle: 'Inbound channel', tag: { tone: 'success', label: 'Active' }, rows: [{ k: 'Status', v: 'Connected' }, { k: 'Drafts', v: String(data.drafts.filter((d) => d.channel === c).length) }], body: 'Work enters the pipeline on ' + c + '.' });
+  const openStage = (s: typeof stages[number]) => open({ title: s.stage, subtitle: 'Pipeline stage', tag: { tone: 'info', label: s.value + ' in stage' }, rows: [{ k: 'Count', v: String(s.value) }, { k: 'Share of top', v: Math.round((s.value / maxV) * 100) + '%' }], body: 'Records the Operator has moved into “' + s.stage + '”.' });
+  const openHuman = (h: any) => open({ title: h.name, subtitle: h.owner ? h.role : h.role + ' · your team', tag: { tone: 'info', label: h.owner ? 'You' : 'Team' }, rows: [{ k: 'Role', v: h.role }, ...(h.picks ? [{ k: 'Picks up', v: h.picks }] : [])], body: h.owner ? 'Escalations route to you.' : 'The Operator hands off ' + (h.picks || 'work') + ' to ' + h.name + '.' });
 
   const VW = 1280, VH = 620;
   const n = stages.length;
@@ -640,7 +733,7 @@ export function ConceptFlow({ embedded }: { embedded?: boolean }) {
           </div>
 
           {channels.map((c, j) => (
-            <div key={j} className="flow-chan" style={{ left: 64, top: chanY[j] }}>
+            <div key={j} className="flow-chan is-clickable" style={{ left: 64, top: chanY[j] }} {...clickProps(() => openChan(c))}>
               <ChannelDot channel={c} />
             </div>
           ))}
@@ -649,7 +742,7 @@ export function ConceptFlow({ embedded }: { embedded?: boolean }) {
             const f = agents[i % agents.length];
             return (
               <div key={i} className="g-node" style={{ left: x, top: yAgent }}>
-                <div className={'g-chip g-chip--agent' + (f.state !== 'live' ? ' g-chip--scheduled' : '')}>
+                <div className={'g-chip g-chip--agent is-clickable' + (f.state !== 'live' ? ' g-chip--scheduled' : '')} {...clickProps(() => openAgent(f))}>
                   <span className="g-chip-name">{f.name}</span>
                   <span className="g-chip-sub">{f.state === 'live' ? 'Autonomous' : 'Scheduled'}</span>
                 </div>
@@ -658,7 +751,7 @@ export function ConceptFlow({ embedded }: { embedded?: boolean }) {
           })}
 
           {stages.map((s, i) => (
-            <div key={i} className={'flow-card' + (i === n - 1 ? ' is-last' : '')} style={{ left: sx[i], top: yStage }}>
+            <div key={i} className={'flow-card is-clickable' + (i === n - 1 ? ' is-last' : '')} style={{ left: sx[i], top: yStage }} {...clickProps(() => openStage(s))}>
               <span className="flow-card-stage">{s.stage}</span>
               <span className="flow-card-val">{s.value}</span>
               <div className="flow-card-track"><div className="flow-card-fill" style={{ width: Math.max(10, (s.value / maxV) * 100) + '%' }} /></div>
@@ -667,7 +760,7 @@ export function ConceptFlow({ embedded }: { embedded?: boolean }) {
 
           {humans.map((h, i) => (
             <div key={i} className="g-node" style={{ left: sx[i], top: yTeam }}>
-              <div className={'g-face' + (h.owner ? ' g-face--owner' : '')}>{h.initials}</div>
+              <div className={'g-face is-clickable' + (h.owner ? ' g-face--owner' : '')} {...clickProps(() => openHuman(h))}>{h.initials}</div>
               <span className="g-person-name">{h.owner ? 'You · ' + h.name.split(' ')[0] : h.name}</span>
               <span className="g-person-role">{h.owner ? h.role : h.picks}</span>
             </div>

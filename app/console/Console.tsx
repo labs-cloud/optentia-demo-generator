@@ -4,7 +4,7 @@
    pages. Ported from console-app.jsx. */
 
 import React, { useState, useEffect } from 'react';
-import { useIndustry, OpIcon, IndustrySwitcher } from './shared';
+import { useIndustry, OpIcon, IndustrySwitcher, DetailProvider } from './shared';
 import {
   OperatorMark, useGraphTheme, useGraphFont, useGraphStyle,
   GraphThemeSwitcher, GraphFontSwitcher, GraphStyleSwitcher,
@@ -87,6 +87,7 @@ export function Console() {
   const meta = (PAGE_META[page] || PAGE_META.command)(data);
 
   return (
+    <DetailProvider>
     <div className={'op-console theme-' + theme + ' font-' + font + ' style-' + style}>
       {/* Mobile drawer scrim */}
       <div className={'con-scrim' + (navOpen ? ' is-open' : '')} onClick={() => setNavOpen(false)} aria-hidden="true" />
@@ -157,5 +158,6 @@ export function Console() {
         </div>
       </div>
     </div>
+    </DetailProvider>
   );
 }
