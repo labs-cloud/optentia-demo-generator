@@ -667,6 +667,57 @@ export const OP_INDUSTRIES: Industry[] = [
     chatOpener: 'Morning, Simon. The crew brief for the Parsippany install went out before 7 and every active job is on track — here’s what I handled overnight.',
     chatConfirm: 'Sent. The Edison client has the change order with the revised scope and completion date — I’ll log it against the job and chase a sign-off if they’re quiet by tomorrow.',
   },
+
+  /* ── 14 · Commercial plumbing ──────────────────────────────── */
+  {
+    id: 'plumbing', label: 'Plumbing', tagline: 'Commercial plumbing · NYC Metro',
+    persona: { name: 'Moshe B.', initials: 'MB', role: 'Owner', company: 'BMP' },
+    date: 'Friday · May 30',
+    streak: '167h streak',
+    kpis: [
+      { label: 'Open-bid pipeline · 7d', value: '$1.84M', delta: '+ $360K vs prev 7d', tone: 'up', accent: true },
+      { label: 'Calls to review', value: '8', delta: '2 missed — callbacks sent', tone: 'flat' },
+      { label: 'Site visits booked', value: '9', delta: '3 booked overnight', tone: 'up' },
+      { label: 'Hours given back', value: '8.4', unit: 'hr', delta: '≈ 1.1 work days · this week', tone: 'flat' },
+    ],
+    pipeline: [
+      { stage: 'New RFQs', value: 31 },
+      { stage: 'Walkthrough', value: 17 },
+      { stage: 'Bid sent', value: 12 },
+      { stage: 'Awarded', value: 5 },
+    ],
+    log: [
+      ['06:50', 'Done', 'Logged every call that came in after 5pm — 14 total. Two went to voicemail; both got an automatic “we’ll call you back” text and a callback task.'],
+      ['07:28', 'Done', 'Answered a 7am WhatsApp change order from the Hudson Yards GC before the office opened — drafted the reply and flagged it for sign-off.'],
+      ['08:05', 'Done', 'Chased 5 open bids that had gone quiet — 2 GCs replied to confirm walkthroughs.'],
+      ['08:40', 'Review', 'Drafted the change-order reply for the Brooklyn medical fit-out — needs your sign-off before the crew commits.'],
+      ['09:15', 'Done', 'Routed 3 foreman field updates from WhatsApp into the right job records; flagged one needing a same-day material order.'],
+      ['09:48', 'Failed', 'Could not sync a new GC contact into the CRM — reconnect in Settings.'],
+      ['10:12', 'Note', '2 developer contacts have gone quiet 30+ days — flagged for re-engagement.'],
+      ['11:00', 'Done', 'Confirmed permits are filed on 4 awarded jobs and updated each job record.'],
+    ],
+    drafts: [
+      { who: 'Hudson Yards GC', co: 'Change order · 14th-floor riser', channel: 'WhatsApp', subj: 'Re: Change order — riser relocation', preview: 'Morning — confirmed. Relocating the riser adds two days and the material delta is attached. I’ve logged it against the job and flagged it for your sign-off before we commit the crew…', flag: 'urgent', when: '7m ago' },
+      { who: 'Property manager', co: 'Missed call · 6:42pm', channel: 'Phone', subj: 'Re: Callback — slab leak at 230 Park', preview: 'You called after hours about the slab leak on 12 — we caught it. I sent the “we’ll call you back” text right away and queued a foreman for a 9am site check. Here’s the callback ready to go…', flag: 'missed', when: 'overnight' },
+      { who: 'Long Island City GC', co: 'Bid follow-up · $420K', channel: 'Email', subj: 'Re: Bid follow-up — LIC tower rough-in', preview: 'Following up on our plumbing bid for the LIC tower. The number holds through month-end and I can lock a crew start for August if we move this week…', flag: null, when: '38m ago' },
+      { who: 'Developer · gone quiet', co: 'No contact · 34 days', channel: 'CRM', subj: 'Re: Re-engagement — Gowanus mixed-use', preview: 'It’s been five weeks since we last spoke about the Gowanus mixed-use rough-in. I’ve drafted a check-in to the PM and pulled our last bid so we’re ready the moment it moves…', flag: null, when: '1h ago' },
+    ],
+    events: [
+      { t: '06:30', title: 'Crew dispatch · day routing', who: 'Recurring', tone: 'flat' },
+      { t: '09:00', title: 'Hudson Yards walkthrough · change order', who: 'Booked overnight', tone: 'accent' },
+      { t: '13:00', title: 'LIC tower bid review with Moshe', who: 'Booked overnight', tone: 'flat' },
+      { t: '15:30', title: 'Permit + material status round', who: 'Recurring', tone: 'flat' },
+    ],
+    flows: [
+      { name: 'Inbound call capture & callback', last: 'ran 12m ago', state: 'live' },
+      { name: 'Multi-channel inbox triage', last: 'ran 20m ago', state: 'live' },
+      { name: 'Job follow-up & confirmation loop', last: 'ran 1h ago', state: 'live' },
+      { name: 'CRM relationship watch', last: 'next: 17:00', state: 'scheduled' },
+    ],
+    briefLede: 'Before the crew rolled out, the Operator logged every call that came in after hours — including the two it missed and texted back — answered a 7am change order from the Hudson Yards GC, and chased five open bids that had gone quiet.',
+    chatOpener: 'Morning, Moshe. Every call that came in overnight is logged — the two we missed already got a callback text and are queued for first thing. Nothing’s sitting.',
+    chatConfirm: 'Sent. The Hudson Yards GC has the change-order delta and I’ve held it for your sign-off before the crew commits — I’ll chase the LIC bid if they’re quiet by Thursday.',
+  },
 ];
 
 /* Helper: map a status tag to a semantic tone (never teal — teal is brand). */
@@ -744,11 +795,16 @@ export const OP_TEAMS: Record<string, TeamMember[]> = {
     { name: 'Tina Alvarez', initials: 'TA', role: 'Office Manager', picks: 'Invoices & QuickBooks' },
     { name: 'Mike Chen', initials: 'MC', role: 'Warehouse Lead', picks: 'Deliveries & staging' },
   ],
+  plumbing: [
+    { name: 'Rivka Stern', initials: 'RS', role: 'Office Manager', picks: 'Callbacks & scheduling' },
+    { name: 'Danny Russo', initials: 'DR', role: 'Project Manager', picks: 'Change orders & bids' },
+    { name: 'Luis Ortega', initials: 'LO', role: 'Field Foreman', picks: 'Site updates & materials' },
+  ],
 };
 
 /* Channels the agents actually work, derived per industry from drafts. */
 export const OP_CHANNELS = (data: Industry): string[] => {
-  const order = ['Shopify', 'Dialer', 'QuickBooks', 'Email', 'Google Calendar', 'Wholesale Form', 'WhatsApp', 'SMS'];
+  const order = ['Shopify', 'Dialer', 'QuickBooks', 'Phone', 'Email', 'Google Calendar', 'Wholesale Form', 'WhatsApp', 'SMS', 'CRM'];
   const seen = [...new Set((data.drafts || []).map((d: Draft) => d.channel))];
   return order.filter((c: string) => seen.includes(c)).concat(seen.filter((c: string) => !order.includes(c)));
 };

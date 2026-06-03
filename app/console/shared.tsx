@@ -68,6 +68,7 @@ export const ICONS: Record<string, string> = {
   mca: 'M4 12a8 8 0 0 1 16 0 M3 13h3v6H5a2 2 0 0 1-2-2z M21 13h-3v6h1a2 2 0 0 0 2-2z M18 19v1a2 2 0 0 1-2 2h-3',
   apparel: 'M9 3L4 6l2.2 3.2L9 7.4V20h6V7.4l2.8 1.8L20 6l-5-3a3 3 0 0 1-6 0z',
   fieldservices: 'M3 7h11v8H3z M14 10h4l3 3v2h-7z M7 19a1.6 1.6 0 1 0 0-.01 M17 19a1.6 1.6 0 1 0 0-.01',
+  plumbing: 'M3 5h8v5H3z M11 7h4a3 3 0 0 1 3 3v2 M12 15.5c0 1.4 1.1 2.5 2.5 2.5s2.5-1.1 2.5-2.5S14.5 11 14.5 11 12 14.1 12 15.5z',
 };
 
 export const OpIcon = ({ name, size = 18, sw = 1.6, style }: { name: string; size?: number; sw?: number; style?: React.CSSProperties }) => (
