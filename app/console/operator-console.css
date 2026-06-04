@@ -218,7 +218,8 @@
 .op-avatar {
   border-radius: 50%; flex-shrink: 0;
   background: linear-gradient(180deg, var(--color-brand-teal-light), var(--color-brand-teal));
-  color: var(--color-text-strong); font-family: var(--font-body); font-weight: 600;
+  /* always light: the fill is a saturated brand color in every theme */
+  color: #fff; font-family: var(--font-body); font-weight: 600;
   display: flex; align-items: center; justify-content: center;
 }
 
@@ -256,7 +257,8 @@
   display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px;
   border-radius: var(--radius-md); font-family: var(--font-body); font-size: 13px; font-weight: 500;
   background: linear-gradient(180deg, var(--color-brand-teal-light), var(--color-brand-teal));
-  color: var(--color-text-strong);
+  /* always light: the fill is a saturated brand color in every theme */
+  color: #fff;
   border: 1px solid color-mix(in srgb, var(--color-brand-teal-light) 50%, transparent);
   box-shadow: 0 6px 18px rgba(58,154,170,0.22);
   transition: box-shadow var(--dur-fast);
@@ -644,7 +646,8 @@
 .ch-bubble { padding: 12px 16px; border-radius: 16px; border-bottom-left-radius: 5px; background: var(--color-surface-2); border: 1px solid var(--color-border); }
 .ch-bubble p { font-size: 14px; line-height: 1.55; color: var(--color-text); text-wrap: pretty; }
 .ch-bubble--me { background: linear-gradient(180deg, var(--color-brand-teal), var(--color-brand-teal-dark)); border-color: transparent; border-bottom-left-radius: 16px; border-bottom-right-radius: 5px; }
-.ch-bubble--me p { color: var(--color-text-strong); }
+/* always light: the bubble fill is a saturated brand color in every theme */
+.ch-bubble--me p { color: #fff; }
 .ch-bubble--card { padding: 0; background: transparent; border: none; width: 100%; }
 
 /* number card inside a bubble */
