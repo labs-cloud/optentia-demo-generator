@@ -18,18 +18,11 @@ export function OperatorMark({ size = 28, variant = 'auto', style }: { size?: nu
 
 /* ── Theme system (premium re-skins of the token set) ────────── */
 export interface GTheme { id: string; label: string; tone: string; bg: string; primary: string; secondary: string; }
+/* Vibrant ships in two modes (Treatment A · light + dark). The swatch
+   `primary` is the violet AI accent; `secondary` is the coral category color. */
 export const G_THEMES: GTheme[] = [
-  { id: 'navy',      label: 'Optentia',  tone: 'dark',  bg: '#0D1B2A', primary: '#3A9AAA', secondary: '#C9A84C' },
-  { id: 'graphite',  label: 'Graphite',  tone: 'dark',  bg: '#1A1B1F', primary: '#D2B463', secondary: '#AEB6C0' },
-  { id: 'plum',      label: 'Aubergine', tone: 'dark',  bg: '#241B2E', primary: '#D896AF', secondary: '#D8B45E' },
-  { id: 'slate',     label: 'Slate',     tone: 'mid',   bg: '#243441', primary: '#54C6A8', secondary: '#D7A85A' },
-  { id: 'sand',      label: 'Sand',      tone: 'light', bg: '#EFE9DD', primary: '#B5623C', secondary: '#9A7B3A' },
-  { id: 'porcelain', label: 'Porcelain', tone: 'light', bg: '#ECEEF2', primary: '#4A55B8', secondary: '#B07A3E' },
-  { id: 'mist',      label: 'Mist',      tone: 'light', bg: '#EBF0F4', primary: '#379AAB', secondary: '#B98A3C' },
-  { id: 'blush',     label: 'Blush',     tone: 'light', bg: '#F6EDEA', primary: '#D67F73', secondary: '#B68A4A' },
-  { id: 'mint',      label: 'Mint',      tone: 'light', bg: '#ECF3ED', primary: '#44B98A', secondary: '#B6923E' },
-  { id: 'aurora',    label: 'Aurora',    tone: 'light', bg: 'linear-gradient(135deg,#E3F1F0,#ECE7F6,#FBEDE6)', primary: '#3F9FAE', secondary: '#D98A5A' },
-  { id: 'dawn',      label: 'Dawn',      tone: 'light', bg: 'linear-gradient(135deg,#FDEEE4,#F8E4EA,#ECE6F6)', primary: '#E08769', secondary: '#C29A4E' },
+  { id: 'vibrant-dark', label: 'Vibrant Dark',  tone: 'dark',  bg: '#0E1424', primary: '#A78BFF', secondary: '#FF8C7A' },
+  { id: 'vibrant',      label: 'Vibrant Light', tone: 'light', bg: '#EDF0F9', primary: '#6D4AE6', secondary: '#F0584A' },
 ];
 interface GThemeCtxValue { theme: string; setTheme: (id: string) => void; themes: GTheme[]; }
 const GThemeCtx = createContext<GThemeCtxValue | null>(null);
@@ -37,14 +30,14 @@ const G_THEME_KEY = 'op-graph-theme';
 
 export function GraphThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<string>(() => {
-    if (typeof window === 'undefined') return 'navy';
+    if (typeof window === 'undefined') return 'vibrant-dark';
     const s = localStorage.getItem(G_THEME_KEY);
-    return G_THEMES.some((t) => t.id === s) ? (s as string) : 'navy';
+    return G_THEMES.some((t) => t.id === s) ? (s as string) : 'vibrant-dark';
   });
   const set = (id: string) => { setTheme(id); try { localStorage.setItem(G_THEME_KEY, id); } catch (e) {} };
   return <GThemeCtx.Provider value={{ theme, setTheme: set, themes: G_THEMES }}>{children}</GThemeCtx.Provider>;
 }
-export const useGraphTheme = (): GThemeCtxValue => useContext(GThemeCtx) || { theme: 'navy', setTheme: () => {}, themes: G_THEMES };
+export const useGraphTheme = (): GThemeCtxValue => useContext(GThemeCtx) || { theme: 'vibrant-dark', setTheme: () => {}, themes: G_THEMES };
 
 export function GraphThemeSwitcher() {
   const { theme, setTheme, themes } = useGraphTheme();

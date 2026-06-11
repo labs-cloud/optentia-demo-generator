@@ -51,8 +51,18 @@ Channels, Records, Agent Graph, Settings) plus three top-bar selectors that
 re-skin the whole console live:
 
 - **Type** — six curated font pairings (Editorial, Grotesk, Newsprint, Display, Elegant, Technical)
-- **Theme** — six premium palettes (Optentia, Graphite, Aubergine, Slate, Sand, Porcelain)
+- **Theme** — the **"Vibrant"** design system from the Claude Design handoff, in two
+  modes: **Vibrant Dark** (default) and **Vibrant Light**
 - **Demo industry** — fourteen industries that repopulate every screen from one data model
+
+### Vibrant design system
+
+The console is skinned with the "Vibrant" treatment (Treatment A) ported from the
+Operator app handoff. **Violet is the single "AI did this" accent** (active tab,
+links, AI badges, the orchestrator core); **mint / amber / coral** are the category
+colors; and the signature **blue→violet→pink gradient** carries the brand monogram,
+primary buttons, the user chat bubble, and active controls. Gold from the previous
+palette is dropped. Type stays Playfair Display · Sora · DM Mono.
 
 The **Agent Graph** tab carries three living layouts as sub-tabs — Hierarchy
 (Mesh), Mission Control (Orbit), and Pipeline Flow — with animated delegation,
@@ -73,7 +83,7 @@ Core behavior:
 - Client-specific KPI cards, activity feed, pipeline, inbox, tasks, calendar, escalations, capabilities, and demo scenario.
 - Reusable simulation engine that adds live activity events when the demo flow runs.
 - Strong TypeScript models for the shared data contract.
-- Premium executive SaaS visual system using dark navy, black, white, gold, and teal accents.
+- Premium executive SaaS visual system using the "Vibrant" palette — deep indigo navy (dark) / cool light canvas, a violet AI accent, mint/amber/coral categories, and the blue→violet→pink brand gradient.
 
 ## Folder Structure
 
