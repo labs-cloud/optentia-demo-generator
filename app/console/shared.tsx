@@ -128,6 +128,19 @@ export const Tag = ({ tone, children }: { tone: string; children: React.ReactNod
 );
 
 /* ── Channel dot (Dialer / Email / WhatsApp / SMS) ─────────── */
+// Vibrant: each channel carries a category color (mint · violet · amber · coral).
+export const channelColor = (channel: string): string => {
+  switch (channel) {
+    case 'WhatsApp': return 'var(--color-mint)';
+    case 'Email': return 'var(--color-violet)';
+    case 'SMS': case 'Dialer': return 'var(--color-amber)';
+    case 'Shopify': case 'Wholesale Form': return 'var(--color-coral)';
+    case 'QuickBooks': return 'var(--color-mint)';
+    case 'Google Calendar': return 'var(--color-violet)';
+    default: return 'var(--color-violet)';
+  }
+};
+
 export const ChannelDot = ({ channel }: { channel: string }) => {
   const icon = channel === 'WhatsApp' ? 'whatsapp'
     : (channel === 'SMS' || channel === 'Dialer') ? 'phone'
@@ -138,7 +151,7 @@ export const ChannelDot = ({ channel }: { channel: string }) => {
     : 'mail';
   return (
     <span className="op-channel" title={channel}>
-      <OpIcon name={icon} size={12} sw={1.7} />{channel}
+      <span style={{ color: channelColor(channel), display: 'inline-flex' }}><OpIcon name={icon} size={12} sw={1.7} /></span>{channel}
     </span>
   );
 };

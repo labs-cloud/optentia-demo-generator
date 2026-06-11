@@ -3,7 +3,7 @@
    Schedule, Channels, Records, Settings. All driven by the industry data. */
 
 import React, { useState } from 'react';
-import { useIndustry, OpIcon, ChannelDot, useDetail, clickProps } from './shared';
+import { useIndustry, OpIcon, ChannelDot, channelColor, useDetail, clickProps } from './shared';
 import { OP_CHANNELS } from './data';
 
 const CHAN_ICON: Record<string, string> = { Email: 'mail', WhatsApp: 'whatsapp', SMS: 'phone', Shopify: 'ecommerce', 'Wholesale Form': 'drafts', QuickBooks: 'finance', 'Google Calendar': 'calendar' };
@@ -83,6 +83,7 @@ export function PageChannels() {
           const latest = ds[0];
           return (
             <div key={i} className="con-chan-card is-clickable"
+              style={{ ['--ch-c' as string]: channelColor(c) } as React.CSSProperties}
               {...clickProps(() => open({
                 title: c, subtitle: 'Channel · ' + data.persona.company, tag: { tone: 'success', label: 'Active' },
                 meta: ds.length + ' awaiting sign-off',
@@ -137,6 +138,7 @@ export function PageRecords() {
   const { data } = useIndustry();
   const { open } = useDetail();
   const maxV = Math.max(...data.pipeline.map((s) => s.value));
+  const cats = ['var(--color-mint)', 'var(--color-violet)', 'var(--color-amber)', 'var(--color-coral)'];
   return (
     <div className="con-page">
       <div className="con-page-head">
@@ -169,6 +171,7 @@ export function PageRecords() {
             <div className="op-funnel">
               {data.pipeline.map((s, i) => (
                 <div key={i} className="op-funnel-row is-clickable"
+                  style={{ ['--fc' as string]: cats[i % cats.length] } as React.CSSProperties}
                   {...clickProps(() => open({
                     title: s.stage, subtitle: 'Pipeline stage', tag: { tone: 'info', label: s.value + ' in stage' },
                     rows: [{ k: 'Count', v: String(s.value) }, { k: 'Share of top', v: Math.round((s.value / maxV) * 100) + '%' }, { k: 'Owner', v: data.persona.name }],
