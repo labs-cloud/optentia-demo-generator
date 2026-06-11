@@ -1231,3 +1231,82 @@
 .op-modal-row dd { margin: 0; font-size: 13px; color: var(--color-text); font-weight: 500; text-align: right; word-break: break-word; }
 .op-modal-body { margin: 0 0 16px; font-size: 13.5px; line-height: 1.55; color: var(--color-text); }
 .op-modal-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ════════════════════════════════════════════════════════════
+   Operator command palette — the summonable floating "deck"
+   (Desktop handoff · ⌘K Spotlight). Summoned from the topbar
+   button, the bottom-right pill, or ⌘K; dismissed with ESC.
+   ════════════════════════════════════════════════════════════ */
+
+/* topbar summon button + keycap */
+.con-summon {
+  display: inline-flex; align-items: center; gap: 9px; flex-shrink: 0;
+  padding: 8px 12px; border-radius: var(--radius-md);
+  border: 1px solid var(--color-border); background: color-mix(in srgb, var(--color-surface-2) 50%, transparent);
+  color: var(--color-text-muted); font-size: 12.5px; white-space: nowrap;
+  transition: color var(--dur-fast), border-color var(--dur-fast);
+}
+.con-summon:hover { color: var(--color-text); border-color: var(--color-brand-teal-light); }
+.con-summon svg { color: var(--color-brand-teal-light); }
+.con-kbd { font-family: var(--font-mono); font-size: 10px; padding: 2px 6px; border-radius: 5px; background: var(--color-surface-2); border: 1px solid var(--color-border); color: var(--color-text); letter-spacing: 0.04em; }
+
+/* scrim + panel */
+.op-cmdk-scrim {
+  position: fixed; inset: 0; z-index: 150;
+  background: rgba(6, 10, 20, 0.5); backdrop-filter: blur(4px) saturate(0.9); -webkit-backdrop-filter: blur(4px) saturate(0.9);
+  display: flex; align-items: flex-start; justify-content: center; padding: 12vh 20px 20px;
+  animation: opModalIn 0.16s ease;
+}
+.op-cmdk {
+  width: 560px; max-width: 100%; overflow: hidden;
+  border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, var(--color-surface-2), var(--color-surface));
+  box-shadow: 0 36px 100px rgba(0,0,0,0.5), 0 0 0 1px color-mix(in srgb, var(--color-brand-teal-light) 12%, transparent);
+  animation: opModalPop 0.2s var(--ease-emphasized);
+}
+.op-cmdk-search { display: flex; align-items: center; gap: 12px; padding: 16px 18px; border-bottom: 1px solid var(--color-border); }
+.op-cmdk-search > svg { color: var(--color-brand-teal-light); flex-shrink: 0; }
+.op-cmdk-input { flex: 1; background: transparent; border: none; outline: none; font-family: var(--font-body); font-size: 16px; color: var(--color-text); }
+.op-cmdk-input::placeholder { color: var(--color-text-muted); }
+.op-cmdk-esc { font-family: var(--font-mono); font-size: 10px; color: var(--color-text-muted); padding: 3px 7px; border: 1px solid var(--color-border); border-radius: 6px; background: transparent; cursor: pointer; }
+.op-cmdk-esc:hover { color: var(--color-text); border-color: var(--color-brand-teal-light); }
+.op-cmdk-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 13px; max-height: min(60vh, 440px); overflow: auto; }
+
+.op-cmdk-thread { display: flex; flex-direction: column; gap: 10px; }
+.op-cmdk-bub { max-width: 84%; padding: 10px 13px; font-size: 13px; line-height: 1.5; border-radius: 14px; text-wrap: pretty; }
+.op-cmdk-bub--you { align-self: flex-end; background: var(--color-grad); color: #fff; border-bottom-right-radius: 5px; }
+.op-cmdk-bub--op { align-self: flex-start; background: var(--color-surface-2); border: 1px solid var(--color-border); color: var(--color-text); border-bottom-left-radius: 5px; }
+.op-cmdk-bub--think { align-self: flex-start; display: flex; align-items: center; gap: 9px; background: color-mix(in srgb, var(--color-brand-teal) 14%, transparent); border: 1px solid color-mix(in srgb, var(--color-brand-teal-light) 30%, transparent); color: var(--color-brand-teal-light); font-size: 12px; }
+.op-cmdk-dots { display: inline-flex; gap: 3px; }
+.op-cmdk-dots i { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: 0.5; animation: dt-blink 1.2s infinite; }
+.op-cmdk-dots i:nth-child(2) { animation-delay: 0.2s; }
+.op-cmdk-dots i:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dt-blink { 0%, 60%, 100% { opacity: 0.3; } 30% { opacity: 1; } }
+
+.op-cmdk-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-text-muted); padding: 0 2px; }
+.op-cmdk-suggests { display: flex; flex-direction: column; gap: 7px; }
+.op-cmdk-suggest {
+  display: flex; align-items: center; gap: 11px; padding: 11px 13px; width: 100%; text-align: left;
+  border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--color-surface);
+  color: var(--color-text); font-size: 12.5px; transition: border-color var(--dur-fast), background var(--dur-fast);
+}
+.op-cmdk-suggest:hover { border-color: var(--color-brand-teal-light); background: color-mix(in srgb, var(--color-brand-teal) 12%, transparent); }
+.op-cmdk-suggest svg { color: var(--color-brand-teal-light); flex-shrink: 0; }
+
+/* always-available floating summon pill */
+.op-cmdk-pill {
+  position: fixed; right: 22px; bottom: 22px; z-index: 140;
+  display: inline-flex; align-items: center; gap: 9px; padding: 11px 15px;
+  border-radius: var(--radius-md); border: none; cursor: pointer;
+  background: var(--color-grad); color: #fff; font-size: 12.5px; font-weight: 600;
+  box-shadow: 0 16px 36px -12px rgba(0,0,0,0.5);
+  transition: transform var(--dur-fast), box-shadow var(--dur-fast);
+}
+.op-cmdk-pill:hover { transform: translateY(-1px); box-shadow: 0 20px 44px -12px rgba(0,0,0,0.55); }
+.op-cmdk-pill-k { font-family: var(--font-mono); font-size: 10px; padding: 2px 6px; border-radius: 5px; background: rgba(255,255,255,0.2); letter-spacing: 0.04em; }
+
+@media (max-width: 768px) {
+  .con-summon-lbl, .con-summon .con-kbd { display: none; }
+  .op-cmdk-pill { right: 16px; bottom: 16px; }
+  .op-cmdk-scrim { padding-top: 8vh; }
+}
