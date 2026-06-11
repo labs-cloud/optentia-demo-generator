@@ -20,6 +20,8 @@ export function ConceptCommand({ embedded }: { embedded?: boolean }) {
   const { open } = useDetail();
   const p = data.persona;
   const spark = [22, 26, 24, 30, 28, 34, 33, 40, 44];
+  // Vibrant category colors — one per stat tile (mint · violet · amber · coral).
+  const cats = ['var(--color-mint)', 'var(--color-violet)', 'var(--color-amber)', 'var(--color-coral)'];
 
   return (
     <div className="op-shell cc">
@@ -60,9 +62,23 @@ export function ConceptCommand({ embedded }: { embedded?: boolean }) {
           </div>
         </div>
 
+        {/* Vibrant signature: full-width gradient "Daily briefing" hero */}
+        <div className="cc-brief is-clickable" {...clickProps(() => open({
+          title: 'Daily briefing', subtitle: data.date, tag: { tone: 'info', label: '✦ Operator' },
+          rows: [{ k: 'Actions overnight', v: String(data.log.length + 10) }, { k: 'Errors', v: '0' }, { k: 'Streak', v: data.streak }],
+          body: data.briefLede,
+        }))}>
+          <div className="cc-brief-top">
+            <span className="cc-brief-label">Daily briefing</span>
+            <span className="cc-brief-badge"><OperatorMark size={12} variant="cream" /> Operator</span>
+          </div>
+          <p className="cc-brief-text">{data.briefLede}</p>
+        </div>
+
         <section className="cc-kpis">
           {data.kpis.map((k, i) => (
             <div key={i} className={'cc-kpi is-clickable' + (k.accent ? ' is-accent' : '')}
+              style={{ ['--kpi-c' as string]: cats[i % cats.length] } as React.CSSProperties}
               {...clickProps(() => open({
                 title: k.label, subtitle: p.company,
                 tag: { tone: k.tone === 'up' ? 'success' : 'info', label: k.tone === 'up' ? 'Trending up' : 'This week' },

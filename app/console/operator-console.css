@@ -524,7 +524,28 @@
 .cc-actions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
 .cc-search { display: flex; align-items: center; gap: 9px; padding: 10px 15px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-text-muted); font-size: 13px; white-space: nowrap; }
 
+/* Vibrant · gradient "Daily briefing" hero (blue→violet→pink) */
+.cc-brief {
+  border-radius: var(--radius-lg); padding: 18px 22px;
+  background: var(--color-grad); color: #fff;
+  box-shadow: 0 16px 38px -18px rgba(123,91,227,0.65);
+  transition: box-shadow var(--dur-fast), transform var(--dur-fast);
+}
+.cc-brief.is-clickable:hover { transform: translateY(-1px); box-shadow: 0 20px 46px -18px rgba(123,91,227,0.75); filter: none; }
+.cc-brief-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.cc-brief-label { font-family: var(--font-mono); font-size: 10px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(255,255,255,0.82); }
+.cc-brief-badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 11px; border-radius: var(--radius-pill); background: rgba(255,255,255,0.22); color: #fff; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; }
+.cc-brief-text { font-size: 15px; line-height: 1.55; margin-top: 9px; color: #fff; max-width: 74ch; text-wrap: pretty; }
+
 .cc-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+/* Vibrant · category-tinted stat tiles (mint · violet · amber · coral) */
+.cc-kpi { --kpi-c: var(--color-brand-teal-light); }
+.cc-kpi:not(.is-accent) {
+  background: color-mix(in srgb, var(--kpi-c) 9%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--kpi-c) 24%, var(--color-border));
+}
+.cc-kpi:not(.is-accent) .cc-kpi-value { color: var(--kpi-c); }
+.cc-kpi:not(.is-accent) .cc-kpi-label { color: color-mix(in srgb, var(--kpi-c) 70%, var(--color-text-muted)); }
 .cc-kpi { padding: 20px; border: var(--surf-bd, 1px solid var(--color-border)); border-radius: var(--surf-rad, var(--radius-lg)); background: var(--surf-card-bg, var(--color-surface)); box-shadow: var(--surf-sh, none); backdrop-filter: var(--surf-blur, none); -webkit-backdrop-filter: var(--surf-blur, none); display: flex; flex-direction: column; gap: 10px; min-height: 138px; }
 .cc-kpi-label { font-family: var(--font-mono); font-size: 10px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-text-muted); }
 .cc-kpi-value { font-family: var(--font-display); font-size: 38px; font-weight: 700; line-height: 1; letter-spacing: -0.018em; }
