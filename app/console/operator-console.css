@@ -24,37 +24,52 @@
   --text-body-sm:     14px;     /* captions, meta — Sora, 400, line-height 1.55 */
   --text-mono:        14px;     /* code — DM Mono, 400, line-height 1.5 */
 
-  /* ── Color (matches optentia.com production) ───────────── */
+  /* ── Color · "Vibrant" design system (from Claude Design handoff) ──
+     Colorful light + dark system. VIOLET is the single "AI did this"
+     accent; mint / amber / coral are the category colors; the signature
+     blue→violet→pink gradient (--color-grad) carries hero cards, primary
+     buttons, the user chat bubble and the brand monogram. Gold is dropped.
+     Defaults below are Vibrant DARK; .theme-vibrant repaints to light. */
 
-  /* Surface — navy, NOT pure black. The site is darkened blue. */
-  --color-bg:                  #0D1B2A;       /* deep navy */
-  --color-bg-light:            #132238;       /* lighter navy surface */
-  --color-surface:             #132238;       /* alias of bg-light */
-  --color-surface-2:           #1A2E47;       /* nested raised surface */
-  --color-border:              #2A4258;       /* hairline borders on navy */
+  /* Surface — deep indigo navy, not pure black */
+  --color-bg:                  #0E1424;       /* canvas */
+  --color-bg-light:            #172036;       /* card */
+  --color-surface:             #172036;       /* card */
+  --color-surface-2:           #1F2A44;       /* nested raised surface */
+  --color-border:              #26334E;       /* hairline (1px line) */
 
-  /* Brand — teal is THE accent, gold is a secondary accent */
-  --color-brand-teal:          #2A7A8A;       /* PRIMARY ACCENT — the brand teal */
-  --color-brand-teal-light:    #3A9AAA;       /* hover, glow, brighter highlights */
-  --color-brand-teal-dark:     #1E5A66;       /* pressed, dimmer states */
-  --color-brand-gold:          #C9A84C;       /* SECONDARY ACCENT — premium / award flourish */
-  --color-brand-gold-light:    #E0C56A;       /* gold highlight */
+  /* Brand — VIOLET is the AI / primary accent (mapped onto the teal token
+     names the components already reference). Amber is the warm secondary. */
+  --color-brand-teal:          #8B6CF0;       /* PRIMARY ACCENT — violet */
+  --color-brand-teal-light:    #A78BFF;       /* violet — hover / glow / active */
+  --color-brand-teal-dark:     #6D4AE6;       /* violet — pressed / dim */
+  --color-brand-gold:          #F4B050;       /* SECONDARY ACCENT — amber */
+  --color-brand-gold-light:    #F7C57A;       /* amber highlight */
 
   /* Aliases for the "accent" role (used in component CSS) */
-  --color-brand-accent:        var(--color-brand-teal);          /* default accent = teal */
+  --color-brand-accent:        var(--color-brand-teal);          /* default accent = violet */
   --color-brand-accent-bright: var(--color-brand-teal-light);
   --color-brand-accent-dark:   var(--color-brand-teal-dark);
 
-  /* Text */
-  --color-text:               #F0F4F7;        /* cool white — primary body / display */
-  --color-text-cream:         #F5F0E8;        /* warm cream — for warmer copy contexts */
-  --color-text-muted:         #8DA4B5;        /* slate — meta, secondary, muted */
-  --color-text-strong:        #FFFFFF;        /* pure white — for max emphasis */
+  /* The Vibrant gradient — identical in both modes */
+  --color-grad: linear-gradient(135deg, #2A6FDB 0%, #7B5BE3 52%, #E0589F 100%);
 
-  /* Status — kept in design-system convention, harmonized with palette */
+  /* Category colors — mint (leads/positive) · violet (AI) · amber (tasks) · coral (high) */
+  --color-mint:   #5BE3C3;
+  --color-violet: #A78BFF;
+  --color-amber:  #F4B050;
+  --color-coral:  #FF8C7A;
+
+  /* Text */
+  --color-text:               #EAF0F7;        /* ink — primary body / display */
+  --color-text-cream:         #EAF0F7;        /* (alias — no warm cream in Vibrant) */
+  --color-text-muted:         #8AA0C0;        /* muted — meta, secondary */
+  --color-text-strong:        #FFFFFF;        /* pure white — max emphasis */
+
+  /* Status — harmonized with the category palette */
   --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-danger:  #EF4444;
+  --color-warning: var(--color-amber);
+  --color-danger:  var(--color-coral);
   --color-info:    var(--color-brand-teal-light);
 
   /* ── Spacing (4px base unit) ───────────────────────────── */
@@ -159,8 +174,8 @@
 .op-aura {
   position: absolute; inset: 0; pointer-events: none; z-index: 0;
   background:
-    radial-gradient(900px 360px at 78% -8%, rgba(58,154,170,0.10), transparent 70%),
-    radial-gradient(700px 300px at 8% 108%, rgba(58,154,170,0.05), transparent 70%);
+    radial-gradient(900px 360px at 78% -8%, rgba(123,91,227,0.10), transparent 70%),
+    radial-gradient(700px 300px at 8% 108%, rgba(123,91,227,0.05), transparent 70%);
 }
 
 /* ── Industry switcher ─────────────────────────────────────── */
@@ -190,8 +205,8 @@
 .op-seg:hover { color: var(--color-text); }
 .op-seg.is-active {
   color: var(--color-text-strong);
-  background: linear-gradient(180deg, var(--color-brand-teal-light), var(--color-brand-teal));
-  box-shadow: 0 4px 14px rgba(58,154,170,0.30);
+  background: var(--color-grad);
+  box-shadow: 0 4px 14px rgba(123,91,227,0.30);
 }
 .op-switcher--compact .op-seg { padding: 6px 11px; font-size: 12px; }
 
@@ -205,7 +220,7 @@
 .op-tag--success { color: var(--color-success); border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.08); }
 .op-tag--warning { color: var(--color-warning); border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.08); }
 .op-tag--danger  { color: var(--color-danger);  border-color: rgba(239,68,68,0.4);  background: rgba(239,68,68,0.08); }
-.op-tag--info    { color: var(--color-brand-teal-light); border-color: rgba(58,154,170,0.4); background: rgba(58,154,170,0.10); }
+.op-tag--info    { color: var(--color-brand-teal-light); border-color: rgba(123,91,227,0.4); background: rgba(123,91,227,0.10); }
 
 /* ── Channel chip ──────────────────────────────────────────── */
 .op-channel {
@@ -217,7 +232,7 @@
 /* ── Avatar ────────────────────────────────────────────────── */
 .op-avatar {
   border-radius: 50%; flex-shrink: 0;
-  background: linear-gradient(180deg, var(--color-brand-teal-light), var(--color-brand-teal));
+  background: var(--color-grad);
   /* always light: the fill is a saturated brand color in every theme */
   color: #fff; font-family: var(--font-body); font-weight: 600;
   display: flex; align-items: center; justify-content: center;
@@ -235,7 +250,7 @@
 }
 .op-funnel-fill.is-accent {
   background: linear-gradient(90deg, var(--color-brand-teal), var(--color-brand-teal-light));
-  box-shadow: 0 0 14px rgba(58,154,170,0.5);
+  box-shadow: 0 0 14px rgba(123,91,227,0.5);
 }
 .op-funnel-val { font-family: var(--font-display); font-size: 17px; font-weight: 700; text-align: right; color: var(--color-text); }
 
@@ -248,19 +263,19 @@
 /* ── Shared primitives: eyebrow, pill, live dot ────────────── */
 .op-eyebrow { font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-text-muted); }
 .op-livedot { width: 7px; height: 7px; border-radius: 50%; background: var(--color-success); box-shadow: 0 0 0 0 rgba(16,185,129,0.6); animation: op-pulse 2s infinite; flex-shrink: 0; }
-.op-livedot--teal { background: var(--color-brand-teal-light); box-shadow: 0 0 0 0 rgba(58,154,170,0.6); animation: op-pulse-teal 2.4s infinite; }
+.op-livedot--teal { background: var(--color-brand-teal-light); box-shadow: 0 0 0 0 rgba(123,91,227,0.6); animation: op-pulse-teal 2.4s infinite; }
 @keyframes op-pulse { 0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.55); } 70% { box-shadow: 0 0 0 7px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
-@keyframes op-pulse-teal { 0% { box-shadow: 0 0 0 0 rgba(58,154,170,0.55); } 70% { box-shadow: 0 0 0 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+@keyframes op-pulse-teal { 0% { box-shadow: 0 0 0 0 rgba(123,91,227,0.55); } 70% { box-shadow: 0 0 0 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
 
 /* primary CTA shared */
 .op-cta {
   display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px;
   border-radius: var(--radius-md); font-family: var(--font-body); font-size: 13px; font-weight: 500;
-  background: linear-gradient(180deg, var(--color-brand-teal-light), var(--color-brand-teal));
+  background: var(--color-grad);
   /* always light: the fill is a saturated brand color in every theme */
   color: #fff;
   border: 1px solid color-mix(in srgb, var(--color-brand-teal-light) 50%, transparent);
-  box-shadow: 0 6px 18px rgba(58,154,170,0.22);
+  box-shadow: 0 6px 18px rgba(123,91,227,0.22);
   transition: box-shadow var(--dur-fast);
 }
 .op-cta:hover { box-shadow: 0 0 24px var(--color-brand-teal-light); }
@@ -326,7 +341,7 @@
 .g-chip--agent::before {
   content: ''; width: 8px; height: 8px; border-radius: 50%;
   background: var(--color-brand-teal-light); margin-bottom: 2px;
-  box-shadow: 0 0 0 0 rgba(58,154,170,0.55); animation: op-pulse-teal 2.6s infinite;
+  box-shadow: 0 0 0 0 rgba(123,91,227,0.55); animation: op-pulse-teal 2.6s infinite;
 }
 .g-chip--scheduled::before { background: var(--color-text-muted); animation: none; box-shadow: none; }
 
@@ -342,7 +357,7 @@
 .g-face--owner {
   background: linear-gradient(160deg, var(--color-brand-gold-light), var(--color-brand-gold));
   color: #2A210A; border-color: color-mix(in srgb, var(--color-brand-gold-light) 60%, transparent);
-  box-shadow: 0 6px 20px rgba(201,168,76,0.30);
+  box-shadow: 0 6px 20px rgba(224,138,30,0.30);
 }
 .g-person-name { font-size: 12.5px; font-weight: 600; color: var(--color-text); line-height: 1.15; }
 .g-person-role { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--color-text-muted); }
@@ -353,7 +368,7 @@
   display: flex; align-items: center; justify-content: center;
   background: radial-gradient(circle at 38% 32%, var(--color-brand-teal-light), var(--color-brand-teal-dark));
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-brand-teal-light) 60%, transparent),
-              0 0 48px rgba(58,154,170,0.45);
+              0 0 48px rgba(123,91,227,0.45);
   position: relative;
 }
 .g-core::after {
@@ -379,88 +394,26 @@
   color: var(--color-text-muted); position: absolute; z-index: 1;
 }
 
-/* Operator agent-graph — premium theme re-skins.
-   Each theme overrides the design-token --color-* vars on .op-shell.
-   primary == the teal/"delegate" role; secondary == the gold/"escalate" role. */
+/* "Vibrant" theme re-skins — the design ships in two modes (Treatment A
+   light + dark), selected from the Theme switcher. Each overrides the
+   design-token --color-* vars on the console root. The primary "teal" token
+   name carries VIOLET (the AI accent); the "gold" name carries AMBER. */
 
-/* ---- Optentia (default dark navy) ---- */
-.theme-navy {
-  --color-bg:#0D1B2A; --color-bg-light:#132238; --color-surface:#132238; --color-surface-2:#1A2E47; --color-border:#2A4258;
-  --color-brand-teal:#2A7A8A; --color-brand-teal-light:#3A9AAA; --color-brand-teal-dark:#1E5A66;
-  --color-brand-gold:#C9A84C; --color-brand-gold-light:#E0C56A;
-  --color-text:#F0F4F7; --color-text-strong:#FFFFFF; --color-text-muted:#8DA4B5; --color-text-cream:#F5F0E8;
+/* ---- Vibrant · Dark (default · mirrors :root) ---- */
+.theme-vibrant-dark {
+  --color-bg:#0E1424; --color-bg-light:#172036; --color-surface:#172036; --color-surface-2:#1F2A44; --color-border:#26334E;
+  --color-brand-teal:#8B6CF0; --color-brand-teal-light:#A78BFF; --color-brand-teal-dark:#6D4AE6;
+  --color-brand-gold:#F4B050; --color-brand-gold-light:#F7C57A;
+  --color-mint:#5BE3C3; --color-violet:#A78BFF; --color-amber:#F4B050; --color-coral:#FF8C7A;
+  --color-text:#EAF0F7; --color-text-strong:#FFFFFF; --color-text-muted:#8AA0C0; --color-text-cream:#EAF0F7;
 }
-/* ---- Graphite (mid-dark · champagne gold + platinum) ---- */
-.theme-graphite {
-  --color-bg:#1A1B1F; --color-bg-light:#232429; --color-surface:#232429; --color-surface-2:#2D2F36; --color-border:#3B3E47;
-  --color-brand-teal:#C2A14E; --color-brand-teal-light:#D8BE72; --color-brand-teal-dark:#8E732F;
-  --color-brand-gold:#9AA3AE; --color-brand-gold-light:#C3CAD3;
-  --color-text:#ECEAE3; --color-text-strong:#FFFFFF; --color-text-muted:#9A9AA4; --color-text-cream:#F2EFE7;
-}
-/* ---- Aubergine (mid-dark · rose + warm gold) ---- */
-.theme-plum {
-  --color-bg:#241B2E; --color-bg-light:#2E2339; --color-surface:#2E2339; --color-surface-2:#392B47; --color-border:#4A3A59;
-  --color-brand-teal:#C77D9A; --color-brand-teal-light:#E2A0BC; --color-brand-teal-dark:#9A5273;
-  --color-brand-gold:#CBA45A; --color-brand-gold-light:#E1C281;
-  --color-text:#EFE8F2; --color-text-strong:#FFFFFF; --color-text-muted:#A696B0; --color-text-cream:#F4ECF3;
-}
-/* ---- Slate (mid · mint + amber) ---- */
-.theme-slate {
-  --color-bg:#243441; --color-bg-light:#2C3E4D; --color-surface:#2C3E4D; --color-surface-2:#36495A; --color-border:#45596A;
-  --color-brand-teal:#3DBB9C; --color-brand-teal-light:#5FD6B7; --color-brand-teal-dark:#2A8B73;
-  --color-brand-gold:#D7A85A; --color-brand-gold-light:#ECC57E;
-  --color-text:#E9EFF3; --color-text-strong:#FFFFFF; --color-text-muted:#93A6B2; --color-text-cream:#EFF3F2;
-}
-/* ---- Sand (light · clay + bronze) ---- */
-.theme-sand {
-  --color-bg:#EFE9DD; --color-bg-light:#F6F1E8; --color-surface:#F8F4EC; --color-surface-2:#E8DFCE; --color-border:#D8CDB7;
-  --color-brand-teal:#B5623C; --color-brand-teal-light:#CC7B50; --color-brand-teal-dark:#8E4A2C;
-  --color-brand-gold:#9A7B3A; --color-brand-gold-light:#B8995A;
-  --color-text:#2E2A22; --color-text-strong:#181410; --color-text-muted:#6F6450; --color-text-cream:#FBF8F1;
-}
-/* ---- Porcelain (light · indigo + copper) ---- */
-.theme-porcelain {
-  --color-bg:#ECEEF2; --color-bg-light:#F4F6F9; --color-surface:#F6F8FB; --color-surface-2:#E1E6ED; --color-border:#CCD3DD;
-  --color-brand-teal:#4A55B8; --color-brand-teal-light:#6470D6; --color-brand-teal-dark:#353E8C;
-  --color-brand-gold:#B07A3E; --color-brand-gold-light:#CE9A5E;
-  --color-text:#1E2530; --color-text-strong:#0E1620; --color-text-muted:#647082; --color-text-cream:#FBFCFE;
-}
-/* ---- Mist (light · brand teal on cool porcelain) ---- */
-.theme-mist {
-  --color-bg:#EBF0F4; --color-bg-light:#F3F7FA; --color-surface:#F5F9FC; --color-surface-2:#E2EAF0; --color-border:#CFDAE3;
-  --color-brand-teal:#2A7A8A; --color-brand-teal-light:#379AAB; --color-brand-teal-dark:#1E5A66;
-  --color-brand-gold:#B98A3C; --color-brand-gold-light:#D6A95C;
-  --color-text:#1B2A33; --color-text-strong:#0C1820; --color-text-muted:#5E7180; --color-text-cream:#FBFDFE;
-}
-/* ---- Blush (light · warm rose) ---- */
-.theme-blush {
-  --color-bg:#F6EDEA; --color-bg-light:#FBF4F1; --color-surface:#FCF5F2; --color-surface-2:#EFE0DA; --color-border:#E3CFC7;
-  --color-brand-teal:#C2675C; --color-brand-teal-light:#D67F73; --color-brand-teal-dark:#9A4A40;
-  --color-brand-gold:#B68A4A; --color-brand-gold-light:#D2A968;
-  --color-text:#2E211E; --color-text-strong:#1A100D; --color-text-muted:#74605A; --color-text-cream:#FDF8F5;
-}
-/* ---- Mint (light · sage emerald) ---- */
-.theme-mint {
-  --color-bg:#ECF3ED; --color-bg-light:#F4F9F5; --color-surface:#F6FAF6; --color-surface-2:#DEEBE0; --color-border:#CCDDCF;
-  --color-brand-teal:#2E9E72; --color-brand-teal-light:#44B98A; --color-brand-teal-dark:#207854;
-  --color-brand-gold:#B6923E; --color-brand-gold-light:#D3B062;
-  --color-text:#1C2A22; --color-text-strong:#0C1A12; --color-text-muted:#5C7165; --color-text-cream:#FAFDFB;
-}
-/* ---- Aurora (light · pastel teal→lavender→peach gradient) ---- */
-.theme-aurora {
-  --bg-grad: linear-gradient(135deg,#E3F1F0 0%,#ECE7F6 48%,#FBEDE6 100%);
-  --color-bg:#ECEFF3; --color-bg-light:#F6F5FB; --color-surface:#FBFAFE; --color-surface-2:#E7E6F0; --color-border:#D7D6E3;
-  --color-brand-teal:#2F8E9C; --color-brand-teal-light:#3F9FAE; --color-brand-teal-dark:#226A75;
-  --color-brand-gold:#D98A5A; --color-brand-gold-light:#E7A579;
-  --color-text:#21262E; --color-text-strong:#10141A; --color-text-muted:#67707E; --color-text-cream:#FCFCFE;
-}
-/* ---- Dawn (light · peach→pink→lilac gradient) ---- */
-.theme-dawn {
-  --bg-grad: linear-gradient(135deg,#FDEEE4 0%,#F8E4EA 50%,#ECE6F6 100%);
-  --color-bg:#F6EEEC; --color-bg-light:#FDF6F3; --color-surface:#FEF8F5; --color-surface-2:#F1E2DD; --color-border:#E8D4CD;
-  --color-brand-teal:#D2735C; --color-brand-teal-light:#E08769; --color-brand-teal-dark:#A85543;
-  --color-brand-gold:#C29A4E; --color-brand-gold-light:#DBB870;
-  --color-text:#2C2320; --color-text-strong:#1A1310; --color-text-muted:#786059; --color-text-cream:#FEF9F6;
+/* ---- Vibrant · Light ---- */
+.theme-vibrant {
+  --color-bg:#EDF0F9; --color-bg-light:#FFFFFF; --color-surface:#FFFFFF; --color-surface-2:#F4F6FC; --color-border:#E7EAF4;
+  --color-brand-teal:#6D4AE6; --color-brand-teal-light:#7E5FEA; --color-brand-teal-dark:#553BC0;
+  --color-brand-gold:#E08A1E; --color-brand-gold-light:#E7A23F;
+  --color-mint:#0FB5A1; --color-violet:#6D4AE6; --color-amber:#E08A1E; --color-coral:#F0584A;
+  --color-text:#1B2336; --color-text-strong:#0E1422; --color-text-muted:#6E7A95; --color-text-cream:#1B2336;
 }
 
 /* aura + switcher follow the active accent on every theme */
@@ -476,7 +429,7 @@
 .op-mark { display: inline-block; }
 .op-mark--cream { /* white figure — sits on accent/dark discs on every theme */ }
 /* 'auto' marks invert to ink on light themes so they read on light surfaces */
-.theme-sand .op-mark--auto, .theme-porcelain .op-mark--auto { filter: brightness(0) opacity(0.82); }
+.theme-vibrant .op-mark--auto { filter: brightness(0) opacity(0.82); }
 
 /* theme switcher */
 .g-themes { display: flex; align-items: center; gap: 10px; }
@@ -582,8 +535,8 @@
 .cc-kpi-delta.is-up::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .cc-kpi.is-accent {
   border-color: color-mix(in srgb, var(--color-brand-teal-light) 55%, var(--color-border));
-  box-shadow: 0 0 34px rgba(58,154,170,0.20);
-  background: radial-gradient(ellipse 300px 170px at 100% 0%, rgba(58,154,170,0.13), transparent 70%), var(--color-surface);
+  box-shadow: 0 0 34px rgba(123,91,227,0.20);
+  background: radial-gradient(ellipse 300px 170px at 100% 0%, rgba(123,91,227,0.13), transparent 70%), var(--color-surface);
 }
 .cc-kpi.is-accent .cc-kpi-label { color: var(--color-brand-teal-light); }
 
@@ -645,13 +598,13 @@
 .ch-msg-av { width: 30px; height: 30px; border-radius: 50%; background: var(--color-surface-2); border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-bottom: 2px; }
 .ch-bubble { padding: 12px 16px; border-radius: 16px; border-bottom-left-radius: 5px; background: var(--color-surface-2); border: 1px solid var(--color-border); }
 .ch-bubble p { font-size: 14px; line-height: 1.55; color: var(--color-text); text-wrap: pretty; }
-.ch-bubble--me { background: linear-gradient(180deg, var(--color-brand-teal), var(--color-brand-teal-dark)); border-color: transparent; border-bottom-left-radius: 16px; border-bottom-right-radius: 5px; }
+.ch-bubble--me { background: var(--color-grad); border-color: transparent; border-bottom-left-radius: 16px; border-bottom-right-radius: 5px; }
 /* always light: the bubble fill is a saturated brand color in every theme */
 .ch-bubble--me p { color: #fff; }
 .ch-bubble--card { padding: 0; background: transparent; border: none; width: 100%; }
 
 /* number card inside a bubble */
-.ch-numcard { display: flex; align-items: center; gap: 20px; padding: 18px 20px; border: 1px solid color-mix(in srgb, var(--color-brand-teal-light) 45%, var(--color-border)); border-radius: var(--radius-lg); background: radial-gradient(ellipse 280px 150px at 0% 0%, rgba(58,154,170,0.12), transparent 70%), var(--color-surface); box-shadow: 0 0 30px rgba(58,154,170,0.14); }
+.ch-numcard { display: flex; align-items: center; gap: 20px; padding: 18px 20px; border: 1px solid color-mix(in srgb, var(--color-brand-teal-light) 45%, var(--color-border)); border-radius: var(--radius-lg); background: radial-gradient(ellipse 280px 150px at 0% 0%, rgba(123,91,227,0.12), transparent 70%), var(--color-surface); box-shadow: 0 0 30px rgba(123,91,227,0.14); }
 .ch-num { display: flex; flex-direction: column; gap: 6px; }
 .ch-num-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-brand-teal-light); }
 .ch-num-val { font-family: var(--font-display); font-size: 40px; font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
@@ -699,8 +652,8 @@
 .st-hero {
   border: 1px solid color-mix(in srgb, var(--color-brand-teal-light) 40%, var(--color-border));
   border-radius: var(--radius-xl); padding: 30px 28px;
-  background: radial-gradient(ellipse 360px 280px at 30% 0%, rgba(58,154,170,0.16), transparent 70%), var(--color-surface);
-  box-shadow: 0 0 50px rgba(58,154,170,0.16);
+  background: radial-gradient(ellipse 360px 280px at 30% 0%, rgba(123,91,227,0.16), transparent 70%), var(--color-surface);
+  box-shadow: 0 0 50px rgba(123,91,227,0.16);
   display: flex; flex-direction: column; gap: 14px; align-self: start;
 }
 .st-now-label { display: inline-flex; align-items: center; gap: 9px; color: var(--color-brand-teal-light); }
@@ -793,7 +746,7 @@
   padding: 6px 13px; border-radius: var(--radius-pill);
   background: var(--color-bg); border: 1px solid color-mix(in srgb, var(--color-brand-teal-light) 50%, var(--color-border));
   font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--color-text); box-shadow: 0 0 22px rgba(58,154,170,0.22);
+  color: var(--color-text); box-shadow: 0 0 22px rgba(123,91,227,0.22);
 }
 
 /* channels */
@@ -813,7 +766,7 @@
 .orbit-you { z-index: 4; gap: 8px; }
 .orbit-you-face {
   width: 74px; height: 74px; font-size: 22px;
-  box-shadow: 0 0 0 8px color-mix(in srgb, var(--color-bg) 70%, transparent), 0 10px 30px rgba(201,168,76,0.34);
+  box-shadow: 0 0 0 8px color-mix(in srgb, var(--color-bg) 70%, transparent), 0 10px 30px rgba(224,138,30,0.34);
 }
 .orbit-you .g-person-name { font-size: 14px; }
 
@@ -832,7 +785,7 @@
   border-radius: var(--radius-pill); z-index: 2;
   background: linear-gradient(90deg, color-mix(in srgb, var(--color-brand-teal) 22%, var(--color-surface)), var(--color-surface));
   border: 1px solid color-mix(in srgb, var(--color-brand-teal-light) 45%, var(--color-border));
-  box-shadow: 0 0 26px rgba(58,154,170,0.18);
+  box-shadow: 0 0 26px rgba(123,91,227,0.18);
 }
 .flow-opbar-tag { display: inline-flex; align-items: center; gap: 9px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text-strong); }
 .flow-opbar-meta { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-muted); }
@@ -854,7 +807,7 @@
   box-shadow: var(--surf-sh, var(--shadow-sm)); backdrop-filter: var(--surf-blur, none); -webkit-backdrop-filter: var(--surf-blur, none);
   display: flex; flex-direction: column; gap: 7px;
 }
-.flow-card.is-last { border-color: color-mix(in srgb, var(--color-brand-gold) 45%, var(--color-border)); box-shadow: 0 0 24px rgba(201,168,76,0.16); }
+.flow-card.is-last { border-color: color-mix(in srgb, var(--color-brand-gold) 45%, var(--color-border)); box-shadow: 0 0 24px rgba(224,138,30,0.16); }
 .flow-card-stage { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-muted); }
 .flow-card-val { font-family: var(--font-display); font-size: 38px; font-weight: 700; line-height: 1; color: var(--color-text-strong); letter-spacing: -0.01em; }
 .flow-card-track { height: 7px; border-radius: var(--radius-pill); background: var(--color-surface-2); overflow: hidden; }
@@ -883,7 +836,7 @@
 .con-brand-badge {
   width: 42px; height: 42px; border-radius: 13px; flex-shrink: 0;
   display: flex; align-items: flex-end; justify-content: center; overflow: hidden;
-  background: linear-gradient(155deg, var(--color-brand-teal-light), var(--color-brand-teal-dark));
+  background: var(--color-grad);
   box-shadow: 0 6px 18px color-mix(in srgb, var(--color-brand-teal) 40%, transparent);
 }
 .con-brand-meta { display: flex; flex-direction: column; line-height: 1.1; }
@@ -950,7 +903,7 @@
 .con-graphbar { display: flex; align-items: center; gap: 14px; padding: 16px 30px 0; }
 .con-seg { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--color-border); border-radius: var(--radius-pill); background: color-mix(in srgb, var(--color-surface-2) 50%, transparent); }
 .con-seg button { display: inline-flex; align-items: center; gap: 8px; padding: 7px 15px; border-radius: var(--radius-pill); font-size: 12.5px; font-weight: 500; color: var(--color-text-muted); transition: color var(--dur-fast), background var(--dur-fast); }
-.con-seg button.is-active { color: #fff; background: linear-gradient(180deg, var(--color-brand-teal-light), var(--color-brand-teal)); box-shadow: 0 4px 14px color-mix(in srgb, var(--color-brand-teal) 35%, transparent); }
+.con-seg button.is-active { color: #fff; background: var(--color-grad); box-shadow: 0 4px 14px color-mix(in srgb, var(--color-brand-teal) 35%, transparent); }
 .con-graphbar-hint { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-muted); }
 
 /* ── Generic page scaffold (Schedule/Channels/Records/Settings) ── */
@@ -999,7 +952,7 @@
 .con-flow { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px dashed var(--color-border); }
 .con-flow:last-child { border-bottom: none; }
 .con-flow-state { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.con-flow-state.live { background: var(--color-brand-teal-light); box-shadow: 0 0 0 0 rgba(58,154,170,0.5); animation: op-pulse-teal 2.6s infinite; }
+.con-flow-state.live { background: var(--color-brand-teal-light); box-shadow: 0 0 0 0 rgba(123,91,227,0.5); animation: op-pulse-teal 2.6s infinite; }
 .con-flow-state.scheduled { background: var(--color-text-muted); }
 .con-flow-name { flex: 1; font-size: 13.5px; font-weight: 500; color: var(--color-text); }
 .con-flow-last { font-family: var(--font-mono); font-size: 10px; color: var(--color-text-muted); }
