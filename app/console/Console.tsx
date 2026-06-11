@@ -11,6 +11,7 @@ import {
 } from './graph';
 import { ConceptCommand, ConceptChat, ConceptStream, ConceptMesh, ConceptOrbit, ConceptFlow } from './concepts';
 import { PageSchedule, PageChannels, PageRecords, PageSettings } from './pages';
+import { CommandPalette } from './CommandPalette';
 import type { Industry } from './data';
 
 interface NavItem { sec?: string; id?: string; label?: string; icon?: string; cnt?: (d: Industry) => number; }
@@ -83,8 +84,18 @@ export function Console() {
   const p = data.persona;
   const [page, setPage] = useState<string>(() => (typeof window === 'undefined' ? 'command' : localStorage.getItem('op-console-page') || 'command'));
   const [navOpen, setNavOpen] = useState(false);
+  const [cmdk, setCmdk] = useState(false);
   const go = (id: string) => { setPage(id); setNavOpen(false); try { localStorage.setItem('op-console-page', id); } catch (e) {} };
   const meta = (PAGE_META[page] || PAGE_META.command)(data);
+
+  // ⌘K / Ctrl-K summons the floating Operator deck from anywhere.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); setCmdk((v) => !v); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   return (
     <DetailProvider>
@@ -136,6 +147,9 @@ export function Console() {
             <span className="con-top-h">{meta[1]}</span>
           </div>
           <div className="con-top-spacer" />
+          <button className="con-summon" onClick={() => setCmdk(true)} aria-label="Summon the Operator">
+            <OpIcon name="sparkles" size={15} /><span className="con-summon-lbl">Ask Operator</span><span className="con-kbd">⌘K</span>
+          </button>
           <GraphStyleSwitcher />
           <GraphFontSwitcher />
           <GraphThemeSwitcher />
@@ -157,6 +171,15 @@ export function Console() {
           {page === 'settings' && <PageSettings />}
         </div>
       </div>
+
+      {/* Summonable floating Operator deck (⌘K) — available on every screen */}
+      <CommandPalette open={cmdk} onClose={() => setCmdk(false)} />
+      {!cmdk && (
+        <button className="op-cmdk-pill" onClick={() => setCmdk(true)}>
+          <OperatorMark size={15} variant="cream" /> Summon Operator
+          <span className="op-cmdk-pill-k">⌘K</span>
+        </button>
+      )}
     </div>
     </DetailProvider>
   );

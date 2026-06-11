@@ -64,6 +64,14 @@ colors; and the signature **blue→violet→pink gradient** carries the brand mo
 primary buttons, the user chat bubble, and active controls. Gold from the previous
 palette is dropped. Type stays Playfair Display · Sora · DM Mono.
 
+### Command palette (the floating deck)
+
+From the Desktop handoff, a summonable Operator "deck" overlays the console on
+every screen — a ⌘K Spotlight-style **command palette**. Trigger it with **⌘K /
+Ctrl-K**, the **Ask Operator** button in the top bar, or the floating **Summon
+Operator** pill (bottom-right). Type to ask, pick a suggestion, or press **ESC**
+to dismiss. It seeds from the active industry's data and follows the live theme.
+
 The **Agent Graph** tab carries three living layouts as sub-tabs — Hierarchy
 (Mesh), Mission Control (Orbit), and Pipeline Flow — with animated delegation,
 escalation, and inbound pulses. The Operator silhouette is the brand mark
