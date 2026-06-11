@@ -245,12 +245,13 @@
 .op-funnel-track { height: 10px; border-radius: var(--radius-pill); background: var(--color-surface-2); overflow: hidden; }
 .op-funnel-fill {
   height: 100%; border-radius: var(--radius-pill);
-  background: linear-gradient(90deg, var(--color-brand-teal-dark), var(--color-brand-teal));
+  /* Vibrant: each stage carries its category color (--fc), falling back to violet */
+  background: linear-gradient(90deg, color-mix(in srgb, var(--fc, var(--color-brand-teal-dark)) 45%, transparent), var(--fc, var(--color-brand-teal)));
   transition: width var(--dur-cinematic) var(--ease-emphasized);
 }
 .op-funnel-fill.is-accent {
-  background: linear-gradient(90deg, var(--color-brand-teal), var(--color-brand-teal-light));
-  box-shadow: 0 0 14px rgba(123,91,227,0.5);
+  background: linear-gradient(90deg, var(--fc, var(--color-brand-teal)), color-mix(in srgb, var(--fc, var(--color-brand-teal-light)) 65%, #fff));
+  box-shadow: 0 0 14px color-mix(in srgb, var(--fc, var(--color-brand-teal-light)) 55%, transparent);
 }
 .op-funnel-val { font-family: var(--font-display); font-size: 17px; font-weight: 700; text-align: right; color: var(--color-text); }
 
@@ -957,9 +958,11 @@
 .con-ag-tag.is-accent { color: var(--color-brand-teal-light); border-color: color-mix(in srgb, var(--color-brand-teal-light) 45%, transparent); background: color-mix(in srgb, var(--color-brand-teal) 12%, transparent); }
 
 /* Channels — cards */
-.con-chan-card { border: var(--surf-bd, 1px solid var(--color-border)); border-radius: var(--surf-rad, var(--radius-lg)); background: var(--surf-card-bg, linear-gradient(180deg, var(--color-surface), var(--color-bg))); box-shadow: var(--surf-sh, none); backdrop-filter: var(--surf-blur, none); -webkit-backdrop-filter: var(--surf-blur, none); padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.con-chan-card { position: relative; overflow: hidden; border: var(--surf-bd, 1px solid var(--color-border)); border-radius: var(--surf-rad, var(--radius-lg)); background: var(--surf-card-bg, linear-gradient(180deg, var(--color-surface), var(--color-bg))); box-shadow: var(--surf-sh, none); backdrop-filter: var(--surf-blur, none); -webkit-backdrop-filter: var(--surf-blur, none); padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+/* Vibrant: channel category color rides the top edge + the icon tile */
+.con-chan-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--ch-c, var(--color-brand-teal)); }
 .con-chan-top { display: flex; align-items: center; gap: 12px; }
-.con-chan-ico { width: 40px; height: 40px; border-radius: 11px; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--color-brand-teal) 14%, transparent); color: var(--color-brand-teal-light); flex-shrink: 0; }
+.con-chan-ico { width: 40px; height: 40px; border-radius: 11px; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--ch-c, var(--color-brand-teal)) 16%, transparent); color: var(--ch-c, var(--color-brand-teal-light)); flex-shrink: 0; }
 .con-chan-name { font-size: 15px; font-weight: 600; color: var(--color-text-strong); flex: 1; }
 .con-pill { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 9px; border-radius: var(--radius-pill); border: 1px solid; }
 .con-pill.on { color: var(--color-success); border-color: color-mix(in srgb, var(--color-success) 45%, transparent); background: color-mix(in srgb, var(--color-success) 12%, transparent); }
